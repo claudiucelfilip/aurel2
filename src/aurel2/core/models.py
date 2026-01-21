@@ -6,12 +6,36 @@ from decimal import Decimal
 from enum import Enum
 
 
+class AssetCategory(str, Enum):
+    """Broad asset categories."""
+    EQUITY = "equity"
+    FIXED_INCOME = "fixed_income"
+    ALTERNATIVE = "alternative"
+    CASH = "cash"
+
+
 class AssetClass(str, Enum):
     """Asset classes for momentum strategy."""
+    # Core Equity
     US_STOCKS = "us_stocks"
-    GLOBAL_STOCKS = "global_stocks"
-    BONDS = "bonds"
+    INTL_DEVELOPED = "intl_developed"
+    EMERGING_MARKETS = "emerging_markets"
+    # Sectors
+    TECH_SECTOR = "tech_sector"
+    FINANCIAL_SECTOR = "financial_sector"
+    ENERGY_SECTOR = "energy_sector"
+    HEALTHCARE_SECTOR = "healthcare_sector"
+    # Fixed Income
+    BONDS_AGGREGATE = "bonds_aggregate"
+    BONDS_TREASURY = "bonds_treasury"
+    # Alternatives
+    GOLD = "gold"
+    COMMODITIES = "commodities"
+    # Cash
     CASH = "cash"
+    # Backward compatibility aliases
+    GLOBAL_STOCKS = "intl_developed"  # Alias for INTL_DEVELOPED
+    BONDS = "bonds_aggregate"  # Alias for BONDS_AGGREGATE
 
 
 class SignalAction(str, Enum):
@@ -29,6 +53,8 @@ class Asset:
     asset_class: AssetClass
     isin: str | None = None
     yahoo_symbol: str | None = None
+    category: AssetCategory = AssetCategory.EQUITY
+    ucits_symbol: str | None = None
 
 
 @dataclass
