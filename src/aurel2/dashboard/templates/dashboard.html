@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aurel2 - Momentum Dashboard</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --green: #22c55e;
+            --red: #ef4444;
+            --yellow: #eab308;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .date-info {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-green { background: rgba(34, 197, 94, 0.2); color: var(--green); }
+        .badge-red { background: rgba(239, 68, 68, 0.2); color: var(--red); }
+        .badge-yellow { background: rgba(234, 179, 8, 0.2); color: var(--yellow); }
+        .badge-blue { background: rgba(59, 130, 246, 0.2); color: var(--accent); }
+
+        /* Recommendation Card */
+        .recommendation {
+            background: linear-gradient(135deg, var(--bg-card), #1e3a5f);
+            border: 2px solid var(--accent);
+        }
+
+        .action-text {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .action-buy { color: var(--green); }
+        .action-sell { color: var(--red); }
+        .action-hold { color: var(--yellow); }
+        .action-switch { color: var(--accent); }
+
+        .action-details {
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .etf-info {
+            background: rgba(0,0,0,0.2);
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+        }
+
+        .etf-info dt {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-bottom: 2px;
+        }
+
+        .etf-info dd {
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .tax-warning {
+            background: rgba(234, 179, 8, 0.1);
+            border-left: 3px solid var(--yellow);
+            padding: 12px;
+            margin-top: 16px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* Portfolio Card */
+        .holding {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .holding:last-child {
+            border-bottom: none;
+        }
+
+        .holding-symbol {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .holding-name {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .holding-value {
+            text-align: right;
+        }
+
+        .holding-shares {
+            font-weight: 600;
+        }
+
+        .holding-days {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .tax-rate {
+            font-size: 0.8rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .tax-1 { background: rgba(34, 197, 94, 0.2); color: var(--green); }
+        .tax-3 { background: rgba(234, 179, 8, 0.2); color: var(--yellow); }
+
+        /* Momentum Table */
+        .momentum-table {
+            width: 100%;
+        }
+
+        .momentum-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .momentum-row:last-child {
+            border-bottom: none;
+        }
+
+        .momentum-row.winner {
+            background: rgba(34, 197, 94, 0.1);
+            margin: 0 -24px;
+            padding: 12px 24px;
+            border-radius: 8px;
+        }
+
+        .momentum-row.held {
+            border-left: 3px solid var(--accent);
+            padding-left: 12px;
+        }
+
+        .momentum-asset {
+            flex: 1;
+        }
+
+        .momentum-name {
+            font-weight: 500;
+        }
+
+        .momentum-symbol {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .momentum-value {
+            text-align: right;
+            min-width: 100px;
+        }
+
+        .momentum-pct {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .momentum-positive { color: var(--green); }
+        .momentum-negative { color: var(--red); }
+
+        .winner-badge {
+            background: var(--green);
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-left: 8px;
+        }
+
+        .held-badge {
+            background: var(--accent);
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-left: 8px;
+        }
+
+        /* Next Rebalance */
+        .next-rebalance {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .rebalance-date {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .rebalance-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Forms */
+        .form-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        input, select, button {
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        button {
+            background: var(--accent);
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .btn-danger {
+            background: var(--red);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 40px;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Aurel2</h1>
+            <div class="date-info">
+                {{ today.strftime('%B %d, %Y') }}
+            </div>
+        </header>
+
+        <div class="grid">
+            <!-- Recommendation Card -->
+            <div class="card recommendation">
+                <div class="card-header">
+                    <span class="card-title">Recommendation</span>
+                    {% if recommendation.action == "HOLD" %}
+                    <span class="badge badge-yellow">No Action</span>
+                    {% elif recommendation.action == "BUY" %}
+                    <span class="badge badge-green">Action Required</span>
+                    {% elif recommendation.action == "SWITCH" %}
+                    <span class="badge badge-blue">Action Required</span>
+                    {% endif %}
+                </div>
+
+                <div class="action-text
+                    {% if recommendation.action == 'BUY' %}action-buy
+                    {% elif recommendation.action == 'SWITCH' %}action-switch
+                    {% elif recommendation.action == 'HOLD' %}action-hold
+                    {% endif %}">
+                    {% if recommendation.action == "BUY" %}
+                        BUY {{ recommendation.winner_ucits.symbol }}
+                    {% elif recommendation.action == "SWITCH" %}
+                        SWITCH TO {{ recommendation.winner_ucits.symbol }}
+                    {% elif recommendation.action == "STAY_CASH" %}
+                        STAY IN CASH
+                    {% else %}
+                        HOLD {{ recommendation.current_holding.symbol if recommendation.current_holding else "CASH" }}
+                    {% endif %}
+                </div>
+
+                <div class="action-details">{{ recommendation.details }}</div>
+
+                {% if recommendation.action in ["BUY", "SWITCH"] %}
+                <div class="etf-info">
+                    <dl>
+                        <dt>Symbol</dt>
+                        <dd>{{ recommendation.winner_ucits.symbol }}</dd>
+                        <dt>Name</dt>
+                        <dd>{{ recommendation.winner_ucits.name }}</dd>
+                        <dt>ISIN</dt>
+                        <dd>{{ recommendation.winner_ucits.isin }}</dd>
+                    </dl>
+                </div>
+                {% endif %}
+
+                {% if recommendation.tax_warning %}
+                <div class="tax-warning">
+                    ⚠️ {{ recommendation.tax_warning }}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Portfolio Card -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Your Portfolio</span>
+                </div>
+
+                {% if portfolio.holdings %}
+                    {% for h in portfolio.holdings %}
+                    <div class="holding">
+                        <div>
+                            <div class="holding-symbol">{{ h.symbol }}</div>
+                            <div class="holding-name">{{ h.name[:40] }}...</div>
+                        </div>
+                        <div class="holding-value">
+                            <div class="holding-shares">{{ "%.4f"|format(h.shares) }} shares</div>
+                            <div class="holding-days">
+                                {{ h.days_held() }} days
+                                <span class="tax-rate {% if h.is_long_term() %}tax-1{% else %}tax-3{% endif %}">
+                                    {% if h.is_long_term() %}1% tax{% else %}3% tax{% endif %}
+                                </span>
+                            </div>
+                            {% if not h.is_long_term() %}
+                            <div class="holding-days">{{ h.days_until_long_term() }} days to 1%</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <div class="holding">
+                        <div>
+                            <div class="holding-symbol">Cash</div>
+                        </div>
+                        <div class="holding-value">
+                            <div class="holding-shares">{{ "%.2f"|format(portfolio.cash) }} EUR</div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <p>No holdings recorded</p>
+                        <p style="margin-top: 8px; font-size: 0.9rem;">Use the form below to record a purchase</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Momentum Scores -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Momentum Scores (12-month)</span>
+            </div>
+
+            <div class="momentum-table">
+                {% for m in momentum_data %}
+                <div class="momentum-row {% if m.is_winner %}winner{% endif %} {% if m.is_held %}held{% endif %}">
+                    <div class="momentum-asset">
+                        <div class="momentum-name">
+                            {{ m.name }}
+                            {% if m.is_winner %}<span class="winner-badge">WINNER</span>{% endif %}
+                            {% if m.is_held %}<span class="held-badge">YOU</span>{% endif %}
+                        </div>
+                        <div class="momentum-symbol">{{ m.ucits.symbol }} · {{ m.ucits.isin }}</div>
+                    </div>
+                    <div class="momentum-value">
+                        <div class="momentum-pct {% if m.momentum > 0 %}momentum-positive{% else %}momentum-negative{% endif %}">
+                            {{ "%.2f"|format(m.momentum * 100) }}%
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="grid" style="margin-top: 20px;">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Record Purchase</span>
+                </div>
+                <form action="/api/buy" method="POST" hx-post="/api/buy" hx-swap="none"
+                      hx-on::after-request="if(event.detail.successful) location.reload()">
+                    <div class="form-row">
+                        <select name="symbol" style="flex: 1;">
+                            <option value="VWRA">VWRA - All-World</option>
+                            <option value="CSPX">CSPX - S&P 500</option>
+                            <option value="AGGH">AGGH - Bonds</option>
+                        </select>
+                        <input type="number" name="shares" placeholder="Shares" step="0.0001" style="flex: 1;" required>
+                        <input type="number" name="price" placeholder="Price (EUR)" step="0.01" style="flex: 1;" required>
+                        <button type="submit">Add</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Next Rebalance</span>
+                </div>
+                <div class="next-rebalance">
+                    <div class="rebalance-date">{{ next_rebalance.strftime('%B %d, %Y') }}</div>
+                    <div class="rebalance-label">
+                        {{ (next_rebalance - today).days }} days away
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            Aurel2 · Tax-Optimized Dual Momentum
+        </footer>
+    </div>
+</body>
+</html>

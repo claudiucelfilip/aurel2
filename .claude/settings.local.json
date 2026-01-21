@@ -12,7 +12,10 @@
       "Bash(git -C /Users/claudiu/Sites/aurel2 commit -m \"Improve momentum command with clear buy recommendations and UCITS equivalents\")",
       "Bash(python3 -m aurel2.cli buy:*)",
       "Bash(python3:*)",
-      "Bash(git -C /Users/claudiu/Sites/aurel2 commit -m \"Add portfolio tracking with tax-aware buy/sell recommendations\")"
+      "Bash(git -C /Users/claudiu/Sites/aurel2 commit -m \"Add portfolio tracking with tax-aware buy/sell recommendations\")",
+      "WebSearch",
+      "WebFetch(domain:api.tradeville.ro)",
+      "WebFetch(domain:portal.tradeville.ro)"
     ]
   }
 }

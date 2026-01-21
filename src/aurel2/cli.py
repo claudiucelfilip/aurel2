@@ -560,6 +560,24 @@ def cash(
 
 
 @app.command()
+def dashboard(
+    host: str = typer.Option("127.0.0.1", "--host", "-h", help="Host to bind to"),
+    port: int = typer.Option(8000, "--port", "-p", help="Port to bind to"),
+):
+    """Launch the web dashboard."""
+    typer.echo(f"\nStarting Aurel2 Dashboard at http://{host}:{port}")
+    typer.echo("Press Ctrl+C to stop\n")
+
+    try:
+        import uvicorn
+        from aurel2.dashboard.app import app as dashboard_app
+        uvicorn.run(dashboard_app, host=host, port=port, log_level="warning")
+    except ImportError:
+        typer.echo("Dashboard requires: pip install uvicorn fastapi jinja2")
+        raise typer.Exit(1)
+
+
+@app.command()
 def version():
     """Show version information."""
     from aurel2 import __version__
