@@ -171,30 +171,71 @@ def momentum(
     date_str: str = typer.Option(None, "--date", "-d", help="Date to check (YYYY-MM-DD), defaults to today"),
     config: Path = typer.Option(None, help="Config file path"),
 ):
-    """Show current momentum scores for all assets."""
+    """Show current momentum scores and trading recommendation."""
     from datetime import date as date_type
 
     check_date = date_type.fromisoformat(date_str) if date_str else date_type.today()
 
-    typer.echo(f"Calculating momentum scores for {check_date}")
+    typer.echo(f"\nCalculating momentum scores for {check_date}...")
 
     # Load settings
     settings = load_settings(config)
 
-    # Build assets (use US ETFs for demo)
+    # Define assets with full details
+    # Backtest symbols (US-listed, for data availability)
+    # and UCITS equivalents (for actual trading with Romanian tax benefits)
     assets = {
         AssetClass.US_STOCKS: Asset(
-            symbol="SPY", name="S&P 500", asset_class=AssetClass.US_STOCKS, yahoo_symbol="SPY"
+            symbol="SPY",
+            name="S&P 500 US Stocks",
+            asset_class=AssetClass.US_STOCKS,
+            yahoo_symbol="SPY"
         ),
         AssetClass.GLOBAL_STOCKS: Asset(
-            symbol="EFA", name="International", asset_class=AssetClass.GLOBAL_STOCKS, yahoo_symbol="EFA"
+            symbol="EFA",
+            name="International Developed Markets (ex-US)",
+            asset_class=AssetClass.GLOBAL_STOCKS,
+            yahoo_symbol="EFA"
         ),
         AssetClass.BONDS: Asset(
-            symbol="AGG", name="Bonds", asset_class=AssetClass.BONDS, yahoo_symbol="AGG"
+            symbol="AGG",
+            name="US Aggregate Bonds",
+            asset_class=AssetClass.BONDS,
+            yahoo_symbol="AGG"
         ),
         AssetClass.CASH: Asset(
-            symbol="CASH", name="Cash", asset_class=AssetClass.CASH
+            symbol="CASH",
+            name="Cash / Money Market",
+            asset_class=AssetClass.CASH
         ),
+    }
+
+    # UCITS equivalents for actual trading
+    ucits_equivalents = {
+        AssetClass.US_STOCKS: {
+            "symbol": "CSPX",
+            "name": "iShares Core S&P 500 UCITS ETF (Acc)",
+            "isin": "IE00B5BMR087",
+            "exchange": "Xetra (Germany)",
+        },
+        AssetClass.GLOBAL_STOCKS: {
+            "symbol": "VWRA",
+            "name": "Vanguard FTSE All-World UCITS ETF (Acc)",
+            "isin": "IE00BK5BQT80",
+            "exchange": "Xetra (Germany)",
+        },
+        AssetClass.BONDS: {
+            "symbol": "AGGH",
+            "name": "iShares Core Global Aggregate Bond UCITS ETF (Acc)",
+            "isin": "IE00BDBRDM35",
+            "exchange": "Xetra (Germany)",
+        },
+        AssetClass.CASH: {
+            "symbol": "CASH",
+            "name": "Hold in broker cash account",
+            "isin": "N/A",
+            "exchange": "N/A",
+        },
     }
 
     # Fetch data
@@ -217,19 +258,78 @@ def momentum(
         cash_rate=0.04,
     )
 
-    typer.echo("\n" + "=" * 50)
-    typer.echo("MOMENTUM SCORES (12-month)")
-    typer.echo("=" * 50)
+    # Find winner
+    sorted_scores = sorted(scores.items(), key=lambda x: x[1].momentum_12m, reverse=True)
+    winner_class, winner_score = sorted_scores[0]
+    winner_ucits = ucits_equivalents[winner_class]
 
-    for asset_class, score in sorted(scores.items(), key=lambda x: x[1].momentum_12m, reverse=True):
-        indicator = "👑" if score == max(scores.values(), key=lambda s: s.momentum_12m) else "  "
-        positive = "✓" if score.is_positive else "✗"
+    # Print momentum table
+    typer.echo("\n" + "=" * 70)
+    typer.echo("MOMENTUM SCORES (12-month lookback)")
+    typer.echo("=" * 70)
+    typer.echo(f"{'':2} {'Asset':<35} {'Momentum':>10} {'Price':>10}")
+    typer.echo("-" * 70)
+
+    for asset_class, score in sorted_scores:
+        indicator = ">>" if asset_class == winner_class else "  "
         typer.echo(
-            f"{indicator} {asset_class.value:15} | {score.momentum_12m:7.2%} | "
-            f"${score.price:8.2f} | Positive: {positive}"
+            f"{indicator} {score.asset.name:<35} {score.momentum_12m:>9.2%} "
+            f"${score.price:>9.2f}"
         )
 
-    typer.echo("=" * 50)
+    typer.echo("=" * 70)
+
+    # Print recommendation
+    typer.echo("\n" + "=" * 70)
+    typer.echo("RECOMMENDATION")
+    typer.echo("=" * 70)
+
+    if winner_score.momentum_12m <= 0.04:  # Below cash rate
+        typer.echo("\nACTION: Hold CASH (all assets underperforming)")
+        typer.echo("\nKeep funds in your broker's money market or savings account.")
+    else:
+        typer.echo(f"\nACTION: BUY {winner_class.value.upper().replace('_', ' ')}")
+        typer.echo(f"\nWinner has {winner_score.momentum_12m:.2%} momentum (12-month return)")
+
+    typer.echo("\n" + "-" * 70)
+    typer.echo("WHAT TO BUY:")
+    typer.echo("-" * 70)
+
+    typer.echo(f"\n  For US broker (e.g., Interactive Brokers US):")
+    typer.echo(f"    Symbol: {assets[winner_class].symbol}")
+    typer.echo(f"    Name:   {assets[winner_class].name}")
+
+    typer.echo(f"\n  For European broker (TradeVille, IBKR EU) - RECOMMENDED for RO tax:")
+    typer.echo(f"    Symbol: {winner_ucits['symbol']}")
+    typer.echo(f"    Name:   {winner_ucits['name']}")
+    typer.echo(f"    ISIN:   {winner_ucits['isin']}")
+    typer.echo(f"    Exchange: {winner_ucits['exchange']}")
+
+    typer.echo("\n" + "-" * 70)
+    typer.echo("TAX NOTE (Romania):")
+    typer.echo("-" * 70)
+    typer.echo("  - Hold >365 days via Romanian broker: 1% tax on gains")
+    typer.echo("  - Hold <365 days via Romanian broker: 3% tax on gains")
+    typer.echo("  - Via IBKR (foreign broker): 16% tax on net annual gains")
+    typer.echo("  - Use accumulating ETFs (Acc) to defer dividend tax")
+    typer.echo("=" * 70)
+
+    # Next rebalance
+    import calendar
+    year = check_date.year
+    month = check_date.month
+
+    # Find next quarter end
+    quarter_ends = [(3, 31), (6, 30), (9, 30), (12, 31)]
+    next_rebalance = None
+    for q_month, q_day in quarter_ends:
+        if month < q_month or (month == q_month and check_date.day < q_day):
+            next_rebalance = date_type(year, q_month, q_day)
+            break
+    if next_rebalance is None:
+        next_rebalance = date_type(year + 1, 3, 31)
+
+    typer.echo(f"\nNext rebalance check: {next_rebalance}")
 
 
 @app.command()
