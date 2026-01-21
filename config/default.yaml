@@ -1,0 +1,42 @@
+strategy:
+  name: dual_momentum
+  lookback_months: 12
+  rebalance_frequency: quarterly
+  switch_threshold: 0.10
+
+# US ETFs for backtesting (longer history available)
+# For live trading with Romanian tax optimization, use the UCITS versions
+assets:
+  us_stocks:
+    symbol: SPY
+    name: "SPDR S&P 500 ETF"
+    isin: null
+    yahoo_symbol: SPY
+  global_stocks:
+    symbol: EFA
+    name: "iShares MSCI EAFE ETF"
+    isin: null
+    yahoo_symbol: EFA
+  bonds:
+    symbol: AGG
+    name: "iShares Core US Aggregate Bond ETF"
+    isin: null
+    yahoo_symbol: AGG
+  cash_rate: 0.04
+
+# UCITS equivalents for live trading (Irish-domiciled, accumulating):
+# us_stocks: CSPX (IE00B5BMR087) on Xetra
+# global_stocks: VWRA (IE00BK5BQT80) on Xetra
+# bonds: AGGH (IE00BDBRDM35) on Xetra
+
+broker:
+  type: ibkr
+  host: "127.0.0.1"
+  port: 7497
+
+risk:
+  max_position_pct: 1.0
+  transaction_cost_pct: 0.001
+
+logging:
+  level: INFO

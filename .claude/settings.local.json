@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init:*)",
+      "Bash(pip install:*)",
+      "Bash(python -m aurel2.cli backtest:*)",
+      "Bash(python3 -m aurel2.cli backtest:*)",
+      "Bash(git -C /Users/claudiu/Sites/aurel2 add -A)",
+      "Bash(git -C /Users/claudiu/Sites/aurel2 status)"
+    ]
+  }
+}
