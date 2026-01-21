@@ -1,0 +1,19 @@
+{
+  "name": "aurel2-approval",
+  "version": "1.0.0",
+  "description": "Vercel approval endpoint for Aurel2 trading decisions",
+  "private": true,
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "vercel build",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "@vercel/kv": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "vercel": "^33.0.0"
+  }
+}
