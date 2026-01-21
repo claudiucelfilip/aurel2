@@ -6,6 +6,8 @@ from pathlib import Path
 import pandas as pd
 import typer
 import structlog
+from rich.console import Console
+from rich.table import Table
 
 from aurel2.config.settings import load_settings
 from aurel2.core.models import Asset, AssetClass
@@ -575,6 +577,208 @@ def dashboard(
     except ImportError:
         typer.echo("Dashboard requires: pip install uvicorn fastapi jinja2")
         raise typer.Exit(1)
+
+
+@app.command()
+def agent(
+    once: bool = typer.Option(False, "--once", help="Run once and exit"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Don't execute trades"),
+):
+    """Run the AI agent."""
+    from aurel2.agent.orchestrator import AgentOrchestrator, DecisionType
+    from aurel2.mcp.server import Aurel2MCPServer
+
+    console = Console()
+
+    console.print("\n[bold]Running Aurel2 AI Agent...[/bold]\n")
+
+    # Initialize server and orchestrator
+    server = Aurel2MCPServer()
+    orchestrator = AgentOrchestrator()
+
+    # Get strategy signals
+    console.print("Fetching strategy signals...")
+    signals_response = server._get_strategy_signals()
+    signals = signals_response.get("signals", {})
+
+    # Get market context
+    console.print("Fetching market context...")
+    market_context = server._get_market_context()
+
+    # Transform signals into format expected by orchestrator
+    orchestrator_signals = {}
+    for strategy_name, signal_data in signals.items():
+        if "error" not in signal_data:
+            orchestrator_signals[strategy_name] = {
+                "action": signal_data.get("action", "hold"),
+                "confidence": signal_data.get("confidence", 0.5),
+                "asset_symbol": signal_data.get("asset") or signal_data.get("asset_class"),
+            }
+
+    # Analyze and get decision
+    decision = orchestrator.analyze(
+        signals=orchestrator_signals,
+        market_context={
+            "drawdown": market_context.get("drawdown", 0.0),
+            "volatility": "normal",
+        },
+    )
+
+    # Display decision details
+    console.print("\n" + "=" * 60)
+    console.print("[bold]AGENT DECISION[/bold]")
+    console.print("=" * 60)
+
+    # Decision type with color
+    type_color = {
+        DecisionType.ROUTINE: "green",
+        DecisionType.NON_ROUTINE: "yellow",
+        DecisionType.URGENT: "red",
+    }
+    color = type_color.get(decision.decision_type, "white")
+    console.print(f"Decision Type: [{color}]{decision.decision_type.value.upper()}[/{color}]")
+
+    # Action with color
+    action_color = {
+        "buy": "green",
+        "sell": "red",
+        "hold": "yellow",
+    }
+    action_val = decision.action.value
+    acolor = action_color.get(action_val, "white")
+    console.print(f"Action: [{acolor}]{action_val.upper()}[/{acolor}]")
+
+    if decision.asset_symbol:
+        console.print(f"Asset: {decision.asset_symbol}")
+
+    console.print(f"Confidence: {decision.confidence:.1%}")
+    console.print(f"Urgency: {decision.urgency.value.upper()}")
+    console.print(f"Requires Approval: {'Yes' if decision.requires_approval else 'No'}")
+    console.print(f"Timeout: {decision.timeout_hours} hours")
+
+    console.print("\n[bold]Reasoning:[/bold]")
+    console.print(f"  {decision.reasoning}")
+
+    # Show strategy signals
+    console.print("\n[bold]Strategy Signals:[/bold]")
+    for strategy_name, signal_data in signals.items():
+        if "error" in signal_data:
+            console.print(f"  {strategy_name}: [red]Error - {signal_data['error']}[/red]")
+        else:
+            action = signal_data.get("action", "unknown")
+            acolor = action_color.get(action, "white")
+            conf = signal_data.get("confidence")
+            conf_str = f" ({conf:.0%})" if conf else ""
+            console.print(f"  {strategy_name}: [{acolor}]{action.upper()}[/{acolor}]{conf_str}")
+
+    # Market context
+    console.print("\n[bold]Market Context:[/bold]")
+    console.print(f"  Regime: {market_context.get('regime', 'unknown').upper()}")
+    console.print(f"  SPY: ${market_context.get('spy_price', 'N/A')} (200-day MA: ${market_context.get('ma_200', 'N/A')})")
+    dd = market_context.get("drawdown")
+    console.print(f"  Drawdown: {dd:.2%}" if dd is not None else "  Drawdown: N/A")
+    console.print(f"  RSI: {market_context.get('rsi', 'N/A')} ({market_context.get('rsi_interpretation', 'N/A')})")
+
+    console.print("=" * 60)
+
+    # Execute if appropriate
+    if not dry_run and not decision.requires_approval:
+        console.print("\n[green]Auto-executing routine decision...[/green]")
+        result = orchestrator.execute(decision)
+        console.print(f"Execution status: {result['status']}")
+    elif dry_run:
+        console.print("\n[yellow]Dry run - no trades executed.[/yellow]")
+    else:
+        console.print(f"\n[yellow]Approval required. Decision will timeout in {decision.timeout_hours} hours.[/yellow]")
+
+    console.print()
+
+
+@app.command()
+def strategies():
+    """Show current signals from all strategies."""
+    from aurel2.mcp.server import Aurel2MCPServer
+
+    console = Console()
+
+    console.print("\n[bold]Fetching strategy signals...[/bold]\n")
+
+    server = Aurel2MCPServer()
+    signals_response = server._get_strategy_signals()
+    signals = signals_response.get("signals", {})
+    signal_date = signals_response.get("date", "unknown")
+
+    console.print(f"Date: {signal_date}\n")
+
+    # Create a table for strategy signals
+    table = Table(title="Strategy Signals")
+    table.add_column("Strategy", style="bold")
+    table.add_column("Action", justify="center")
+    table.add_column("Confidence", justify="center")
+    table.add_column("Details")
+
+    action_styles = {
+        "buy": "bold green",
+        "sell": "bold red",
+        "hold": "bold yellow",
+    }
+
+    for strategy_name, signal_data in signals.items():
+        # Format strategy name
+        display_name = strategy_name.replace("_", " ").title()
+
+        if "error" in signal_data:
+            table.add_row(
+                display_name,
+                "[red]ERROR[/red]",
+                "-",
+                signal_data["error"][:50],
+            )
+        else:
+            action = signal_data.get("action", "unknown")
+            style = action_styles.get(action, "white")
+            action_display = f"[{style}]{action.upper()}[/{style}]"
+
+            confidence = signal_data.get("confidence")
+            conf_display = f"{confidence:.0%}" if confidence else "-"
+
+            # Build details string
+            details_parts = []
+            if signal_data.get("asset"):
+                details_parts.append(f"Asset: {signal_data['asset']}")
+            if signal_data.get("asset_class"):
+                details_parts.append(f"Class: {signal_data['asset_class']}")
+            if signal_data.get("reason"):
+                details_parts.append(signal_data["reason"][:40])
+            if signal_data.get("reasoning"):
+                details_parts.append(signal_data["reasoning"][:40])
+
+            details = "; ".join(details_parts) if details_parts else "-"
+
+            table.add_row(display_name, action_display, conf_display, details)
+
+    console.print(table)
+
+    # Show metadata for each strategy
+    console.print("\n[bold]Strategy Details:[/bold]")
+    for strategy_name, signal_data in signals.items():
+        if "error" not in signal_data:
+            display_name = strategy_name.replace("_", " ").title()
+            console.print(f"\n[bold]{display_name}:[/bold]")
+
+            if signal_data.get("reason"):
+                console.print(f"  Reason: {signal_data['reason']}")
+            if signal_data.get("reasoning"):
+                console.print(f"  Reasoning: {signal_data['reasoning']}")
+            if signal_data.get("metadata"):
+                console.print("  Metadata:")
+                for key, value in signal_data["metadata"].items():
+                    if isinstance(value, float):
+                        console.print(f"    {key}: {value:.4f}")
+                    else:
+                        console.print(f"    {key}: {value}")
+
+    console.print()
 
 
 @app.command()
