@@ -184,3 +184,21 @@ def get_assets_by_category(category: AssetCategory) -> list[Asset]:
         7
     """
     return [asset for asset in ASSET_REGISTRY.values() if asset.category == category]
+
+
+def get_all_yahoo_symbols() -> list[str]:
+    """Get all Yahoo Finance symbols from the asset registry.
+
+    Returns:
+        List of Yahoo Finance symbols (excluding CASH and assets without yahoo_symbol).
+
+    Example:
+        >>> symbols = get_all_yahoo_symbols()
+        >>> 'SPY' in symbols
+        True
+    """
+    return [
+        asset.yahoo_symbol
+        for asset in ASSET_REGISTRY.values()
+        if asset.yahoo_symbol is not None
+    ]

@@ -339,9 +339,12 @@
     <div class="container">
         <header>
             <h1>Aurel2</h1>
-            <div class="date-info">
-                {{ today.strftime('%B %d, %Y') }}
-            </div>
+            <nav style="display: flex; align-items: center; gap: 20px;">
+                <a href="/" style="color: var(--accent); text-decoration: none;">Dashboard</a>
+                <a href="/backtest" style="color: var(--text-muted); text-decoration: none;">Backtest</a>
+                <a href="/settings" style="color: var(--text-muted); text-decoration: none;">Settings</a>
+                <span class="date-info">{{ today.strftime('%B %d, %Y') }}</span>
+            </nav>
         </header>
 
         <div class="grid">

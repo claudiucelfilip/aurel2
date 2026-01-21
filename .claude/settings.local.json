@@ -15,7 +15,30 @@
       "Bash(git -C /Users/claudiu/Sites/aurel2 commit -m \"Add portfolio tracking with tax-aware buy/sell recommendations\")",
       "WebSearch",
       "WebFetch(domain:api.tradeville.ro)",
-      "WebFetch(domain:portal.tradeville.ro)"
+      "WebFetch(domain:portal.tradeville.ro)",
+      "Bash(git -C /Users/claudiu/Sites/aurel2 commit -m \"Add IBKR broker, TradeVille sync, and web dashboard\")",
+      "Bash(curl:*)",
+      "Bash(pip3 list:*)",
+      "Bash(pkill:*)",
+      "Skill(brainstorming)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Skill(superpowers:writing-plans)",
+      "Skill(superpowers:subagent-driven-development)",
+      "Bash(python -m pytest:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(/Library/Frameworks/Python.framework/Versions/3.11/bin/pip3 install:*)",
+      "Bash(/Library/Frameworks/Python.framework/Versions/3.11/bin/python3 -m pytest:*)",
+      "Bash(/Library/Frameworks/Python.framework/Versions/3.11/bin/python3:*)",
+      "Bash(git -C /Users/claudiu/Sites/aurel2 diff src/aurel2/core/models.py)",
+      "Bash(git -C /Users/claudiu/Sites/aurel2 add src/aurel2/core/models.py tests/test_models.py)",
+      "Bash(git -C /Users/claudiu/Sites/aurel2 commit -m \"feat: extend asset classes for multi-strategy universe\")",
+      "Bash(pytest:*)",
+      "Bash(git -C /Users/claudiu/Sites/aurel2 diff --stat)",
+      "Bash(git -C /Users/claudiu/Sites/aurel2 log --oneline -5)",
+      "Bash(git -C /Users/claudiu/Sites/aurel2 add src/aurel2/core/assets.py tests/test_assets.py)",
+      "Bash(git -C /Users/claudiu/Sites/aurel2 commit -m \"$\\(cat <<''EOF''\nfeat: add asset registry with ~15 ETFs\n\nRegistry maps AssetClass to Asset for all tradeable assets including US/intl equities, sectors, bonds, gold, commodities, and cash with UCITS equivalents.\nEOF\n\\)\")",
+      "Bash(python:*)"
     ]
   }
 }

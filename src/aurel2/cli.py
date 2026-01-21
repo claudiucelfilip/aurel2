@@ -781,6 +781,300 @@ def strategies():
     console.print()
 
 
+@app.command("backtest-agent")
+def backtest_agent(
+    start: str = typer.Option("2015-01-01", help="Start date (YYYY-MM-DD)"),
+    end: str = typer.Option(None, help="End date (YYYY-MM-DD), defaults to today"),
+    capital: float = typer.Option(10000.0, help="Initial capital"),
+    frequency: str = typer.Option("weekly", help="Check frequency: daily, weekly, monthly"),
+    analyze: bool = typer.Option(True, "--analyze/--no-analyze", help="Run decision analysis"),
+    verbose: bool = typer.Option(False, "-v", "--verbose", help="Verbose output"),
+):
+    """Backtest the AI agent's multi-strategy decision making."""
+    from rich.panel import Panel
+    from rich.progress import Progress, SpinnerColumn, TextColumn
+
+    from aurel2.core.assets import ASSET_REGISTRY, get_all_yahoo_symbols
+    from aurel2.engine import AgentBacktestEngine, DecisionFlowAnalyzer
+
+    console = Console()
+
+    if verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+
+    # Parse dates
+    start_date = date.fromisoformat(start)
+    end_date = date.fromisoformat(end) if end else date.today()
+
+    # Header
+    console.print()
+    console.print(Panel.fit(
+        "[bold cyan]Aurel2 Agent Backtest[/bold cyan]",
+        border_style="cyan",
+    ))
+    console.print()
+
+    # Configuration info
+    config_table = Table(show_header=False, box=None, padding=(0, 2))
+    config_table.add_column("Key", style="dim")
+    config_table.add_column("Value")
+    config_table.add_row("Period:", f"{start_date} to {end_date}")
+    config_table.add_row("Initial Capital:", f"${capital:,.2f}")
+    config_table.add_row("Check Frequency:", frequency)
+    console.print(config_table)
+    console.print()
+
+    # Fetch price data for all assets
+    provider = YahooFinanceProvider()
+    symbols = get_all_yahoo_symbols()
+
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task("Fetching price data...", total=None)
+
+        try:
+            prices = provider.get_multi_prices(symbols, start_date, end_date)
+        except Exception as e:
+            console.print(f"[red]Error fetching price data: {e}[/red]")
+            raise typer.Exit(1)
+
+        progress.update(task, completed=True)
+
+    if prices.empty:
+        console.print("[red]No price data available for the specified period.[/red]")
+        raise typer.Exit(1)
+
+    console.print(f"[green]Fetched price data for {len(symbols)} symbols[/green]")
+    console.print()
+
+    # Run the agent backtest
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task("Running agent backtest...", total=None)
+
+        engine = AgentBacktestEngine(
+            initial_capital=capital,
+            transaction_cost_pct=0.001,
+        )
+
+        try:
+            result = engine.run(
+                prices=prices,
+                start_date=start_date,
+                end_date=end_date,
+                check_frequency=frequency,
+            )
+        except Exception as e:
+            console.print(f"[red]Error running backtest: {e}[/red]")
+            if verbose:
+                import traceback
+                console.print(traceback.format_exc())
+            raise typer.Exit(1)
+
+        progress.update(task, completed=True)
+
+    console.print()
+
+    # Performance results
+    console.print("[bold]PERFORMANCE[/bold]")
+    console.print("-" * 40)
+
+    perf_table = Table(show_header=False, box=None, padding=(0, 2))
+    perf_table.add_column("Metric", style="bold")
+    perf_table.add_column("Value", justify="right")
+
+    perf_table.add_row("Final Value:", f"${result.final_value:,.2f}")
+
+    # Color-code returns
+    return_color = "green" if result.total_return >= 0 else "red"
+    perf_table.add_row("Total Return:", f"[{return_color}]{result.total_return:+.1%}[/{return_color}]")
+
+    cagr_color = "green" if result.cagr >= 0 else "red"
+    perf_table.add_row("CAGR:", f"[{cagr_color}]{result.cagr:+.1%}[/{cagr_color}]")
+
+    dd_color = "red" if result.max_drawdown > 0.20 else "yellow" if result.max_drawdown > 0.10 else "green"
+    perf_table.add_row("Max Drawdown:", f"[{dd_color}]{-result.max_drawdown:.1%}[/{dd_color}]")
+
+    sharpe_color = "green" if result.sharpe_ratio > 1.0 else "yellow" if result.sharpe_ratio > 0.5 else "red"
+    perf_table.add_row("Sharpe Ratio:", f"[{sharpe_color}]{result.sharpe_ratio:.2f}[/{sharpe_color}]")
+
+    perf_table.add_row("Number of Trades:", f"{result.num_trades}")
+
+    console.print(perf_table)
+    console.print()
+
+    # Comparison vs benchmarks
+    console.print("[bold]COMPARISON[/bold]")
+    console.print("-" * 40)
+
+    comp_table = Table(show_header=False, box=None, padding=(0, 2))
+    comp_table.add_column("Strategy", style="bold")
+    comp_table.add_column("Return", justify="right")
+    comp_table.add_column("Alpha", justify="right")
+
+    # Agent return
+    agent_color = "green" if result.total_return >= 0 else "red"
+    comp_table.add_row(
+        "Agent:",
+        f"[{agent_color}]{result.total_return:+.1%}[/{agent_color}]",
+        "",
+    )
+
+    # Benchmark (SPY Buy & Hold)
+    if result.benchmark_return is not None:
+        bench_color = "green" if result.benchmark_return >= 0 else "red"
+        alpha_vs_bench = result.total_return - result.benchmark_return
+        alpha_color = "green" if alpha_vs_bench >= 0 else "red"
+        comp_table.add_row(
+            "SPY Buy & Hold:",
+            f"[{bench_color}]{result.benchmark_return:+.1%}[/{bench_color}]",
+            f"[{alpha_color}]{alpha_vs_bench:+.1%}[/{alpha_color}]",
+        )
+
+    # Individual strategies (if available)
+    if result.vs_dual_momentum_only is not None:
+        dm_return = result.total_return - result.vs_dual_momentum_only
+        dm_color = "green" if dm_return >= 0 else "red"
+        alpha_color = "green" if result.vs_dual_momentum_only >= 0 else "red"
+        comp_table.add_row(
+            "Dual Momentum:",
+            f"[{dm_color}]{dm_return:+.1%}[/{dm_color}]",
+            f"[{alpha_color}]{result.vs_dual_momentum_only:+.1%}[/{alpha_color}]",
+        )
+
+    if result.vs_mean_reversion_only is not None:
+        mr_return = result.total_return - result.vs_mean_reversion_only
+        mr_color = "green" if mr_return >= 0 else "red"
+        alpha_color = "green" if result.vs_mean_reversion_only >= 0 else "red"
+        comp_table.add_row(
+            "Mean Reversion:",
+            f"[{mr_color}]{mr_return:+.1%}[/{mr_color}]",
+            f"[{alpha_color}]{result.vs_mean_reversion_only:+.1%}[/{alpha_color}]",
+        )
+
+    if result.vs_multi_timeframe_only is not None:
+        mtf_return = result.total_return - result.vs_multi_timeframe_only
+        mtf_color = "green" if mtf_return >= 0 else "red"
+        alpha_color = "green" if result.vs_multi_timeframe_only >= 0 else "red"
+        comp_table.add_row(
+            "Multi-Timeframe:",
+            f"[{mtf_color}]{mtf_return:+.1%}[/{mtf_color}]",
+            f"[{alpha_color}]{result.vs_multi_timeframe_only:+.1%}[/{alpha_color}]",
+        )
+
+    console.print(comp_table)
+    console.print()
+
+    # Decision summary
+    console.print("[bold]DECISIONS[/bold]")
+    console.print("-" * 40)
+
+    total_decisions = len(result.decisions)
+    decision_table = Table(show_header=False, box=None, padding=(0, 2))
+    decision_table.add_column("Type", style="bold")
+    decision_table.add_column("Count", justify="right")
+    decision_table.add_column("Percentage", justify="right")
+
+    routine_pct = result.routine_count / total_decisions if total_decisions > 0 else 0
+    non_routine_pct = result.non_routine_count / total_decisions if total_decisions > 0 else 0
+    urgent_pct = result.urgent_count / total_decisions if total_decisions > 0 else 0
+
+    decision_table.add_row("Total Decisions:", f"{total_decisions}", "")
+    decision_table.add_row("  Routine:", f"{result.routine_count}", f"[green]{routine_pct:.0%}[/green]")
+    decision_table.add_row("  Non-Routine:", f"{result.non_routine_count}", f"[yellow]{non_routine_pct:.0%}[/yellow]")
+    decision_table.add_row("  Urgent:", f"{result.urgent_count}", f"[red]{urgent_pct:.0%}[/red]")
+    decision_table.add_row("Strategy Agreement:", "", f"{result.strategy_agreement_rate:.0%}")
+
+    console.print(decision_table)
+    console.print()
+
+    # Run decision analysis if requested
+    if analyze:
+        console.print("[bold]DECISION ANALYSIS[/bold]")
+        console.print("-" * 40)
+
+        analyzer = DecisionFlowAnalyzer(result)
+        analysis = analyzer.analyze()
+
+        # Strategy agreement by regime
+        if analysis.agreement_by_regime:
+            console.print("\n[bold]Strategy Agreement by Regime:[/bold]")
+            regime_table = Table(show_header=True, box=None, padding=(0, 2))
+            regime_table.add_column("Regime", style="bold")
+            regime_table.add_column("Agreement Rate", justify="right")
+
+            for regime, rate in sorted(analysis.agreement_by_regime.items(), key=lambda x: -x[1]):
+                rate_color = "green" if rate > 0.6 else "yellow" if rate > 0.4 else "red"
+                regime_table.add_row(
+                    regime.replace("_", " ").title(),
+                    f"[{rate_color}]{rate:.0%}[/{rate_color}]",
+                )
+
+            console.print(regime_table)
+
+        # Strategy accuracy
+        if analysis.strategy_accuracy:
+            console.print("\n[bold]Strategy Accuracy:[/bold]")
+            acc_table = Table(show_header=True, box=None, padding=(0, 2))
+            acc_table.add_column("Strategy", style="bold")
+            acc_table.add_column("Accuracy", justify="right")
+            acc_table.add_column("", justify="left")
+
+            for strategy, accuracy in sorted(analysis.strategy_accuracy.items(), key=lambda x: -x[1]):
+                acc_color = "green" if accuracy > 0.55 else "yellow" if accuracy > 0.45 else "red"
+                best_marker = "[bold cyan]<-- BEST[/bold cyan]" if strategy == analysis.best_strategy else ""
+                acc_table.add_row(
+                    strategy.replace("_", " ").title(),
+                    f"[{acc_color}]{accuracy:.0%}[/{acc_color}]",
+                    best_marker,
+                )
+
+            console.print(acc_table)
+
+        # Urgent decisions
+        if analysis.urgent_decisions:
+            console.print(f"\n[bold]Urgent Decisions:[/bold] {len(analysis.urgent_decisions)} total")
+            console.print(f"  Positive outcome rate: {analysis.urgent_outcome_positive_pct:.0%}")
+
+            if verbose and analysis.urgent_decisions:
+                console.print("\n  Recent urgent decisions:")
+                for ud in analysis.urgent_decisions[-5:]:
+                    outcome = f"{ud['outcome_return']:+.1%}" if ud['outcome_return'] is not None else "N/A"
+                    action_color = "green" if ud['action'] == "buy" else "red" if ud['action'] == "sell" else "yellow"
+                    console.print(
+                        f"    {ud['date']}: [{action_color}]{ud['action'].upper()}[/{action_color}] "
+                        f"(regime: {ud['market_regime']}, outcome: {outcome})"
+                    )
+
+        # Regime performance
+        if analysis.regime_returns:
+            console.print("\n[bold]Returns by Regime:[/bold]")
+            regime_perf_table = Table(show_header=True, box=None, padding=(0, 2))
+            regime_perf_table.add_column("Regime", style="bold")
+            regime_perf_table.add_column("Avg Return", justify="right")
+
+            for regime, ret in sorted(analysis.regime_returns.items(), key=lambda x: -x[1]):
+                ret_color = "green" if ret > 0 else "red"
+                regime_perf_table.add_row(
+                    regime.replace("_", " ").title(),
+                    f"[{ret_color}]{ret:+.2%}[/{ret_color}]",
+                )
+
+            console.print(regime_perf_table)
+
+        console.print()
+
+    # Final separator
+    console.print("=" * 40)
+    console.print()
+
+
 @app.command()
 def version():
     """Show version information."""

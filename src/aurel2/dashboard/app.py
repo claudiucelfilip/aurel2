@@ -2,16 +2,19 @@
 
 from datetime import date
 from pathlib import Path
+import json
 
-from fastapi import FastAPI, Request, Form
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
+import pandas as pd
+from fastapi import FastAPI, Request, Form, Query
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 
 from aurel2.persistence.portfolio import PortfolioStore
 from aurel2.data.providers.yahoo import YahooFinanceProvider
 from aurel2.data.momentum import calculate_momentum_scores
-from aurel2.core.models import Asset, AssetClass
+from aurel2.core.models import Asset, AssetClass, SignalAction
+from aurel2.strategies.dual_momentum import DualMomentumStrategy
+from aurel2.engine.backtest import BacktestEngine
 
 app = FastAPI(title="Aurel2 Dashboard")
 
@@ -244,6 +247,154 @@ async def api_sell(symbol: str = Form(...)):
         return {"status": "ok", "message": f"Removed {symbol} from portfolio"}
     else:
         return {"status": "error", "message": f"No holding found for {symbol}"}
+
+
+@app.get("/backtest", response_class=HTMLResponse)
+async def backtest_page(request: Request):
+    """Backtest visualization page."""
+    return templates.TemplateResponse("backtest.html", {
+        "request": request,
+        "today": date.today(),
+    })
+
+
+@app.get("/api/backtest")
+async def api_backtest(
+    start: str = Query("2010-01-01"),
+    end: str = Query(None),
+    capital: float = Query(10000.0),
+):
+    """Run backtest and return chart data."""
+    from dateutil.relativedelta import relativedelta
+
+    start_date = date.fromisoformat(start)
+    end_date = date.fromisoformat(end) if end else date.today()
+
+    # Fetch price data
+    provider = YahooFinanceProvider()
+    symbols = ["SPY", "EFA", "AGG"]
+    prices = provider.get_multi_prices(symbols, start_date, end_date)
+
+    # Create strategy
+    assets = dict(ASSETS)
+    assets[AssetClass.CASH] = Asset(symbol="CASH", name="Cash", asset_class=AssetClass.CASH)
+
+    strategy = DualMomentumStrategy(
+        assets=assets,
+        lookback_months=12,
+        switch_threshold=0.10,
+        cash_rate=0.04,
+    )
+
+    # Run backtest
+    engine = BacktestEngine(
+        strategy=strategy,
+        initial_capital=capital,
+        transaction_cost_pct=0.001,
+    )
+
+    result = engine.run(
+        prices=prices,
+        start_date=start_date,
+        end_date=end_date,
+        frequency="quarterly",
+        benchmark_symbol="SPY",
+    )
+
+    # Build chart data
+    # Portfolio value over time
+    portfolio_series = []
+    for snap in result.snapshots:
+        portfolio_series.append({
+            "date": snap.date.isoformat(),
+            "value": float(snap.total_value),
+        })
+
+    # Benchmark (S&P 500) value over time
+    spy_prices = prices[prices["symbol"] == "SPY"].copy()
+    spy_prices["date"] = pd.to_datetime(spy_prices["date"])
+    spy_prices = spy_prices.sort_values("date")
+
+    # Get starting SPY price
+    start_spy = spy_prices[spy_prices["date"] >= pd.Timestamp(start_date)]
+    if not start_spy.empty:
+        start_spy_price = float(start_spy.iloc[0]["close"])
+        spy_shares = capital / start_spy_price
+
+        benchmark_series = []
+        # Sample monthly for chart
+        for _, row in spy_prices.iterrows():
+            benchmark_series.append({
+                "date": row["date"].strftime("%Y-%m-%d"),
+                "value": float(row["close"]) * spy_shares,
+            })
+    else:
+        benchmark_series = []
+
+    # Trade markers
+    trades = []
+    for t in result.trades:
+        if t.action == SignalAction.BUY:
+            trades.append({
+                "date": t.date.isoformat(),
+                "action": "BUY",
+                "symbol": t.asset.symbol,
+                "price": t.price,
+                "value": float(t.shares) * t.price,
+            })
+        elif t.action == SignalAction.SELL:
+            trades.append({
+                "date": t.date.isoformat(),
+                "action": "SELL",
+                "symbol": t.asset.symbol,
+                "price": t.price,
+                "value": float(t.shares) * t.price,
+            })
+
+    # Signals for tooltip info
+    signals = []
+    for s in result.signals:
+        scores_data = {}
+        for ac, score in s.momentum_scores.items():
+            scores_data[ac.value] = round(score.momentum_12m * 100, 2)
+
+        signals.append({
+            "date": s.date.isoformat(),
+            "action": s.action.value,
+            "asset": s.asset.symbol if s.asset else "CASH",
+            "reason": s.reason,
+            "momentum_scores": scores_data,
+        })
+
+    return {
+        "portfolio": portfolio_series,
+        "benchmark": benchmark_series,
+        "trades": trades,
+        "signals": signals,
+        "metrics": {
+            "total_return": round(result.total_return * 100, 2),
+            "cagr": round(result.cagr * 100, 2),
+            "max_drawdown": round(result.max_drawdown * 100, 2),
+            "sharpe_ratio": round(result.sharpe_ratio, 2),
+            "num_trades": result.num_trades,
+            "benchmark_return": round((result.benchmark_final / capital - 1) * 100, 2) if result.benchmark_final else 0,
+            "alpha": round((result.total_return - (result.benchmark_final / capital - 1)) * 100, 2) if result.benchmark_final else 0,
+        },
+        "start_date": start_date.isoformat(),
+        "end_date": end_date.isoformat(),
+        "initial_capital": capital,
+        "final_value": round(result.final_value, 2),
+        "benchmark_final": round(result.benchmark_final, 2) if result.benchmark_final else None,
+    }
+
+
+@app.get("/settings", response_class=HTMLResponse)
+async def settings_page(request: Request):
+    """Settings page for broker connections."""
+    return templates.TemplateResponse("settings.html", {
+        "request": request,
+        "today": date.today(),
+    })
 
 
 def run_dashboard(host: str = "127.0.0.1", port: int = 8000):
