@@ -455,6 +455,14 @@ class Checker:
         }
         urgency = urgency_map.get(decision.decision_type, DecisionUrgency.NON_ROUTINE)
 
+        # Get current price for the decision (for validation before auto-execution)
+        original_price = None
+        if decision.asset_symbol and self.connection.is_connected:
+            try:
+                original_price = await self.connection.broker.get_market_price(decision.asset_symbol)
+            except Exception:
+                pass
+
         # Build strategy context for display
         strategy_context = []
         for name, sig in signals.items():
@@ -492,6 +500,7 @@ class Checker:
             strategies=strategy_context,
             market_regime=market_context.get("regime"),
             current_holding=current_holding,
+            original_price=original_price,
         )
 
         # Post to Vercel endpoint

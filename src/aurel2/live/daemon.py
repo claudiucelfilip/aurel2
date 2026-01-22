@@ -233,7 +233,52 @@ class LiveDaemon:
         self.pending_manager.mark_executed(decision.id)
 
     async def _execute_timeout(self, decision) -> None:
-        """Execute a timed-out decision."""
+        """Execute a timed-out decision with validation."""
+        logger.info(
+            "daemon_handling_timed_out_decision",
+            decision_id=decision.id,
+            action=decision.action,
+            symbol=decision.symbol,
+        )
+
+        # Get current market price for validation
+        current_price = 0.0
+        if decision.symbol and self.connection.is_connected:
+            try:
+                current_price = await self.connection.broker.get_market_price(decision.symbol)
+            except Exception as e:
+                logger.warning("failed_to_get_price_for_validation", error=str(e))
+
+        # Validate decision is still appropriate
+        is_valid, reason = self.pending_manager.validate_decision_still_valid(
+            decision=decision,
+            current_price=current_price,
+        )
+
+        if not is_valid:
+            logger.warning(
+                "timed_out_decision_invalidated",
+                decision_id=decision.id,
+                reason=reason,
+            )
+
+            self.notifier.send(
+                message=(
+                    f"Timed-out decision NOT auto-executed: {reason}\n\n"
+                    f"Action: {decision.action.upper()} {decision.symbol or 'CASH'}\n"
+                    f"Please review manually."
+                ),
+                title="Aurel2: Decision Invalidated",
+                priority="high",
+                tags=["warning", "clock"],
+            )
+
+            # Mark as rejected
+            self.pending_manager.decisions[decision.id].status = "rejected"
+            self.pending_manager._save()
+            return
+
+        # Proceed with auto-execution
         logger.info("daemon_executing_timeout", id=decision.id)
         print(f"Auto-executing timed-out decision: {decision.action.upper()} {decision.symbol or ''}")
 

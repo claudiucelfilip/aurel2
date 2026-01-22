@@ -45,6 +45,9 @@ class PendingDecision:
     executed_at: Optional[str] = None
     approval_url: Optional[str] = None
 
+    # Price when decision was made (for validation before auto-execution)
+    original_price: Optional[float] = None
+
     # Rich context for display
     deterministic_action: Optional[str] = None
     deterministic_asset: Optional[str] = None
@@ -126,6 +129,7 @@ class PendingManager:
         strategies: Optional[list] = None,
         market_regime: Optional[str] = None,
         current_holding: Optional[str] = None,
+        original_price: Optional[float] = None,
     ) -> PendingDecision:
         """Create a new pending decision."""
         decision_id = str(uuid.uuid4())[:8]
@@ -139,6 +143,7 @@ class PendingManager:
             reasoning=reasoning,
             confidence=confidence,
             status=PendingStatus.PENDING.value,
+            original_price=original_price,
             approval_url=f"{self.approval_base_url}/{decision_id}",
             deterministic_action=deterministic_action,
             deterministic_asset=deterministic_asset,
@@ -291,6 +296,38 @@ class PendingManager:
             d for d in self.decisions.values()
             if d.status == PendingStatus.PENDING.value
         ]
+
+    def validate_decision_still_valid(
+        self,
+        decision: PendingDecision,
+        current_price: float,
+    ) -> tuple[bool, str]:
+        """Validate that a pending decision is still valid for execution.
+
+        Checks:
+        - Market hasn't moved more than 3% since decision
+        - Decision is not too stale (> 4 hours)
+
+        Args:
+            decision: The pending decision to validate
+            current_price: Current market price of the asset
+
+        Returns:
+            Tuple of (is_valid, reason)
+        """
+        # Check staleness
+        created = datetime.fromisoformat(decision.created_at)
+        age = datetime.now() - created
+        if age > timedelta(hours=4):
+            return False, f"Decision too stale: {age.total_seconds() / 3600:.1f} hours old"
+
+        # Check market movement if we have original price
+        if decision.original_price and decision.original_price > 0 and current_price > 0:
+            price_change = abs(current_price - decision.original_price) / decision.original_price
+            if price_change > 0.03:  # 3% threshold
+                return False, f"Market moved {price_change:.1%} since decision"
+
+        return True, "Decision still valid"
 
     def _save(self) -> None:
         """Save decisions to file."""
