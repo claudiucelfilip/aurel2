@@ -10,6 +10,7 @@ from typing import Optional
 import structlog
 
 from aurel2.broker.ibkr import IBKRBroker
+from aurel2.live.circuit_breaker import CircuitBreaker
 from aurel2.broker.base import AccountSummary, BrokerPosition
 
 logger = structlog.get_logger()
@@ -61,14 +62,22 @@ class IBKRConnection:
         self,
         paper: bool = True,
         host: str = "127.0.0.1",
-        client_id: int = 1,
+        client_id: int | None = None,
     ):
         self.paper = paper
         self.port = 7497 if paper else 7496
         self.host = host
+        # Use random client ID if not specified to avoid conflicts
+        if client_id is None:
+            import random
+            client_id = random.randint(100, 999)
         self.client_id = client_id
         self.broker: Optional[IBKRBroker] = None
         self._heartbeat_task: Optional[asyncio.Task] = None
+        self.circuit_breaker = CircuitBreaker(
+            failure_threshold=3,
+            reset_timeout_seconds=300,
+        )
 
     @property
     def is_connected(self) -> bool:
@@ -83,6 +92,16 @@ class IBKRConnection:
 
         Returns True if connected successfully.
         """
+        # Check circuit breaker before attempting connection
+        if not self.circuit_breaker.can_execute():
+            status = self.circuit_breaker.get_status()
+            logger.warning(
+                "ibkr_connect_blocked_circuit_open",
+                circuit_state=status["state"],
+                failure_count=status["failure_count"],
+            )
+            return False
+
         # Try to connect
         for attempt in range(max_retries):
             logger.info(
@@ -103,6 +122,7 @@ class IBKRConnection:
                 if connected:
                     logger.info("ibkr_connected", port=self.port, paper=self.paper)
                     self._start_heartbeat()
+                    self.circuit_breaker.record_success()
                     return True
             except Exception as e:
                 logger.warning("ibkr_connect_failed", error=str(e), attempt=attempt + 1)
@@ -116,8 +136,15 @@ class IBKRConnection:
             launched = self._launch_tws()
 
             if launched:
-                return await self._wait_for_login()
+                result = await self._wait_for_login()
+                if result:
+                    self.circuit_breaker.record_success()
+                else:
+                    self.circuit_breaker.record_failure("TWS login timeout")
+                return result
 
+        # All retries failed
+        self.circuit_breaker.record_failure("Connection failed after all retries")
         return False
 
     async def disconnect(self) -> None:

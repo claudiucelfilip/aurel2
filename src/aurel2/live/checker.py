@@ -88,6 +88,24 @@ class Checker:
         """Run a single check cycle."""
         logger.info("checker_run_start")
 
+        # Check circuit breaker before execution
+        if not self.connection.circuit_breaker.can_execute():
+            status = self.connection.circuit_breaker.get_status()
+            logger.error("execution_blocked_circuit_open", status=status)
+
+            if self.notifier:
+                self.notifier.send(
+                    message=f"Trading paused - circuit breaker open after {status['failure_count']} failures",
+                    title="Aurel2: Circuit Breaker Open",
+                    priority="urgent",
+                    tags=["warning", "stop_sign"],
+                )
+
+            return CheckResult(
+                success=False,
+                message=f"Circuit breaker open: {status['failure_count']} consecutive failures",
+            )
+
         # 1. Ensure connection
         if not await self.connection.ensure_connected():
             return CheckResult(
