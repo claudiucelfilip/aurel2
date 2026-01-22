@@ -1,7 +1,8 @@
 """Interactive Brokers integration using ib_insync."""
 
 import asyncio
-from typing import Optional
+from dataclasses import dataclass
+from typing import Any, Optional
 import structlog
 
 from aurel2.broker.base import (
@@ -11,6 +12,17 @@ from aurel2.broker.base import (
     OrderResult,
     AccountSummary,
 )
+
+
+@dataclass
+class OrderVerification:
+    """Result of order verification."""
+    verified: bool
+    expected_shares: float
+    actual_shares: float
+    expected_action: str  # "BUY" or "SELL"
+    slippage_pct: float  # (fill_price - expected_price) / expected_price
+    message: str
 
 logger = structlog.get_logger()
 
@@ -268,6 +280,59 @@ class IBKRBroker(BaseBroker):
         )
 
         return result
+
+    async def verify_order(
+        self,
+        order_result: OrderResult,
+        expected_shares: float,
+        expected_price: float | None = None,
+    ) -> OrderVerification:
+        """Verify order was filled as expected."""
+        if order_result.status == "REJECTED":
+            return OrderVerification(
+                verified=False,
+                expected_shares=expected_shares,
+                actual_shares=0,
+                expected_action=order_result.action,
+                slippage_pct=0,
+                message=f"Order rejected: {order_result.message}",
+            )
+
+        if order_result.status == "PENDING":
+            return OrderVerification(
+                verified=False,
+                expected_shares=expected_shares,
+                actual_shares=order_result.filled_quantity,
+                expected_action=order_result.action,
+                slippage_pct=0,
+                message="Order still pending after timeout",
+            )
+
+        fill_ratio = order_result.filled_quantity / expected_shares if expected_shares > 0 else 0
+        if fill_ratio < 0.95:
+            return OrderVerification(
+                verified=False,
+                expected_shares=expected_shares,
+                actual_shares=order_result.filled_quantity,
+                expected_action=order_result.action,
+                slippage_pct=0,
+                message=f"Partial fill: {fill_ratio:.1%} of expected",
+            )
+
+        slippage_pct = 0.0
+        if expected_price and expected_price > 0 and order_result.avg_fill_price > 0:
+            slippage_pct = (order_result.avg_fill_price - expected_price) / expected_price
+            if order_result.action == "SELL":
+                slippage_pct = -slippage_pct
+
+        return OrderVerification(
+            verified=True,
+            expected_shares=expected_shares,
+            actual_shares=order_result.filled_quantity,
+            expected_action=order_result.action,
+            slippage_pct=slippage_pct,
+            message="Order verified successfully",
+        )
 
     async def execute_switch(
         self,

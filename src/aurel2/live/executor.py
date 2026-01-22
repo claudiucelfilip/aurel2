@@ -1,11 +1,12 @@
 """Trade executor - translates decisions into IBKR orders."""
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 
 import structlog
 
 from aurel2.broker.base import BrokerOrder, OrderResult, BrokerPosition
+from aurel2.broker.ibkr import OrderVerification
 from aurel2.live.connection import IBKRConnection
 
 logger = structlog.get_logger()
@@ -136,17 +137,51 @@ class Executor:
                 order_type="MKT",
             )
 
-            result = await self.connection.broker.place_order(order)
+            order_result = await self.connection.broker.place_order(order)
 
-            success = result.status == "FILLED"
+            # Verify the order
+            verification = await self.connection.broker.verify_order(
+                order_result=order_result,
+                expected_shares=shares,
+                expected_price=price,
+            )
+
+            if not verification.verified:
+                logger.error(
+                    "order_verification_failed",
+                    symbol=symbol,
+                    expected_shares=verification.expected_shares,
+                    actual_shares=verification.actual_shares,
+                    message=verification.message,
+                )
+                return ExecutionResult(
+                    success=False,
+                    action="buy",
+                    symbol=symbol,
+                    shares=verification.actual_shares,
+                    fill_price=order_result.avg_fill_price,
+                    message=f"Verification failed: {verification.message}",
+                    order_result=order_result,
+                )
+
+            if abs(verification.slippage_pct) > 0.01:
+                logger.warning(
+                    "high_slippage_detected",
+                    symbol=symbol,
+                    slippage_pct=f"{verification.slippage_pct:.2%}",
+                    expected_price=price,
+                    fill_price=order_result.avg_fill_price,
+                )
+
+            success = order_result.status == "FILLED"
             return ExecutionResult(
                 success=success,
                 action="buy",
                 symbol=symbol,
-                shares=result.filled_quantity,
-                fill_price=result.avg_fill_price,
-                message=f"Order {result.status}: {result.message}",
-                order_result=result,
+                shares=order_result.filled_quantity,
+                fill_price=order_result.avg_fill_price,
+                message=f"Order {order_result.status}: {order_result.message}",
+                order_result=order_result,
             )
 
         except Exception as e:
@@ -173,6 +208,9 @@ class Executor:
                     message=f"No position found for {symbol}",
                 )
 
+            # Get market price for slippage calculation
+            market_price = await self.connection.broker.get_market_price(symbol)
+
             # Place sell order
             order = BrokerOrder(
                 symbol=symbol,
@@ -181,17 +219,51 @@ class Executor:
                 order_type="MKT",
             )
 
-            result = await self.connection.broker.place_order(order)
+            order_result = await self.connection.broker.place_order(order)
 
-            success = result.status == "FILLED"
+            # Verify the order
+            verification = await self.connection.broker.verify_order(
+                order_result=order_result,
+                expected_shares=position.shares,
+                expected_price=market_price,
+            )
+
+            if not verification.verified:
+                logger.error(
+                    "order_verification_failed",
+                    symbol=symbol,
+                    expected_shares=verification.expected_shares,
+                    actual_shares=verification.actual_shares,
+                    message=verification.message,
+                )
+                return ExecutionResult(
+                    success=False,
+                    action="sell",
+                    symbol=symbol,
+                    shares=verification.actual_shares,
+                    fill_price=order_result.avg_fill_price,
+                    message=f"Verification failed: {verification.message}",
+                    order_result=order_result,
+                )
+
+            if abs(verification.slippage_pct) > 0.01:
+                logger.warning(
+                    "high_slippage_detected",
+                    symbol=symbol,
+                    slippage_pct=f"{verification.slippage_pct:.2%}",
+                    expected_price=market_price,
+                    fill_price=order_result.avg_fill_price,
+                )
+
+            success = order_result.status == "FILLED"
             return ExecutionResult(
                 success=success,
                 action="sell",
                 symbol=symbol,
-                shares=result.filled_quantity,
-                fill_price=result.avg_fill_price,
-                message=f"Order {result.status}: {result.message}",
-                order_result=result,
+                shares=order_result.filled_quantity,
+                fill_price=order_result.avg_fill_price,
+                message=f"Order {order_result.status}: {order_result.message}",
+                order_result=order_result,
             )
 
         except Exception as e:
@@ -264,3 +336,30 @@ class Executor:
             return largest.symbol
 
         return None
+
+    async def reconcile_positions(self) -> dict[str, Any]:
+        """Reconcile local state with broker positions."""
+        broker_positions = await self.connection.get_positions()
+
+        result = {
+            "positions": [],
+            "discrepancies": [],
+            "total_value": 0,
+        }
+
+        for pos in broker_positions:
+            result["positions"].append({
+                "symbol": pos.symbol,
+                "shares": pos.shares,
+                "market_value": pos.market_value,
+                "avg_cost": pos.avg_cost,
+            })
+            result["total_value"] += pos.market_value
+
+        logger.info(
+            "positions_reconciled",
+            num_positions=len(broker_positions),
+            total_value=result["total_value"],
+        )
+
+        return result
