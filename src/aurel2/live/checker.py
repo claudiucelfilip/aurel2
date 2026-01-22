@@ -1,5 +1,6 @@
 """Single check logic - runs strategy analysis and produces decisions."""
 
+import uuid
 from dataclasses import dataclass
 from datetime import date, timedelta
 from typing import Optional
@@ -16,6 +17,7 @@ from aurel2.strategies.mean_reversion import MeanReversionStrategy
 from aurel2.strategies.multi_timeframe import MultiTimeframeTrendStrategy
 from aurel2.live.connection import IBKRConnection
 from aurel2.live.executor import Executor, ExecutionResult
+from aurel2.live.journal import TradeJournal
 from aurel2.live.pending import PendingManager, PendingDecision, DecisionUrgency
 from aurel2.notifications.ntfy import NtfyNotifier
 
@@ -83,6 +85,9 @@ class Checker:
                 failure_file=failure_learnings_file,
                 model="sonnet",  # Uses Claude Code CLI, not API
             )
+
+        # Initialize trade journal for audit trail
+        self.journal = TradeJournal()
 
     async def run(self) -> CheckResult:
         """Run a single check cycle."""
@@ -230,6 +235,37 @@ class Checker:
                 logger.error("checker_ai_advisor_error", error=str(e))
                 # Continue with deterministic decision if AI fails
 
+        # 7b. Record decision in trade journal
+        decision_id = str(uuid.uuid4())[:8]
+
+        # Convert strategy signals to serializable format
+        signals_for_journal = {}
+        for name, signal in signals.items():
+            if hasattr(signal, 'to_dict'):
+                signals_for_journal[name] = signal.to_dict()
+            elif isinstance(signal, dict):
+                signals_for_journal[name] = signal
+            else:
+                signals_for_journal[name] = str(signal)
+
+        self.journal.record_decision(
+            decision_id=decision_id,
+            action=decision.action.value,
+            symbol=decision.asset_symbol,
+            confidence=decision.confidence,
+            decision_type=decision.decision_type.value,
+            strategy_signals=signals_for_journal,
+            ai_agrees=ai_advice.agrees_with_deterministic if ai_advice else True,
+            ai_action=ai_advice.recommended_action if ai_advice else None,
+            ai_asset=ai_advice.recommended_asset if ai_advice else None,
+            ai_reasoning=ai_advice.reasoning[:500] if ai_advice and ai_advice.reasoning else None,
+            ai_confidence=ai_advice.confidence if ai_advice else 0.0,
+            failure_patterns=ai_advice.failure_patterns_detected if ai_advice else [],
+            market_regime=market_context.get("regime") if market_context else None,
+            account_value=account_value,
+            current_holding=current_holding,
+        )
+
         # 8. Execute or create pending
         if self.dry_run:
             logger.info("checker_dry_run", decision=decision.to_dict())
@@ -256,7 +292,7 @@ class Checker:
         if not decision.requires_approval:
             # ROUTINE - auto-execute
             return await self._execute_decision(
-                decision, ai_advice, current_holding, account_value
+                decision, ai_advice, current_holding, account_value, decision_id
             )
         else:
             # NON_ROUTINE or URGENT - create pending approval
@@ -393,6 +429,7 @@ class Checker:
         ai_advice: Optional[AIAdvice],
         current_holding: Optional[str],
         account_value: Optional[float],
+        decision_id: str,
     ) -> CheckResult:
         """Execute a ROUTINE decision immediately."""
         logger.info(
@@ -405,6 +442,15 @@ class Checker:
             action=decision.action.value,
             symbol=decision.asset_symbol,
             current_holding=current_holding,
+        )
+
+        # Record execution result in journal
+        self.journal.record_execution(
+            decision_id=decision_id,
+            success=result.success,
+            shares=result.shares,
+            fill_price=result.fill_price,
+            error=result.message if not result.success else None,
         )
 
         # Send notification
