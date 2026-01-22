@@ -1038,8 +1038,8 @@ Respond with ONLY valid JSON matching the specified format (no markdown code blo
                 action=decision.action,
                 asset=decision.asset,
                 confidence=decision.confidence,
-                override=decision_info.get("action") == "override",
-                failure_mode=analysis.get("failure_mode_detected"),
+                override=override_decision.get("should_override", False),
+                failure_type=pattern_match.get("matched_failure_type"),
             )
 
             return decision

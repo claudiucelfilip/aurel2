@@ -8,6 +8,7 @@ import pandas as pd
 import structlog
 
 from aurel2.agent.orchestrator import AgentOrchestrator, AgentDecision, DecisionType
+from aurel2.agent.advisor import AIAdvisor, AIAdvice
 from aurel2.core.assets import ASSET_REGISTRY, get_all_yahoo_symbols
 from aurel2.data.providers.yahoo import YahooFinanceProvider
 from aurel2.strategies.dual_momentum import DualMomentumStrategy
@@ -27,6 +28,7 @@ class CheckResult:
 
     success: bool
     decision: Optional[AgentDecision] = None
+    ai_advice: Optional[AIAdvice] = None
     execution_result: Optional[ExecutionResult] = None
     pending_decision: Optional[PendingDecision] = None
     message: str = ""
@@ -54,12 +56,15 @@ class Checker:
         pending_manager: PendingManager,
         ntfy_topic: str = "aurel2",
         dry_run: bool = False,
+        use_ai_advisor: bool = True,
+        failure_learnings_file: str = "data/failure_learnings.json",
     ):
         self.connection = connection
         self.pending_manager = pending_manager
         self.executor = Executor(connection)
         self.notifier = NtfyNotifier(topic=ntfy_topic)
         self.dry_run = dry_run
+        self.use_ai_advisor = use_ai_advisor
 
         # Initialize strategies
         self.strategies = {
@@ -70,6 +75,14 @@ class Checker:
 
         self.orchestrator = AgentOrchestrator()
         self.provider = YahooFinanceProvider()
+
+        # Initialize AI advisor with failure learnings (uses Claude Code CLI)
+        self.ai_advisor: Optional[AIAdvisor] = None
+        if use_ai_advisor:
+            self.ai_advisor = AIAdvisor(
+                failure_file=failure_learnings_file,
+                model="sonnet",  # Uses Claude Code CLI, not API
+            )
 
     async def run(self) -> CheckResult:
         """Run a single check cycle."""
@@ -120,14 +133,14 @@ class Checker:
         # 5. Get market context
         market_context = self._build_market_context(prices)
 
-        # 6. Orchestrator analysis
+        # 6. Orchestrator analysis (deterministic)
         decision = self.orchestrator.analyze(
             signals=signals,
             market_context=market_context,
         )
 
         logger.info(
-            "checker_decision",
+            "checker_deterministic_decision",
             decision_type=decision.decision_type.value,
             action=decision.action.value,
             asset=decision.asset_symbol,
@@ -135,12 +148,67 @@ class Checker:
             requires_approval=decision.requires_approval,
         )
 
-        # 7. Execute or create pending
+        # 7. AI Advisor review (uses failure learnings from past mistakes)
+        ai_advice: Optional[AIAdvice] = None
+        if self.ai_advisor and self.use_ai_advisor:
+            try:
+                logger.info("checker_running_ai_advisor")
+                ai_advice = self.ai_advisor.review(
+                    deterministic_action=decision.action.value,
+                    deterministic_asset=decision.asset_symbol,
+                    strategy_signals=signals,
+                    market_context=market_context,
+                    prices=prices,
+                    current_holding=current_holding,
+                )
+
+                logger.info(
+                    "checker_ai_advice",
+                    agrees=ai_advice.agrees_with_deterministic,
+                    ai_action=ai_advice.recommended_action,
+                    ai_asset=ai_advice.recommended_asset,
+                    ai_confidence=ai_advice.confidence,
+                    failure_patterns=ai_advice.failure_patterns_detected,
+                )
+
+                # If AI disagrees and has high confidence, use AI's recommendation
+                if not ai_advice.agrees_with_deterministic and ai_advice.confidence > 0.7:
+                    logger.info(
+                        "checker_ai_override",
+                        old_action=decision.action.value,
+                        old_asset=decision.asset_symbol,
+                        new_action=ai_advice.recommended_action,
+                        new_asset=ai_advice.recommended_asset,
+                    )
+                    # Update decision with AI's recommendation
+                    # The decision becomes NON_ROUTINE since AI overrode
+                    from aurel2.core.models import SignalAction
+                    decision = AgentDecision(
+                        decision_type=DecisionType.NON_ROUTINE,
+                        action=SignalAction(ai_advice.recommended_action),
+                        asset_symbol=ai_advice.recommended_asset,
+                        reasoning=f"AI Override: {ai_advice.reasoning}",
+                        confidence=ai_advice.confidence,
+                        strategy_signals=signals,
+                        requires_approval=True,  # Always require approval for AI overrides
+                        timeout_hours=1.0,
+                        urgency=decision.urgency,
+                        market_context=market_context,
+                        position_size_pct=decision.position_size_pct,
+                        regime=decision.regime,
+                    )
+
+            except Exception as e:
+                logger.error("checker_ai_advisor_error", error=str(e))
+                # Continue with deterministic decision if AI fails
+
+        # 8. Execute or create pending
         if self.dry_run:
             logger.info("checker_dry_run", decision=decision.to_dict())
             return CheckResult(
                 success=True,
                 decision=decision,
+                ai_advice=ai_advice,
                 message="Dry run - no action taken",
                 current_holding=current_holding,
                 account_value=account_value,
@@ -151,6 +219,7 @@ class Checker:
             return CheckResult(
                 success=True,
                 decision=decision,
+                ai_advice=ai_advice,
                 message="Decision: HOLD - no action taken",
                 current_holding=current_holding,
                 account_value=account_value,
@@ -159,12 +228,12 @@ class Checker:
         if not decision.requires_approval:
             # ROUTINE - auto-execute
             return await self._execute_decision(
-                decision, current_holding, account_value
+                decision, ai_advice, current_holding, account_value
             )
         else:
             # NON_ROUTINE or URGENT - create pending approval
             return await self._create_pending_decision(
-                decision, signals, market_context, current_holding, account_value
+                decision, ai_advice, signals, market_context, current_holding, account_value
             )
 
     async def _fetch_prices(self) -> pd.DataFrame:
@@ -293,6 +362,7 @@ class Checker:
     async def _execute_decision(
         self,
         decision: AgentDecision,
+        ai_advice: Optional[AIAdvice],
         current_holding: Optional[str],
         account_value: Optional[float],
     ) -> CheckResult:
@@ -335,6 +405,7 @@ class Checker:
         return CheckResult(
             success=result.success,
             decision=decision,
+            ai_advice=ai_advice,
             execution_result=result,
             message=result.message,
             current_holding=current_holding,
@@ -344,6 +415,7 @@ class Checker:
     async def _create_pending_decision(
         self,
         decision: AgentDecision,
+        ai_advice: Optional[AIAdvice],
         signals: dict,
         market_context: dict,
         current_holding: Optional[str],
@@ -375,16 +447,30 @@ class Checker:
                     "confidence": sig.get("confidence", 0.5),
                 })
 
-        # Create pending decision
+        # Determine if AI agrees and extract AI info
+        ai_agrees = True
+        ai_action = None
+        ai_asset = None
+        ai_reasoning = None
+        if ai_advice:
+            ai_agrees = ai_advice.agrees_with_deterministic
+            ai_action = ai_advice.recommended_action
+            ai_asset = ai_advice.recommended_asset
+            ai_reasoning = ai_advice.reasoning
+
+        # Create pending decision with AI advice context
         pending = self.pending_manager.create_decision(
             urgency=urgency,
             action=decision.action.value,
             symbol=decision.asset_symbol,
             reasoning=decision.reasoning,
             confidence=decision.confidence,
-            deterministic_action=decision.action.value,
-            deterministic_asset=decision.asset_symbol,
-            ai_agrees=True,  # No AI override in this flow
+            deterministic_action=ai_advice.deterministic_action if ai_advice else decision.action.value,
+            deterministic_asset=ai_advice.deterministic_asset if ai_advice else decision.asset_symbol,
+            ai_agrees=ai_agrees,
+            ai_action=ai_action,
+            ai_asset=ai_asset,
+            ai_reasoning=ai_reasoning,
             strategies=strategy_context,
             market_regime=market_context.get("regime"),
             current_holding=current_holding,
@@ -393,18 +479,29 @@ class Checker:
         # Post to Vercel endpoint
         await self.pending_manager.post_to_approval_endpoint(pending)
 
-        # Send notification
+        # Send notification with AI context if relevant
         priority = "high" if urgency == DecisionUrgency.URGENT else "default"
         tags = ["warning", "chart_with_upwards_trend"] if urgency == DecisionUrgency.URGENT else ["question", "chart_with_upwards_trend"]
 
+        # Add robot tag if AI is involved
+        if ai_advice and not ai_agrees:
+            tags.append("robot")
+
         timeout_mins = pending.timeout_seconds() // 60
+
+        # Build message with AI context
+        ai_context = ""
+        if ai_advice and not ai_agrees:
+            ai_context = f"\n\nAI Override: {ai_advice.recommended_action.upper()} {ai_advice.recommended_asset or ''}\nAI Reasoning: {ai_advice.reasoning[:100]}..."
+
         self.notifier.send(
             message=(
                 f"Approval Required ({urgency.value.upper()})\n\n"
                 f"Action: {decision.action.value.upper()} {decision.asset_symbol or ''}\n"
                 f"Confidence: {decision.confidence:.0%}\n"
                 f"Timeout: {timeout_mins} minutes\n\n"
-                f"Reasoning: {decision.reasoning[:150]}...\n\n"
+                f"Reasoning: {decision.reasoning[:150]}..."
+                f"{ai_context}\n\n"
                 f"Approve/Reject: {pending.approval_url}"
             ),
             title=f"Aurel2: {decision.action.value.upper()} {decision.asset_symbol or ''}",
@@ -416,6 +513,7 @@ class Checker:
         return CheckResult(
             success=True,
             decision=decision,
+            ai_advice=ai_advice,
             pending_decision=pending,
             message=f"Pending approval: {pending.approval_url}",
             current_holding=current_holding,

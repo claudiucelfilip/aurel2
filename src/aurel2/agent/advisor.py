@@ -12,7 +12,7 @@ from typing import Any
 import pandas as pd
 import structlog
 
-from aurel2.agent.ai_evaluator import ExpertAIEvaluator
+from aurel2.agent.ai_evaluator import ClaudeCodeExpertEvaluator
 from aurel2.agent.failure_analyzer import FailureAnalysis
 from aurel2.core.assets import ASSET_REGISTRY
 
@@ -53,26 +53,23 @@ class AIAdvisor:
     def __init__(
         self,
         failure_file: str = DEFAULT_FAILURE_FILE,
-        model: str = "claude-sonnet-4-5-20250929",
-        use_extended_thinking: bool = False,
+        model: str = "sonnet",
     ):
         """Initialize the AI advisor.
 
         Args:
             failure_file: Path to failure learnings JSON file.
-            model: Claude model to use.
-            use_extended_thinking: Whether to use extended thinking (costs more).
+            model: Claude model to use via CLI (sonnet, opus, haiku).
         """
         self.failure_file = failure_file
         self.model = model
-        self.use_extended_thinking = use_extended_thinking
 
         # Load failure analysis
         self.failure_analysis: FailureAnalysis | None = None
         self._load_failure_analysis()
 
-        # Initialize AI evaluator
-        self.ai_evaluator: ExpertAIEvaluator | None = None
+        # Initialize AI evaluator (using Claude Code CLI, not API)
+        self.ai_evaluator: ClaudeCodeExpertEvaluator | None = None
 
     def _load_failure_analysis(self) -> None:
         """Load failure analysis from file if available."""
@@ -97,10 +94,8 @@ class AIAdvisor:
         """Lazy initialization of AI evaluator."""
         if self.ai_evaluator is None:
             try:
-                self.ai_evaluator = ExpertAIEvaluator(
-                    model=self.model,
-                    use_extended_thinking=self.use_extended_thinking,
-                )
+                # Use Claude Code CLI instead of Anthropic API
+                self.ai_evaluator = ClaudeCodeExpertEvaluator(model=self.model)
             except Exception as e:
                 logger.error("failed_to_init_ai_evaluator", error=str(e))
                 raise
