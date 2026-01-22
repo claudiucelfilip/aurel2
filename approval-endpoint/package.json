@@ -4,12 +4,13 @@
   "description": "Vercel approval endpoint for Aurel2 trading decisions",
   "private": true,
   "scripts": {
-    "dev": "vercel dev",
-    "build": "vercel build",
     "deploy": "vercel --prod"
   },
+  "engines": {
+    "node": "20.x"
+  },
   "dependencies": {
-    "@vercel/kv": "^2.0.0"
+    "@upstash/redis": "^1.28.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

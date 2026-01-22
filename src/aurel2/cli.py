@@ -583,27 +583,63 @@ def dashboard(
 def agent(
     once: bool = typer.Option(False, "--once", help="Run once and exit"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Don't execute trades"),
+    no_ai: bool = typer.Option(False, "--no-ai", help="Skip AI advisor review"),
+    notify: bool = typer.Option(True, "--notify/--no-notify", help="Send notifications"),
+    ntfy_topic: str = typer.Option("aurel2", "--ntfy-topic", help="Ntfy topic"),
+    approval_url: str = typer.Option(
+        "https://approval-endpoint.vercel.app/api/decision",
+        "--approval-url",
+        help="Approval endpoint URL",
+    ),
+    failure_file: str = typer.Option(
+        "data/failure_learnings.json",
+        "--failures",
+        help="Path to failure learnings",
+    ),
 ):
-    """Run the AI agent."""
+    """Run the AI agent with failure-learning advisor.
+    
+    The agent:
+    1. Gets strategy signals from all 3 strategies
+    2. Orchestrator produces deterministic decision
+    3. AI advisor reviews decision against historical failures
+    4. If AI disagrees, upgrades to NON_ROUTINE and suggests override
+    5. Sends notification and creates approval request if needed
+    """
+    import uuid
+    import httpx
+    from rich.panel import Panel
+
     from aurel2.agent.orchestrator import AgentOrchestrator, DecisionType
+    from aurel2.agent.advisor import AIAdvisor
     from aurel2.mcp.server import Aurel2MCPServer
+    from aurel2.notifications.ntfy import NtfyNotifier
 
     console = Console()
 
-    console.print("\n[bold]Running Aurel2 AI Agent...[/bold]\n")
+    console.print("\n[bold cyan]Running Aurel2 AI Agent with Failure Learning...[/bold cyan]\n")
 
-    # Initialize server and orchestrator
+    # Initialize components
     server = Aurel2MCPServer()
     orchestrator = AgentOrchestrator()
 
     # Get strategy signals
-    console.print("Fetching strategy signals...")
-    signals_response = server._get_strategy_signals()
-    signals = signals_response.get("signals", {})
+    with console.status("[bold green]Fetching strategy signals..."):
+        signals_response = server._get_strategy_signals()
+        signals = signals_response.get("signals", {})
 
     # Get market context
-    console.print("Fetching market context...")
-    market_context = server._get_market_context()
+    with console.status("[bold green]Fetching market context..."):
+        market_context = server._get_market_context()
+        prices = server._get_prices()
+
+    # Get current holding
+    portfolio = server._get_portfolio()
+    current_holding = None
+    for h in portfolio.get("holdings", []):
+        if h["symbol"] not in ["CASH", "EUR"]:
+            current_holding = h["symbol"]
+            break
 
     # Transform signals into format expected by orchestrator
     orchestrator_signals = {}
@@ -615,19 +651,42 @@ def agent(
                 "asset_symbol": signal_data.get("asset") or signal_data.get("asset_class"),
             }
 
-    # Analyze and get decision
+    # Orchestrator analysis (deterministic)
     decision = orchestrator.analyze(
         signals=orchestrator_signals,
         market_context={
             "drawdown": market_context.get("drawdown", 0.0),
             "volatility": "normal",
+            "regime": market_context.get("regime", "neutral"),
         },
     )
 
-    # Display decision details
-    console.print("\n" + "=" * 60)
+    deterministic_action = decision.action.value
+    deterministic_asset = decision.asset_symbol
+
+    # AI Advisor review (unless disabled)
+    ai_advice = None
+    ai_override = False
+    if not no_ai:
+        with console.status("[bold green]AI advisor reviewing decision..."):
+            try:
+                advisor = AIAdvisor(failure_file=failure_file)
+                ai_advice = advisor.review(
+                    deterministic_action=deterministic_action,
+                    deterministic_asset=deterministic_asset,
+                    strategy_signals=signals,
+                    market_context=market_context,
+                    prices=prices,
+                    current_holding=current_holding,
+                )
+                ai_override = not ai_advice.agrees_with_deterministic
+            except Exception as e:
+                console.print(f"[yellow]AI advisor failed: {e}[/yellow]")
+
+    # Display results
+    console.print("\n" + "=" * 70)
     console.print("[bold]AGENT DECISION[/bold]")
-    console.print("=" * 60)
+    console.print("=" * 70)
 
     # Decision type with color
     type_color = {
@@ -635,29 +694,48 @@ def agent(
         DecisionType.NON_ROUTINE: "yellow",
         DecisionType.URGENT: "red",
     }
-    color = type_color.get(decision.decision_type, "white")
-    console.print(f"Decision Type: [{color}]{decision.decision_type.value.upper()}[/{color}]")
-
-    # Action with color
     action_color = {
         "buy": "green",
         "sell": "red",
         "hold": "yellow",
     }
+
+    color = type_color.get(decision.decision_type, "white")
+    console.print(f"Decision Type: [{color}]{decision.decision_type.value.upper()}[/{color}]")
+
     action_val = decision.action.value
     acolor = action_color.get(action_val, "white")
-    console.print(f"Action: [{acolor}]{action_val.upper()}[/{acolor}]")
-
-    if decision.asset_symbol:
-        console.print(f"Asset: {decision.asset_symbol}")
-
+    console.print(f"Deterministic: [{acolor}]{action_val.upper()}[/{acolor}] {deterministic_asset or ''}")
     console.print(f"Confidence: {decision.confidence:.1%}")
-    console.print(f"Urgency: {decision.urgency.value.upper()}")
-    console.print(f"Requires Approval: {'Yes' if decision.requires_approval else 'No'}")
-    console.print(f"Timeout: {decision.timeout_hours} hours")
 
-    console.print("\n[bold]Reasoning:[/bold]")
-    console.print(f"  {decision.reasoning}")
+    # AI Advisor section
+    if ai_advice:
+        console.print()
+        if ai_advice.agrees_with_deterministic:
+            console.print(Panel.fit(
+                "[bold green]✓ AI AGREES[/bold green]\n\n"
+                f"The AI advisor reviewed the decision against {len(advisor.failure_analysis.failure_events) if advisor.failure_analysis else 0} "
+                "historical failures and agrees with the deterministic signal.",
+                border_style="green"
+            ))
+        else:
+            # AI disagrees - upgrade to NON_ROUTINE
+            decision.decision_type = DecisionType.NON_ROUTINE
+            decision.requires_approval = True
+            
+            console.print(Panel.fit(
+                "[bold red]⚠ AI OVERRIDE SUGGESTED[/bold red]\n\n"
+                f"Deterministic: {ai_advice.deterministic_action.upper()} {ai_advice.deterministic_asset or ''}\n"
+                f"AI suggests:   {ai_advice.recommended_action.upper()} {ai_advice.recommended_asset or ''}\n"
+                f"Confidence:    {ai_advice.confidence:.0%}\n\n"
+                f"Reasoning: {ai_advice.reasoning[:200]}...",
+                border_style="red"
+            ))
+
+            if ai_advice.failure_patterns_detected:
+                console.print("\n[bold]Detected Failure Patterns:[/bold]")
+                for pattern in ai_advice.failure_patterns_detected:
+                    console.print(f"  • {pattern}")
 
     # Show strategy signals
     console.print("\n[bold]Strategy Signals:[/bold]")
@@ -678,18 +756,122 @@ def agent(
     dd = market_context.get("drawdown")
     console.print(f"  Drawdown: {dd:.2%}" if dd is not None else "  Drawdown: N/A")
     console.print(f"  RSI: {market_context.get('rsi', 'N/A')} ({market_context.get('rsi_interpretation', 'N/A')})")
+    console.print(f"  Current Holding: {current_holding or 'Cash'}")
 
-    console.print("=" * 60)
+    console.print("=" * 70)
 
-    # Execute if appropriate
-    if not dry_run and not decision.requires_approval:
-        console.print("\n[green]Auto-executing routine decision...[/green]")
+    # Determine final action and asset
+    final_action = ai_advice.recommended_action if ai_override and ai_advice else deterministic_action
+    final_asset = ai_advice.recommended_asset if ai_override and ai_advice else deterministic_asset
+    final_reasoning = ai_advice.reasoning if ai_override and ai_advice else decision.reasoning
+    final_confidence = ai_advice.confidence if ai_override and ai_advice else decision.confidence
+
+    # Execute or request approval
+    if dry_run:
+        console.print("\n[yellow]Dry run - no actions taken.[/yellow]")
+    elif not decision.requires_approval and not ai_override:
+        # Routine decision with AI agreement - auto-execute
+        console.print("\n[green]Auto-executing routine decision (AI agrees)...[/green]")
         result = orchestrator.execute(decision)
         console.print(f"Execution status: {result['status']}")
-    elif dry_run:
-        console.print("\n[yellow]Dry run - no trades executed.[/yellow]")
+        
+        if notify:
+            notifier = NtfyNotifier(topic=ntfy_topic)
+            notifier.send(
+                message=f"Auto-executed: {final_action.upper()} {final_asset or ''}\n\n{final_reasoning[:150]}",
+                title=f"Aurel2: {final_action.upper()} {final_asset or ''}",
+                tags=["white_check_mark", "chart_with_upwards_trend"],
+            )
     else:
-        console.print(f"\n[yellow]Approval required. Decision will timeout in {decision.timeout_hours} hours.[/yellow]")
+        # Needs approval - create approval request
+        decision_id = str(uuid.uuid4())[:8]
+        approval_link = f"{approval_url}/{decision_id}"
+
+        console.print(f"\n[yellow]Approval required. Creating approval request...[/yellow]")
+
+        # Build strategy context for approval page
+        strategy_context = []
+        for name, sig in signals.items():
+            if "error" not in sig:
+                strategy_context.append({
+                    "name": name.replace("_", " ").title(),
+                    "action": sig.get("action", "hold").upper(),
+                    "confidence": sig.get("confidence", 0.5),
+                })
+        
+        # Check strategy agreement
+        strategy_actions = [s["action"] for s in strategy_context]
+        strategies_agree = len(set(strategy_actions)) == 1
+        
+        # Create decision in Vercel KV with rich context
+        try:
+            with httpx.Client() as client:
+                response = client.post(
+                    approval_link,
+                    json={
+                        "action": final_action,
+                        "symbol": final_asset or "HOLD",
+                        "reasoning": final_reasoning[:500],
+                        "confidence": final_confidence,
+                        # Rich context
+                        "deterministic_action": deterministic_action,
+                        "deterministic_asset": deterministic_asset,
+                        "ai_agrees": not ai_override,
+                        "ai_action": ai_advice.recommended_action.upper() if ai_advice else None,
+                        "ai_asset": ai_advice.recommended_asset if ai_advice else None,
+                        "ai_reasoning": ai_advice.reasoning[:300] if ai_advice else None,
+                        "strategies_agree": strategies_agree,
+                        "strategies": strategy_context,
+                        "market_regime": market_context.get("regime", "unknown").upper(),
+                        "spy_price": market_context.get("spy_price"),
+                        "drawdown": market_context.get("drawdown"),
+                        "current_holding": current_holding,
+                    },
+                    timeout=10.0,
+                )
+                if response.status_code == 201:
+                    console.print(f"[green]Approval request created: {approval_link}[/green]")
+                else:
+                    console.print(f"[yellow]Could not create approval request: {response.text}[/yellow]")
+        except Exception as e:
+            console.print(f"[yellow]Could not reach approval endpoint: {e}[/yellow]")
+
+        # Send notification
+        if notify:
+            notifier = NtfyNotifier(topic=ntfy_topic)
+            
+            if ai_override:
+                notifier.send(
+                    message=(
+                        f"🤖 AI Override Alert!\n\n"
+                        f"Deterministic: {deterministic_action.upper()} {deterministic_asset or ''}\n"
+                        f"AI suggests: {final_action.upper()} {final_asset or ''}\n\n"
+                        f"Confidence: {final_confidence:.0%}\n"
+                        f"Reasoning: {final_reasoning[:150]}...\n\n"
+                        f"Approve/Reject: {approval_link}"
+                    ),
+                    title="Aurel2: AI Override Suggested",
+                    priority="high",
+                    tags=["warning", "robot"],
+                    click_url=approval_link,
+                )
+            else:
+                notifier.send(
+                    message=(
+                        f"Approval Required\n\n"
+                        f"Action: {final_action.upper()} {final_asset or ''}\n"
+                        f"Confidence: {final_confidence:.0%}\n"
+                        f"Reasoning: {final_reasoning[:150]}...\n\n"
+                        f"Approve/Reject: {approval_link}"
+                    ),
+                    title=f"Aurel2: {final_action.upper()} {final_asset or ''}",
+                    priority="default",
+                    tags=["question", "chart_with_upwards_trend"],
+                    click_url=approval_link,
+                )
+            console.print("[dim]Notification sent.[/dim]")
+
+        console.print(f"\n[yellow]Decision will timeout in {decision.timeout_hours} hours.[/yellow]")
 
     console.print()
 
@@ -1072,6 +1254,661 @@ def backtest_agent(
 
     # Final separator
     console.print("=" * 40)
+    console.print()
+
+
+@app.command("eval-agent")
+def eval_agent(
+    weeks: int = typer.Option(4, "--weeks", "-w", help="Number of weeks to evaluate"),
+    end_date: str = typer.Option(None, "--end", "-e", help="End date (YYYY-MM-DD), defaults to today"),
+    mock: bool = typer.Option(False, "--mock", "-m", help="Use mock AI (no API calls)"),
+    claude_code: bool = typer.Option(False, "--claude-code", help="Use Claude Code CLI instead of Anthropic API (uses your Claude plan)"),
+    claude_model: str = typer.Option("sonnet", "--claude-model", help="Model for Claude Code: sonnet, opus, haiku"),
+    expert: bool = typer.Option(False, "--expert", "-x", help="Use Expert AI with extended thinking (Opus 4.5)"),
+    no_cache: bool = typer.Option(False, "--no-cache", help="Don't use cached data"),
+    compare: bool = typer.Option(False, "--compare", "-c", help="Show comparison summary from all cached data"),
+    outcomes: bool = typer.Option(False, "--outcomes", "-o", help="Calculate historical outcomes to measure performance"),
+    verbose: bool = typer.Option(False, "-v", "--verbose", help="Verbose output"),
+):
+    """Evaluate AI vs deterministic decision-making over recent weeks.
+
+    This command compares what the AI agent would decide vs the deterministic
+    weighted voting approach. It helps determine if AI reasoning adds value.
+
+    The evaluation:
+    1. Fetches market context (VIX, SPY levels, Fed meetings, etc.)
+    2. Gets signals from all 3 strategies
+    3. Runs deterministic weighted voting
+    4. Runs AI evaluation with Claude
+    5. Compares and caches results
+
+    Results are cached to avoid repeated API calls. After 1 week, you can
+    update outcomes to measure which approach was better.
+    """
+    from rich.panel import Panel
+
+    from aurel2.agent.eval_runner import EvalRunner
+    from aurel2.agent.eval_cache import EvalCache
+
+    console = Console()
+
+    if verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+
+    # Header
+    console.print()
+    console.print(Panel.fit(
+        "[bold cyan]AI vs Deterministic Evaluation[/bold cyan]",
+        border_style="cyan",
+    ))
+    console.print()
+
+    # Just show comparison if requested
+    if compare:
+        cache = EvalCache()
+        summary = cache.compute_comparison_summary()
+
+        if summary.total_decisions == 0:
+            console.print("[yellow]No cached decisions found. Run an evaluation first.[/yellow]")
+            raise typer.Exit(0)
+
+        console.print("[bold]COMPARISON SUMMARY[/bold]")
+        console.print("-" * 50)
+
+        comp_table = Table(show_header=False, box=None, padding=(0, 2))
+        comp_table.add_column("Metric", style="bold")
+        comp_table.add_column("Value", justify="right")
+
+        comp_table.add_row("Total Decisions:", f"{summary.total_decisions}")
+
+        agree_pct = summary.agreements / summary.total_decisions if summary.total_decisions > 0 else 0
+        comp_table.add_row("Agreements:", f"{summary.agreements} ({agree_pct:.0%})")
+        comp_table.add_row("Disagreements:", f"{summary.disagreements}")
+
+        if summary.disagreements > 0:
+            ai_win_rate = summary.ai_better_when_disagreed / summary.disagreements
+            det_win_rate = summary.deterministic_better_when_disagreed / summary.disagreements
+            ai_color = "green" if ai_win_rate > 0.5 else "red"
+            det_color = "green" if det_win_rate > 0.5 else "red"
+            comp_table.add_row("AI Better (on disagreements):", f"[{ai_color}]{summary.ai_better_when_disagreed} ({ai_win_rate:.0%})[/{ai_color}]")
+            comp_table.add_row("Det. Better (on disagreements):", f"[{det_color}]{summary.deterministic_better_when_disagreed} ({det_win_rate:.0%})[/{det_color}]")
+
+        if summary.ai_cumulative_return != 0 or summary.deterministic_cumulative_return != 0:
+            ai_ret_color = "green" if summary.ai_cumulative_return > 0 else "red"
+            det_ret_color = "green" if summary.deterministic_cumulative_return > 0 else "red"
+            comp_table.add_row("AI Cumulative Return:", f"[{ai_ret_color}]{summary.ai_cumulative_return:+.2f}%[/{ai_ret_color}]")
+            comp_table.add_row("Det. Cumulative Return:", f"[{det_ret_color}]{summary.deterministic_cumulative_return:+.2f}%[/{det_ret_color}]")
+
+        console.print(comp_table)
+        console.print()
+
+        # Show recent decisions
+        if summary.decisions:
+            console.print("[bold]RECENT DECISIONS[/bold]")
+            console.print("-" * 50)
+
+            dec_table = Table(show_header=True, box=None, padding=(0, 1))
+            dec_table.add_column("Date", style="bold")
+            dec_table.add_column("Det.", justify="center")
+            dec_table.add_column("AI", justify="center")
+            dec_table.add_column("Agree", justify="center")
+            dec_table.add_column("Det. 1w", justify="right")
+            dec_table.add_column("AI 1w", justify="right")
+
+            for dec in summary.decisions[-10:]:  # Last 10
+                det_dec = dec.get("deterministic_decision", {})
+                ai_dec = dec.get("ai_decision", {})
+
+                det_action = det_dec.get("action", "?").upper()
+                det_asset = det_dec.get("asset", "")
+                det_str = f"{det_action}" + (f" {det_asset}" if det_asset else "")
+
+                ai_action = ai_dec.get("action", "?").upper() if ai_dec else "?"
+                ai_asset = ai_dec.get("asset", "") if ai_dec else ""
+                ai_str = f"{ai_action}" + (f" {ai_asset}" if ai_asset else "")
+
+                agreed = dec.get("agreed", False)
+                agree_str = "[green]Yes[/green]" if agreed else "[red]No[/red]"
+
+                det_1w = dec.get("outcome_deterministic_1w")
+                ai_1w = dec.get("outcome_ai_1w")
+                det_1w_str = f"{det_1w:+.1f}%" if det_1w is not None else "-"
+                ai_1w_str = f"{ai_1w:+.1f}%" if ai_1w is not None else "-"
+
+                dec_table.add_row(
+                    dec.get("date", "?"),
+                    det_str,
+                    ai_str,
+                    agree_str,
+                    det_1w_str,
+                    ai_1w_str,
+                )
+
+            console.print(dec_table)
+
+        console.print()
+        raise typer.Exit(0)
+
+    # Calculate historical outcomes if requested
+    if outcomes:
+        from rich.panel import Panel
+
+        console.print("[bold]Calculating historical outcomes...[/bold]")
+        console.print()
+
+        runner = EvalRunner(use_mock_ai=True)  # Don't need AI for outcome calculation
+
+        try:
+            results = runner.calculate_all_outcomes()
+        except Exception as e:
+            console.print(f"[red]Error calculating outcomes: {e}[/red]")
+            if verbose:
+                import traceback
+                console.print(traceback.format_exc())
+            raise typer.Exit(1)
+
+        if "error" in results:
+            console.print(f"[yellow]{results['error']}[/yellow]")
+            raise typer.Exit(0)
+
+        # Display results
+        console.print(Panel.fit(
+            "[bold cyan]AI vs Deterministic: Historical Performance[/bold cyan]",
+            border_style="cyan",
+        ))
+        console.print()
+
+        # Summary table
+        console.print("[bold]OVERALL RESULTS[/bold]")
+        console.print("=" * 60)
+
+        summary_table = Table(show_header=False, box=None, padding=(0, 2))
+        summary_table.add_column("Metric", style="bold")
+        summary_table.add_column("Value", justify="right")
+
+        summary_table.add_row("Total Decisions:", f"{results['total_decisions']}")
+        summary_table.add_row("Decisions with Outcomes:", f"{results['decisions_with_outcomes']}")
+        summary_table.add_row("Agreements:", f"{results['agreements']}")
+        summary_table.add_row("Disagreements:", f"{results['disagreements']}")
+
+        console.print(summary_table)
+        console.print()
+
+        # Performance comparison
+        console.print("[bold]PERFORMANCE COMPARISON[/bold]")
+        console.print("-" * 60)
+
+        perf_table = Table(show_header=True, box=None, padding=(0, 2))
+        perf_table.add_column("Metric", style="bold")
+        perf_table.add_column("AI", justify="right")
+        perf_table.add_column("Deterministic", justify="right")
+        perf_table.add_column("Winner", justify="center")
+
+        # Total return
+        ai_ret = results['ai_total_return']
+        det_ret = results['det_total_return']
+        ai_color = "green" if ai_ret > det_ret else "red" if ai_ret < det_ret else "yellow"
+        det_color = "green" if det_ret > ai_ret else "red" if det_ret < ai_ret else "yellow"
+        winner = "[green]AI[/green]" if ai_ret > det_ret + 0.5 else "[green]DET[/green]" if det_ret > ai_ret + 0.5 else "[yellow]TIE[/yellow]"
+        perf_table.add_row(
+            "Total Return:",
+            f"[{ai_color}]{ai_ret:+.2f}%[/{ai_color}]",
+            f"[{det_color}]{det_ret:+.2f}%[/{det_color}]",
+            winner,
+        )
+
+        # Average return per decision
+        ai_avg = results['ai_avg_return']
+        det_avg = results['det_avg_return']
+        ai_color = "green" if ai_avg > det_avg else "red" if ai_avg < det_avg else "yellow"
+        det_color = "green" if det_avg > ai_avg else "red" if det_avg < ai_avg else "yellow"
+        winner = "[green]AI[/green]" if ai_avg > det_avg + 0.05 else "[green]DET[/green]" if det_avg > ai_avg + 0.05 else "[yellow]TIE[/yellow]"
+        perf_table.add_row(
+            "Avg Return/Decision:",
+            f"[{ai_color}]{ai_avg:+.2f}%[/{ai_color}]",
+            f"[{det_color}]{det_avg:+.2f}%[/{det_color}]",
+            winner,
+        )
+
+        console.print(perf_table)
+        console.print()
+
+        # Disagreement analysis
+        if results['disagreements'] > 0:
+            console.print("[bold]WHEN THEY DISAGREED[/bold]")
+            console.print("-" * 60)
+
+            disagree_table = Table(show_header=False, box=None, padding=(0, 2))
+            disagree_table.add_column("Metric", style="bold")
+            disagree_table.add_column("Value", justify="right")
+
+            ai_wins = results['ai_wins']
+            det_wins = results['det_wins']
+            ties = results['ties']
+            total_disagree = results['disagreements']
+
+            ai_win_pct = ai_wins / total_disagree * 100
+            det_win_pct = det_wins / total_disagree * 100
+
+            ai_color = "green" if ai_wins > det_wins else "red"
+            det_color = "green" if det_wins > ai_wins else "red"
+
+            disagree_table.add_row("AI Wins:", f"[{ai_color}]{ai_wins} ({ai_win_pct:.0f}%)[/{ai_color}]")
+            disagree_table.add_row("Deterministic Wins:", f"[{det_color}]{det_wins} ({det_win_pct:.0f}%)[/{det_color}]")
+            disagree_table.add_row("Ties:", f"{ties}")
+
+            console.print(disagree_table)
+            console.print()
+
+            # Show disagreement details
+            if results['disagreement_details'] and verbose:
+                console.print("[bold]DISAGREEMENT DETAILS[/bold]")
+                console.print("-" * 60)
+
+                detail_table = Table(show_header=True, box=None, padding=(0, 1))
+                detail_table.add_column("Date", style="bold")
+                detail_table.add_column("Det.", justify="center")
+                detail_table.add_column("AI", justify="center")
+                detail_table.add_column("Det. Ret", justify="right")
+                detail_table.add_column("AI Ret", justify="right")
+                detail_table.add_column("Winner", justify="center")
+
+                for d in results['disagreement_details']:
+                    winner_style = "green" if d['winner'] == "AI" else "cyan" if d['winner'] == "DET" else "yellow"
+                    det_ret_color = "green" if d['det_return'] > 0 else "red"
+                    ai_ret_color = "green" if d['ai_return'] > 0 else "red"
+
+                    detail_table.add_row(
+                        d['date'],
+                        d['det_action'],
+                        d['ai_action'],
+                        f"[{det_ret_color}]{d['det_return']:+.1f}%[/{det_ret_color}]",
+                        f"[{ai_ret_color}]{d['ai_return']:+.1f}%[/{ai_ret_color}]",
+                        f"[{winner_style}]{d['winner']}[/{winner_style}]",
+                    )
+
+                console.print(detail_table)
+                console.print()
+
+        # Final verdict
+        console.print("=" * 60)
+        if ai_ret > det_ret + 1.0:
+            console.print("[bold green]VERDICT: AI outperformed deterministic approach[/bold green]")
+        elif det_ret > ai_ret + 1.0:
+            console.print("[bold cyan]VERDICT: Deterministic outperformed AI approach[/bold cyan]")
+        else:
+            console.print("[bold yellow]VERDICT: Performance roughly equal[/bold yellow]")
+        console.print("=" * 60)
+        console.print()
+
+        raise typer.Exit(0)
+
+    # Run evaluation
+    end = date.fromisoformat(end_date) if end_date else date.today()
+
+    console.print(f"Evaluating {weeks} weeks ending {end}")
+    if mock:
+        console.print("AI Mode: Mock (no API calls)")
+    elif expert:
+        console.print(f"AI Mode: Expert AI via Claude Code CLI ({claude_model})")
+    elif claude_code:
+        console.print(f"AI Mode: Claude Code CLI ({claude_model})")
+    else:
+        console.print("AI Mode: Anthropic API")
+    console.print(f"Cache: {'Disabled' if no_cache else 'Enabled'}")
+    console.print()
+
+    runner = EvalRunner(use_mock_ai=mock, use_claude_code=claude_code, use_expert_mode=expert, claude_model=claude_model)
+
+    try:
+        results = runner.run_evaluation(
+            weeks=weeks,
+            end_date=end,
+            use_cache=not no_cache,
+        )
+    except Exception as e:
+        console.print(f"[red]Error running evaluation: {e}[/red]")
+        if verbose:
+            import traceback
+            console.print(traceback.format_exc())
+        raise typer.Exit(1)
+
+    if not results:
+        console.print("[yellow]No results to display.[/yellow]")
+        raise typer.Exit(0)
+
+    # Display results
+    console.print("[bold]EVALUATION RESULTS[/bold]")
+    console.print("=" * 60)
+
+    agreements = sum(1 for r in results if r.agreed)
+    disagreements = len(results) - agreements
+
+    summary_table = Table(show_header=False, box=None, padding=(0, 2))
+    summary_table.add_column("Metric", style="bold")
+    summary_table.add_column("Value", justify="right")
+
+    summary_table.add_row("Period:", f"{results[0].date} to {results[-1].date}")
+    summary_table.add_row("Total Decisions:", f"{len(results)}")
+
+    agree_color = "green" if agreements / len(results) > 0.6 else "yellow"
+    summary_table.add_row("Agreements:", f"[{agree_color}]{agreements} ({agreements/len(results)*100:.0f}%)[/{agree_color}]")
+    summary_table.add_row("Disagreements:", f"{disagreements}")
+
+    console.print(summary_table)
+    console.print()
+
+    # Decision details
+    console.print("[bold]DECISION DETAILS[/bold]")
+    console.print("-" * 60)
+
+    for r in results:
+        status_style = "green" if r.agreed else "red"
+        status = "AGREE" if r.agreed else "DIFFER"
+
+        det = f"{r.deterministic_action.upper()}"
+        if r.deterministic_asset:
+            det += f" {r.deterministic_asset}"
+
+        ai = f"{r.ai_action.upper()}"
+        if r.ai_asset:
+            ai += f" {r.ai_asset}"
+
+        console.print(f"\n[bold]{r.date}[/bold] [[{status_style}]{status}[/{status_style}]]")
+        console.print(f"  Deterministic: {det}")
+        console.print(f"  AI:            {ai}")
+
+        if not r.agreed and r.ai_reasoning:
+            # Truncate reasoning for display
+            reasoning = r.ai_reasoning[:150] + "..." if len(r.ai_reasoning) > 150 else r.ai_reasoning
+            console.print(f"  [dim]AI Reasoning: {reasoning}[/dim]")
+
+        # Show context summary
+        if verbose:
+            ctx = r.context
+            if ctx.vix:
+                console.print(f"  [dim]VIX: {ctx.vix:.1f}[/dim]", end="")
+            if ctx.spy_drawdown:
+                console.print(f"  [dim]Drawdown: {ctx.spy_drawdown:.1f}%[/dim]", end="")
+            if ctx.spy_1w_return:
+                console.print(f"  [dim]1w: {ctx.spy_1w_return:+.1f}%[/dim]", end="")
+            console.print()
+
+    console.print()
+    console.print("=" * 60)
+
+    # Hint about outcomes
+    console.print()
+    console.print("[dim]Tip: After 1 week, run with --compare to see outcome statistics.[/dim]")
+    console.print()
+
+
+@app.command()
+def advise(
+    date_str: str = typer.Option(None, "--date", "-d", help="Date to check (YYYY-MM-DD), defaults to today"),
+    notify: bool = typer.Option(False, "--notify", "-n", help="Send notification if AI disagrees"),
+    ntfy_topic: str = typer.Option("aurel2", "--ntfy-topic", help="Ntfy topic for notifications"),
+    failure_file: str = typer.Option("data/failure_learnings.json", "--failures", "-f", help="Path to failure learnings"),
+):
+    """Get AI-enhanced trading recommendation.
+    
+    Compares deterministic momentum signal with AI advisor that has learned
+    from historical failures. Alerts you when they disagree (rare but valuable).
+    """
+    import os
+    from datetime import date as date_type, timedelta
+
+    from rich.panel import Panel
+
+    from aurel2.agent.ai_evaluator import ExpertAIEvaluator
+    from aurel2.agent.failure_analyzer import FailureAnalysis
+    from aurel2.core.assets import ASSET_REGISTRY
+    from aurel2.notifications.ntfy import NtfyNotifier
+
+    console = Console()
+    check_date = date_type.fromisoformat(date_str) if date_str else date_type.today()
+
+    console.print()
+    console.print(Panel.fit(
+        f"[bold cyan]AI-Enhanced Trading Advisor[/bold cyan]\n"
+        f"Date: {check_date}",
+        border_style="cyan"
+    ))
+    console.print()
+
+    # Load portfolio to get current holding
+    store = PortfolioStore()
+    portfolio = store.load()
+    
+    current_holding = None
+    current_symbol = None
+    for h in portfolio.holdings:
+        if h.symbol not in ["CASH", "EUR"]:
+            current_symbol = h.symbol
+            for ac, asset in ASSET_REGISTRY.items():
+                if asset.symbol == h.symbol or (hasattr(asset, 'yahoo_symbol') and asset.yahoo_symbol == h.symbol):
+                    current_holding = ac
+                    break
+
+    console.print(f"[dim]Current holding: {current_symbol or 'Cash'}[/dim]")
+
+    # Fetch price data
+    provider = YahooFinanceProvider()
+    symbols = ["SPY", "EFA", "EEM", "XLK", "XLF", "XLE", "XLV", "AGG", "TLT", "GLD", "DBC"]
+    extended_start = check_date - timedelta(days=400)
+
+    with console.status("[bold green]Fetching market data..."):
+        all_prices = []
+        for symbol in symbols:
+            try:
+                prices = provider.get_prices(symbol, extended_start, check_date)
+                all_prices.append(prices)
+            except Exception:
+                pass
+        prices_df = pd.concat(all_prices, ignore_index=True)
+
+    # Get deterministic signal
+    strategy = DualMomentumStrategy(assets=ASSET_REGISTRY)
+    det_signal = strategy.generate_signal(
+        prices=prices_df,
+        calc_date=check_date,
+        current_holding=current_holding,
+    )
+
+    det_action = det_signal.action.value.upper()
+    det_asset = det_signal.asset.symbol if det_signal.asset else None
+
+    console.print()
+    console.print("[bold]DETERMINISTIC SIGNAL:[/bold]")
+    console.print(f"  Action: [yellow]{det_action}[/yellow]")
+    if det_asset:
+        console.print(f"  Asset:  [yellow]{det_asset}[/yellow]")
+    console.print(f"  Reason: {det_signal.reason}")
+
+    # Load failure learnings and get AI opinion
+    console.print()
+    with console.status("[bold green]Consulting AI advisor..."):
+        # Load failure analysis
+        if os.path.exists(failure_file):
+            failure_analysis = FailureAnalysis.load(failure_file)
+            failure_context = failure_analysis.to_prompt_text(as_of_date=check_date)
+            num_past_failures = len([f for f in failure_analysis.failure_events if f.date < check_date])
+            console.print(f"[dim]Loaded {num_past_failures} historical failures for AI context[/dim]")
+        else:
+            failure_context = "(No failure history available - run failure analysis first)"
+            console.print("[yellow]Warning: No failure learnings found. Run failure analysis first.[/yellow]")
+
+        # Build context
+        market_context = _build_advise_context(prices_df, check_date)
+        full_context = f"{failure_context}\n\n---\n\nMARKET CONTEXT:\n{market_context}"
+
+        # Build signals dict
+        signals = {
+            "dual_momentum": {
+                "action": det_signal.action.value,
+                "asset_symbol": det_signal.asset.symbol if det_signal.asset else None,
+                "confidence": 0.7,
+                "reasoning": det_signal.reason,
+            }
+        }
+
+        deterministic_decision = {"action": det_action.lower(), "asset": det_asset}
+
+        # Get AI decision
+        try:
+            ai_evaluator = ExpertAIEvaluator(use_extended_thinking=False)
+            ai_decision = ai_evaluator.evaluate(
+                signals=signals,
+                context_text=full_context,
+                current_holding=current_symbol,
+                deterministic_decision=deterministic_decision,
+            )
+            ai_action = ai_decision.action.upper()
+            ai_asset = ai_decision.asset
+            ai_reasoning = ai_decision.reasoning
+            ai_confidence = ai_decision.confidence
+        except Exception as e:
+            console.print(f"[red]AI evaluation failed: {e}[/red]")
+            ai_action = det_action
+            ai_asset = det_asset
+            ai_reasoning = f"AI failed, using deterministic: {e}"
+            ai_confidence = 0.5
+
+    # Compare decisions
+    agreed = (det_action.lower() == ai_action.lower()) and (det_action.lower() != "buy" or det_asset == ai_asset)
+
+    console.print()
+    console.print("[bold]AI ADVISOR OPINION:[/bold]")
+    console.print(f"  Action:     [cyan]{ai_action}[/cyan]")
+    if ai_asset:
+        console.print(f"  Asset:      [cyan]{ai_asset}[/cyan]")
+    console.print(f"  Confidence: {ai_confidence:.0%}")
+    console.print(f"  Reasoning:  {ai_reasoning[:200]}...")
+
+    # Show comparison
+    console.print()
+    if agreed:
+        console.print(Panel.fit(
+            "[bold green]✓ AGREEMENT[/bold green]\n\n"
+            "Both deterministic and AI agree.\n"
+            "Safe to proceed with the signal.",
+            border_style="green"
+        ))
+    else:
+        console.print(Panel.fit(
+            "[bold red]⚠ DISAGREEMENT - AI OVERRIDE SUGGESTED[/bold red]\n\n"
+            f"Deterministic: {det_action} {det_asset or ''}\n"
+            f"AI suggests:   {ai_action} {ai_asset or ''}\n\n"
+            "The AI has identified a potential failure pattern.\n"
+            "Consider the AI's recommendation carefully.",
+            border_style="red"
+        ))
+
+        # Send notification if requested
+        if notify:
+            notifier = NtfyNotifier(topic=ntfy_topic)
+            notifier.send(
+                message=(
+                    f"AI Override Alert!\n\n"
+                    f"Deterministic: {det_action} {det_asset or ''}\n"
+                    f"AI suggests: {ai_action} {ai_asset or ''}\n\n"
+                    f"Confidence: {ai_confidence:.0%}\n"
+                    f"Reasoning: {ai_reasoning[:150]}..."
+                ),
+                title="Aurel2: AI Disagrees with Signal",
+                priority="high",
+                tags=["warning", "robot"],
+            )
+            console.print("[dim]Notification sent to ntfy topic.[/dim]")
+
+    console.print()
+
+
+def _build_advise_context(prices: pd.DataFrame, target_date: date) -> str:
+    """Build market context string for the advise command."""
+    from datetime import timedelta
+    lines = []
+
+    # SPY info
+    spy_prices = prices[prices["symbol"] == "SPY"].copy()
+    spy_prices["date"] = pd.to_datetime(spy_prices["date"])
+    spy_prices = spy_prices[spy_prices["date"] <= pd.Timestamp(target_date)]
+
+    if not spy_prices.empty:
+        current_price = spy_prices.iloc[-1]["close"]
+        year_ago = target_date - timedelta(days=365)
+        year_prices = spy_prices[spy_prices["date"] >= pd.Timestamp(year_ago)]
+        if not year_prices.empty:
+            year_high = year_prices["close"].max()
+            drawdown = (current_price / year_high - 1) * 100
+            lines.append(f"SPY: ${current_price:.2f} (drawdown from 52w high: {drawdown:.1f}%)")
+
+    lines.append(f"Decision Date: {target_date}")
+    return "\n".join(lines)
+
+
+@app.command()
+def learn(
+    start: str = typer.Option("2018-01-01", "--start", "-s", help="Start date (YYYY-MM-DD)"),
+    end: str = typer.Option(None, "--end", "-e", help="End date (YYYY-MM-DD), defaults to today"),
+    output: str = typer.Option("data/failure_learnings.json", "--output", "-o", help="Output file path"),
+):
+    """Run failure analysis and save learnings.
+    
+    Analyzes historical backtests to identify when the deterministic
+    momentum system made suboptimal decisions. These learnings are
+    then used by the AI advisor to avoid repeating past mistakes.
+    
+    Example:
+        aurel2 learn --start 2018-01-01 --output data/failure_learnings.json
+    """
+    from datetime import date as date_type
+    from rich.panel import Panel
+
+    from aurel2.agent.failure_analyzer import run_failure_analysis
+
+    console = Console()
+
+    end_date = end if end else date_type.today().isoformat()
+
+    console.print()
+    console.print(Panel.fit(
+        "[bold cyan]Failure Learning Analysis[/bold cyan]\n"
+        f"Period: {start} to {end_date}",
+        border_style="cyan"
+    ))
+    console.print()
+
+    with console.status("[bold green]Running backtest and analyzing failures..."):
+        analysis = run_failure_analysis(start_date=start, end_date=end_date)
+
+    # Display results
+    console.print(f"[bold]Analysis Complete[/bold]")
+    console.print(f"  Total periods: {analysis.total_periods}")
+    console.print(f"  Failures identified: {len(analysis.failure_events)}")
+    console.print(f"  Failure rate: {analysis.failure_rate:.1%}")
+    console.print(f"  Total opportunity cost: {analysis.total_opportunity_cost:.1%}")
+
+    console.print("\n[bold]Failure Types:[/bold]")
+    for failure_type, count in analysis.common_failure_types.items():
+        console.print(f"  {failure_type}: {count}")
+
+    # Top 5 worst failures
+    console.print("\n[bold]Top 5 Worst Failures:[/bold]")
+    for f in analysis.worst_failures[:5]:
+        console.print(
+            f"  {f.date}: {f.failure_type} - held {f.asset_held}, "
+            f"optimal was {f.optimal_asset} ({f.opportunity_cost:.1%} cost)"
+        )
+
+    # Save to file
+    with console.status(f"[bold green]Saving to {output}..."):
+        analysis.save(output)
+
+    console.print(f"\n[green]✓ Saved {len(analysis.failure_events)} failure learnings to {output}[/green]")
+    console.print()
+    console.print("[dim]These learnings will be used by the AI advisor to avoid repeating past mistakes.[/dim]")
+    console.print("[dim]Run `aurel2 agent` to see the AI advisor in action.[/dim]")
     console.print()
 
 

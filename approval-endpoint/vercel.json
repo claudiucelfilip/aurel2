@@ -3,11 +3,8 @@
   "routes": [
     {
       "src": "/api/decision/([^/]+)",
-      "dest": "/api/decision/[id].ts"
+      "dest": "/api/decision/[id]?id=$1"
     }
   ],
-  "env": {
-    "KV_REST_API_URL": "@kv_rest_api_url",
-    "KV_REST_API_TOKEN": "@kv_rest_api_token"
-  }
+  "public": true
 }
