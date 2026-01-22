@@ -1913,6 +1913,119 @@ def learn(
 
 
 @app.command()
+def live(
+    paper: bool = typer.Option(True, "--paper/--real", help="Use paper trading (default) or real trading"),
+    check_time: str = typer.Option("16:00", "--check-time", "-t", help="Daily check time (HH:MM in Romania timezone)"),
+    poll_interval: int = typer.Option(5, "--poll-interval", "-p", help="Approval poll interval in minutes"),
+    ntfy_topic: str = typer.Option("aurel2", "--ntfy-topic", help="Ntfy notification topic"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Don't execute trades, just simulate"),
+):
+    """Run the live trading daemon.
+
+    The daemon:
+    1. Connects to IBKR (launches TWS if needed)
+    2. Runs daily check at the specified time (default 4 PM Romania)
+    3. Auto-executes ROUTINE decisions (all strategies agree)
+    4. Creates approval requests for NON_ROUTINE/URGENT decisions
+    5. Polls for approvals every 5 minutes
+    6. Auto-executes timed-out decisions after 1 hour
+
+    Examples:
+        aurel2 live --paper          # Paper trading (default)
+        aurel2 live --real           # LIVE trading (caution!)
+        aurel2 live --dry-run        # Simulate without executing
+        aurel2 live --check-time 09:30  # Check at 9:30 AM
+    """
+    import asyncio
+    from datetime import time as dt_time
+
+    from aurel2.live.daemon import LiveDaemon
+
+    console = Console()
+
+    # Parse check time
+    try:
+        hour, minute = map(int, check_time.split(":"))
+        check_time_obj = dt_time(hour, minute)
+    except ValueError:
+        console.print(f"[red]Invalid check time format: {check_time}. Use HH:MM.[/red]")
+        raise typer.Exit(1)
+
+    # Warn about real trading
+    if not paper:
+        console.print("\n[bold red]WARNING: LIVE TRADING MODE[/bold red]")
+        console.print("You are about to run with REAL money!")
+        console.print("Make sure you understand the risks.\n")
+
+        confirm = typer.confirm("Are you sure you want to continue?")
+        if not confirm:
+            console.print("Aborted.")
+            raise typer.Exit(0)
+
+    daemon = LiveDaemon(
+        paper=paper,
+        check_time=check_time_obj,
+        poll_interval_minutes=poll_interval,
+        ntfy_topic=ntfy_topic,
+        dry_run=dry_run,
+    )
+
+    try:
+        asyncio.run(daemon.start())
+    except KeyboardInterrupt:
+        console.print("\nStopped by user.")
+
+
+@app.command()
+def check(
+    paper: bool = typer.Option(True, "--paper/--real", help="Use paper trading (default) or real trading"),
+    ntfy_topic: str = typer.Option("aurel2", "--ntfy-topic", help="Ntfy notification topic"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Don't execute trades, just simulate"),
+):
+    """Run a single market check (for testing).
+
+    This runs the same logic as the daemon but only once:
+    1. Connects to IBKR
+    2. Syncs positions
+    3. Fetches market data
+    4. Runs all strategies
+    5. Produces a decision
+    6. Executes or creates approval request
+
+    Use this to test the system before running the daemon.
+
+    Examples:
+        aurel2 check --paper          # Test with paper trading
+        aurel2 check --dry-run        # Simulate without executing
+        aurel2 check --real           # Single check with LIVE trading
+    """
+    import asyncio
+
+    from aurel2.live.daemon import run_single_check
+
+    console = Console()
+
+    # Warn about real trading
+    if not paper:
+        console.print("\n[bold red]WARNING: LIVE TRADING MODE[/bold red]")
+        console.print("This check may execute REAL trades!")
+
+        confirm = typer.confirm("Are you sure you want to continue?")
+        if not confirm:
+            console.print("Aborted.")
+            raise typer.Exit(0)
+
+    try:
+        asyncio.run(run_single_check(
+            paper=paper,
+            ntfy_topic=ntfy_topic,
+            dry_run=dry_run,
+        ))
+    except KeyboardInterrupt:
+        console.print("\nStopped by user.")
+
+
+@app.command()
 def version():
     """Show version information."""
     from aurel2 import __version__
