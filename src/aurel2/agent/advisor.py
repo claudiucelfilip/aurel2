@@ -90,6 +90,46 @@ class AIAdvisor:
                 message="Run `aurel2 analyze-failures` to generate learnings",
             )
 
+    def reload_failure_analysis(self) -> bool:
+        """Reload failure analysis from file.
+
+        Returns:
+            True if successfully loaded, False otherwise
+        """
+        previous_count = len(self.failure_analysis.failure_events) if self.failure_analysis else 0
+
+        self._load_failure_analysis()
+
+        current_count = len(self.failure_analysis.failure_events) if self.failure_analysis else 0
+
+        if current_count != previous_count:
+            logger.info(
+                "failure_analysis_reloaded",
+                previous_count=previous_count,
+                current_count=current_count,
+            )
+
+        return self.failure_analysis is not None
+
+    def is_failure_data_stale(self, max_age_hours: int = 24) -> bool:
+        """Check if failure data is stale.
+
+        Args:
+            max_age_hours: Maximum age in hours before considered stale
+
+        Returns:
+            True if data is stale or missing
+        """
+        from datetime import datetime, timedelta
+
+        if not os.path.exists(self.failure_file):
+            return True
+
+        file_mtime = datetime.fromtimestamp(os.path.getmtime(self.failure_file))
+        age = datetime.now() - file_mtime
+
+        return age > timedelta(hours=max_age_hours)
+
     def _init_evaluator(self) -> None:
         """Lazy initialization of AI evaluator."""
         if self.ai_evaluator is None:

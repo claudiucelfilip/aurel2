@@ -169,6 +169,16 @@ class Checker:
         # 7. AI Advisor review (uses failure learnings from past mistakes)
         ai_advice: Optional[AIAdvice] = None
         if self.ai_advisor and self.use_ai_advisor:
+            # Reload failure learnings if stale
+            if self.ai_advisor.is_failure_data_stale(max_age_hours=24):
+                logger.warning(
+                    "failure_data_stale",
+                    file=self.ai_advisor.failure_file,
+                )
+
+            # Always reload to get latest
+            self.ai_advisor.reload_failure_analysis()
+
             try:
                 logger.info("checker_running_ai_advisor")
                 ai_advice = self.ai_advisor.review(
