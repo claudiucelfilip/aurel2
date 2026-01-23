@@ -111,8 +111,8 @@ class IBKRBroker(BaseBroker):
         if not self.is_connected:
             raise ConnectionError("Not connected to IBKR")
 
-        # Request account values
-        account_values = self.ib.accountSummary()
+        # Request account values - use async wrapper
+        account_values = await self.ib.accountSummaryAsync()
 
         total_value = 0.0
         cash_balance = 0.0
@@ -140,7 +140,8 @@ class IBKRBroker(BaseBroker):
             raise ConnectionError("Not connected to IBKR")
 
         positions = []
-        for pos in self.ib.positions():
+        ib_positions = await self.ib.positionsAsync()
+        for pos in ib_positions:
             contract = pos.contract
 
             # Get market price
@@ -193,7 +194,7 @@ class IBKRBroker(BaseBroker):
 
         try:
             contract = self._get_contract(symbol)
-            self.ib.qualifyContracts(contract)
+            await self.ib.qualifyContractsAsync(contract)
 
             # Request market data
             ticker = self.ib.reqMktData(contract)
@@ -215,7 +216,7 @@ class IBKRBroker(BaseBroker):
             raise ConnectionError("Not connected to IBKR")
 
         contract = self._get_contract(order.symbol)
-        self.ib.qualifyContracts(contract)
+        await self.ib.qualifyContractsAsync(contract)
 
         # Create order
         if order.order_type == "MKT":
@@ -339,12 +340,20 @@ class IBKRBroker(BaseBroker):
         sell_symbol: str,
         buy_symbol: str,
         sell_quantity: Optional[float] = None,
+        position_size_pct: float = 1.0,
     ) -> tuple[OrderResult, OrderResult]:
         """
         Execute a position switch: sell one ETF and buy another.
 
         If sell_quantity is None, sells entire position.
-        Uses all proceeds to buy the new symbol.
+        Uses proceeds to buy the new symbol, scaled by position_size_pct.
+
+        Args:
+            sell_symbol: Symbol to sell.
+            buy_symbol: Symbol to buy.
+            sell_quantity: Quantity to sell (None = entire position).
+            position_size_pct: Position size percentage for buy leg (0.0 to 1.0).
+                In volatile/bear markets, this may be reduced to hold more cash.
         """
         # Get current position to sell
         if sell_quantity is None:
@@ -374,8 +383,20 @@ class IBKRBroker(BaseBroker):
         if buy_price is None:
             raise RuntimeError(f"Could not get price for {buy_symbol}")
 
-        # Calculate shares to buy (accounting for some slippage)
-        buy_quantity = int(proceeds * 0.99 / buy_price)  # Leave 1% buffer
+        # Calculate shares to buy:
+        # - Apply position_size_pct (regime-based sizing)
+        # - Apply 99% buffer for execution safety
+        effective_pct = position_size_pct * 0.99
+        buy_quantity = int(proceeds * effective_pct / buy_price)
+
+        logger.info(
+            "execute_switch_sizing",
+            sell_symbol=sell_symbol,
+            buy_symbol=buy_symbol,
+            proceeds=proceeds,
+            position_size_pct=f"{position_size_pct:.0%}",
+            buy_quantity=buy_quantity,
+        )
 
         # Buy
         buy_order = BrokerOrder(

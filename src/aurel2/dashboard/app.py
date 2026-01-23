@@ -270,14 +270,14 @@ async def api_backtest(
     start_date = date.fromisoformat(start)
     end_date = date.fromisoformat(end) if end else date.today()
 
-    # Fetch price data
+    # Fetch price data - use full 11-asset universe
+    from aurel2.core.assets import ASSET_REGISTRY, get_all_yahoo_symbols
     provider = YahooFinanceProvider()
-    symbols = ["SPY", "EFA", "AGG"]
+    symbols = get_all_yahoo_symbols()
     prices = provider.get_multi_prices(symbols, start_date, end_date)
 
-    # Create strategy
-    assets = dict(ASSETS)
-    assets[AssetClass.CASH] = Asset(symbol="CASH", name="Cash", asset_class=AssetClass.CASH)
+    # Create strategy with full asset registry
+    assets = ASSET_REGISTRY
 
     strategy = DualMomentumStrategy(
         assets=assets,

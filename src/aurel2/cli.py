@@ -61,59 +61,10 @@ def backtest(
     # Load settings
     settings = load_settings(config)
 
-    # Build assets dictionary
-    assets = {}
-
-    if settings.assets:
-        assets[AssetClass.US_STOCKS] = Asset(
-            symbol=settings.assets.us_stocks.symbol,
-            name=settings.assets.us_stocks.name,
-            asset_class=AssetClass.US_STOCKS,
-            isin=settings.assets.us_stocks.isin,
-            yahoo_symbol=settings.assets.us_stocks.yahoo_symbol,
-        )
-        assets[AssetClass.GLOBAL_STOCKS] = Asset(
-            symbol=settings.assets.global_stocks.symbol,
-            name=settings.assets.global_stocks.name,
-            asset_class=AssetClass.GLOBAL_STOCKS,
-            isin=settings.assets.global_stocks.isin,
-            yahoo_symbol=settings.assets.global_stocks.yahoo_symbol,
-        )
-        assets[AssetClass.BONDS] = Asset(
-            symbol=settings.assets.bonds.symbol,
-            name=settings.assets.bonds.name,
-            asset_class=AssetClass.BONDS,
-            isin=settings.assets.bonds.isin,
-            yahoo_symbol=settings.assets.bonds.yahoo_symbol,
-        )
-        cash_rate = settings.assets.cash_rate
-    else:
-        # Default US-focused assets for longer backtest history
-        assets[AssetClass.US_STOCKS] = Asset(
-            symbol="SPY",
-            name="SPDR S&P 500 ETF",
-            asset_class=AssetClass.US_STOCKS,
-            yahoo_symbol="SPY",
-        )
-        assets[AssetClass.GLOBAL_STOCKS] = Asset(
-            symbol="EFA",
-            name="iShares MSCI EAFE ETF",
-            asset_class=AssetClass.GLOBAL_STOCKS,
-            yahoo_symbol="EFA",
-        )
-        assets[AssetClass.BONDS] = Asset(
-            symbol="AGG",
-            name="iShares Core US Aggregate Bond ETF",
-            asset_class=AssetClass.BONDS,
-            yahoo_symbol="AGG",
-        )
-        cash_rate = 0.04
-
-    assets[AssetClass.CASH] = Asset(
-        symbol="CASH",
-        name="Cash",
-        asset_class=AssetClass.CASH,
-    )
+    # Use full asset registry (11 assets) for consistency with compare command
+    from aurel2.core.assets import ASSET_REGISTRY, get_all_yahoo_symbols
+    assets = ASSET_REGISTRY
+    cash_rate = settings.assets.cash_rate if settings.assets else 0.04
 
     # Fetch price data
     typer.echo("\nFetching historical data...")
@@ -167,6 +118,26 @@ def backtest(
                 f"{float(trade.shares):8.2f} @ ${trade.price:8.2f} | "
                 f"Value: ${trade.value:10.2f}"
             )
+
+    # Save results
+    years = (end_date - start_date).days / 365.25
+    benchmark_return = (result.benchmark_final / capital - 1) if result.benchmark_final else None
+    _save_backtest_results({
+        "type": "backtest",
+        "start_date": str(start_date),
+        "end_date": str(end_date),
+        "initial_capital": capital,
+        "frequency": frequency,
+        "years": round(years, 2),
+        "final_value": round(result.final_value, 2),
+        "total_return_pct": round(result.total_return * 100, 2),
+        "cagr_pct": round(result.cagr * 100, 2),
+        "max_drawdown_pct": round(result.max_drawdown * 100, 2),
+        "sharpe_ratio": round(result.sharpe_ratio, 2) if result.sharpe_ratio else None,
+        "benchmark_return_pct": round(benchmark_return * 100, 2) if benchmark_return else None,
+        "alpha_pct": round((result.total_return - benchmark_return) * 100, 2) if benchmark_return else None,
+        "num_trades": len(result.trades),
+    })
 
 
 @app.command()
@@ -1256,6 +1227,30 @@ def backtest_agent(
     console.print("=" * 40)
     console.print()
 
+    # Save results
+    years = (end_date - start_date).days / 365.25
+    _save_backtest_results({
+        "type": "backtest_agent",
+        "start_date": str(start_date),
+        "end_date": str(end_date),
+        "initial_capital": capital,
+        "frequency": frequency,
+        "years": round(years, 2),
+        "final_value": round(result.final_value, 2),
+        "total_return_pct": round(result.total_return * 100, 2),
+        "cagr_pct": round(result.cagr * 100, 2),
+        "max_drawdown_pct": round(result.max_drawdown * 100, 2),
+        "sharpe_ratio": round(result.sharpe_ratio, 2),
+        "benchmark_return_pct": round(result.benchmark_return * 100, 2) if result.benchmark_return else None,
+        "alpha_vs_spy_pct": round((result.total_return - result.benchmark_return) * 100, 2) if result.benchmark_return else None,
+        "num_trades": result.num_trades,
+        "total_decisions": total_decisions,
+        "routine_count": result.routine_count,
+        "non_routine_count": result.non_routine_count,
+        "urgent_count": result.urgent_count,
+        "strategy_agreement_rate_pct": round(result.strategy_agreement_rate * 100, 2),
+    })
+
 
 @app.command("eval-agent")
 def eval_agent(
@@ -2023,6 +2018,404 @@ def check(
         ))
     except KeyboardInterrupt:
         console.print("\nStopped by user.")
+
+
+@app.command()
+def compare(
+    start: str = typer.Option("2020-01-01", help="Start date (YYYY-MM-DD)"),
+    end: str = typer.Option(None, help="End date (YYYY-MM-DD), defaults to today"),
+    capital: float = typer.Option(10000.0, help="Initial capital"),
+    failure_file: str = typer.Option("data/failure_learnings.json", help="Path to failure learnings"),
+    lookback_years: int = typer.Option(5, "--lookback", "-l", help="Years of failure history to use (3, 5, 7, or 0 for all)"),
+    verbose: bool = typer.Option(False, "-v", "--verbose", help="Show detailed decision history"),
+):
+    """Compare SPY vs Deterministic vs AI Expert over a time period.
+
+    Runs a 3-way backtest comparison:
+    - SPY: Buy and hold S&P 500
+    - Deterministic: Dual momentum strategy (rule-based)
+    - AI Expert: AI with failure learnings that reviews deterministic decisions
+    """
+    from datetime import timedelta
+    from rich.table import Table
+    from rich.console import Console
+    import os
+
+    from aurel2.agent.ai_evaluator import ClaudeCodeExpertEvaluator
+    from aurel2.agent.failure_analyzer import FailureAnalysis
+    from aurel2.core.assets import ASSET_REGISTRY
+    from aurel2.core.models import AssetClass
+
+    console = Console()
+
+    start_date = date.fromisoformat(start)
+    end_date = date.fromisoformat(end) if end else date.today()
+
+    console.print(f"\n[bold]3-Way Backtest Comparison[/bold]")
+    console.print(f"Period: {start_date} to {end_date}")
+    console.print(f"Initial Capital: ${capital:,.2f}")
+    console.print(f"Failure Lookback: {'All history' if lookback_years == 0 else f'{lookback_years} years (rolling)'}")
+    console.print()
+
+    # Fetch price data
+    console.print("Fetching historical data...")
+    provider = YahooFinanceProvider()
+    symbols = ["SPY", "EFA", "EEM", "XLK", "XLF", "XLE", "XLV", "AGG", "TLT", "GLD", "DBC"]
+    extended_start = start_date - timedelta(days=400)
+
+    all_prices = []
+    for symbol in symbols:
+        try:
+            prices = provider.get_prices(symbol, extended_start, end_date + timedelta(days=60))
+            all_prices.append(prices)
+        except Exception as e:
+            console.print(f"[yellow]Warning: Could not fetch {symbol}: {e}[/yellow]")
+
+    prices_df = pd.concat(all_prices, ignore_index=True)
+    console.print(f"Fetched {len(prices_df)} price records")
+
+    # 1. SPY Buy-and-Hold
+    console.print("\n[bold]Calculating SPY Buy-and-Hold...[/bold]")
+    spy_prices = prices_df[prices_df["symbol"] == "SPY"].copy()
+    spy_prices["date"] = pd.to_datetime(spy_prices["date"])
+    spy_start_price = spy_prices[spy_prices["date"] >= pd.Timestamp(start_date)].iloc[0]["close"]
+    spy_end_price = spy_prices[spy_prices["date"] <= pd.Timestamp(end_date)].iloc[-1]["close"]
+    spy_return = (spy_end_price / spy_start_price - 1) * 100
+    spy_final_value = capital * (1 + spy_return / 100)
+
+    # 2. Deterministic (Dual Momentum)
+    console.print("[bold]Running Deterministic backtest...[/bold]")
+    strategy = DualMomentumStrategy(assets=ASSET_REGISTRY)
+
+    # Monthly decision dates
+    decision_dates = pd.date_range(start=start_date, end=end_date, freq="ME")
+    decision_dates = [d.date() for d in decision_dates]
+
+    det_portfolio_value = capital
+    det_holding: str | None = None
+    det_decisions = []
+
+    for i, decision_date in enumerate(decision_dates[:-1]):
+        next_date = decision_dates[i + 1]
+
+        # Get signal
+        current_asset_class = None
+        if det_holding:
+            for ac, asset in ASSET_REGISTRY.items():
+                if asset.symbol == det_holding:
+                    current_asset_class = ac
+                    break
+
+        signal = strategy.generate_signal(
+            prices=prices_df,
+            calc_date=decision_date,
+            current_holding=current_asset_class,
+        )
+
+        # Execute
+        if signal.action.value == "buy" and signal.asset:
+            new_holding = signal.asset.symbol
+            if new_holding != det_holding:
+                det_holding = new_holding
+        elif signal.action.value == "sell":
+            det_holding = None
+
+        # Calculate return for period
+        if det_holding:
+            period_return = _get_period_return(prices_df, det_holding, decision_date, next_date)
+        else:
+            period_return = 0.0  # Cash
+
+        det_portfolio_value *= (1 + period_return / 100)
+        det_decisions.append({
+            "date": decision_date,
+            "action": signal.action.value,
+            "asset": det_holding,
+            "period_return": period_return,
+            "portfolio_value": det_portfolio_value,
+        })
+
+    det_return = (det_portfolio_value / capital - 1) * 100
+
+    # 3. AI Expert with Failure Learnings
+    console.print("[bold]Running AI Expert backtest (this may take a while)...[/bold]")
+
+    # Load failure analysis
+    full_failure_analysis = None
+    if os.path.exists(failure_file):
+        full_failure_analysis = FailureAnalysis.load(failure_file)
+        console.print(f"Loaded {len(full_failure_analysis.failure_events)} failure learnings")
+    else:
+        console.print("[yellow]No failure learnings found. AI will operate without historical patterns.[/yellow]")
+
+    # Initialize AI evaluator
+    ai_evaluator = ClaudeCodeExpertEvaluator(model="sonnet")
+
+    ai_portfolio_value = capital
+    ai_holding: str | None = None
+    ai_decisions = []
+    agreements = 0
+    disagreements = 0
+
+    for i, decision_date in enumerate(decision_dates[:-1]):
+        next_date = decision_dates[i + 1]
+        console.print(f"  Processing {decision_date} ({i+1}/{len(decision_dates)-1})...", end="\r")
+
+        # Get deterministic signal first
+        current_asset_class = None
+        if ai_holding:
+            for ac, asset in ASSET_REGISTRY.items():
+                if asset.symbol == ai_holding:
+                    current_asset_class = ac
+                    break
+
+        det_signal = strategy.generate_signal(
+            prices=prices_df,
+            calc_date=decision_date,
+            current_holding=current_asset_class,
+        )
+
+        det_action = det_signal.action.value
+        det_asset = det_signal.asset.symbol if det_signal.asset else None
+
+        # Build context for AI (with rolling lookback window)
+        failure_context = ""
+        if full_failure_analysis:
+            failure_context = full_failure_analysis.to_prompt_text(
+                as_of_date=decision_date,
+                lookback_years=lookback_years if lookback_years > 0 else None,
+            )
+
+        market_context = _build_simple_market_context(prices_df, decision_date)
+        full_context = f"{failure_context}\n\n---\n\nMARKET CONTEXT:\n{market_context}"
+
+        signals = {
+            "dual_momentum": {
+                "action": det_action,
+                "asset_symbol": det_asset,
+                "confidence": 0.7,
+                "reasoning": det_signal.reason,
+            }
+        }
+
+        deterministic_decision = {"action": det_action, "asset": det_asset}
+
+        # Get AI decision
+        try:
+            ai_decision = ai_evaluator.evaluate(
+                signals=signals,
+                context_text=full_context,
+                current_holding=ai_holding,
+                deterministic_decision=deterministic_decision,
+            )
+            ai_action = ai_decision.action
+            ai_asset = ai_decision.asset
+            ai_reasoning = ai_decision.reasoning[:100] if ai_decision.reasoning else ""
+        except Exception as e:
+            # Fallback to deterministic on failure
+            ai_action = det_action
+            ai_asset = det_asset
+            ai_reasoning = f"AI failed: {e}"
+
+        # Check agreement
+        agreed = (det_action == ai_action) and (det_action != "buy" or det_asset == ai_asset)
+        if agreed:
+            agreements += 1
+        else:
+            disagreements += 1
+
+        # Execute AI decision
+        if ai_action == "buy" and ai_asset:
+            ai_holding = ai_asset
+        elif ai_action == "sell":
+            ai_holding = None
+
+        # Calculate return for period
+        if ai_holding:
+            period_return = _get_period_return(prices_df, ai_holding, decision_date, next_date)
+        else:
+            period_return = 0.0  # Cash
+
+        ai_portfolio_value *= (1 + period_return / 100)
+        ai_decisions.append({
+            "date": decision_date,
+            "det_action": det_action,
+            "det_asset": det_asset,
+            "ai_action": ai_action,
+            "ai_asset": ai_holding,
+            "agreed": agreed,
+            "period_return": period_return,
+            "portfolio_value": ai_portfolio_value,
+            "reasoning": ai_reasoning,
+        })
+
+    console.print("  " + " " * 50)  # Clear progress line
+    ai_return = (ai_portfolio_value / capital - 1) * 100
+
+    # Results table
+    console.print("\n")
+    table = Table(title="5-Year Performance Comparison")
+    table.add_column("Strategy", style="cyan")
+    table.add_column("Final Value", justify="right")
+    table.add_column("Total Return", justify="right")
+    table.add_column("Alpha vs SPY", justify="right")
+
+    table.add_row(
+        "SPY (Buy & Hold)",
+        f"${spy_final_value:,.2f}",
+        f"{spy_return:+.2f}%",
+        "-",
+    )
+    table.add_row(
+        "Deterministic (Dual Momentum)",
+        f"${det_portfolio_value:,.2f}",
+        f"{det_return:+.2f}%",
+        f"{det_return - spy_return:+.2f}%",
+    )
+    table.add_row(
+        "AI Expert (with learnings)",
+        f"${ai_portfolio_value:,.2f}",
+        f"{ai_return:+.2f}%",
+        f"{ai_return - spy_return:+.2f}%",
+    )
+
+    console.print(table)
+
+    # AI vs Deterministic comparison
+    console.print(f"\n[bold]AI vs Deterministic:[/bold]")
+    console.print(f"  Agreements: {agreements} ({agreements/(agreements+disagreements)*100:.1f}%)")
+    console.print(f"  Disagreements: {disagreements}")
+    console.print(f"  AI Alpha vs Deterministic: {ai_return - det_return:+.2f}%")
+
+    # Show disagreements if verbose
+    if verbose:
+        console.print(f"\n[bold]Decision History (Disagreements):[/bold]")
+        for d in ai_decisions:
+            if not d["agreed"]:
+                console.print(f"\n{d['date']}:")
+                console.print(f"  Det: {d['det_action'].upper()} {d['det_asset'] or 'CASH'}")
+                console.print(f"  AI:  {d['ai_action'].upper()} {d['ai_asset'] or 'CASH'}")
+                console.print(f"  Return: {d['period_return']:+.2f}%")
+                if d["reasoning"]:
+                    console.print(f"  Reasoning: {d['reasoning']}")
+
+    # Calculate CAGR
+    years = (end_date - start_date).days / 365.25
+    spy_cagr = ((spy_final_value / capital) ** (1 / years) - 1) * 100
+    det_cagr = ((det_portfolio_value / capital) ** (1 / years) - 1) * 100
+    ai_cagr = ((ai_portfolio_value / capital) ** (1 / years) - 1) * 100
+
+    # Save results
+    _save_backtest_results({
+        "type": "compare",
+        "start_date": str(start_date),
+        "end_date": str(end_date),
+        "initial_capital": capital,
+        "lookback_years": lookback_years if lookback_years > 0 else "all",
+        "years": round(years, 2),
+        "spy": {
+            "final_value": round(spy_final_value, 2),
+            "total_return_pct": round(spy_return, 2),
+            "cagr_pct": round(spy_cagr, 2),
+        },
+        "deterministic": {
+            "final_value": round(det_portfolio_value, 2),
+            "total_return_pct": round(det_return, 2),
+            "cagr_pct": round(det_cagr, 2),
+            "alpha_vs_spy": round(det_return - spy_return, 2),
+        },
+        "ai_expert": {
+            "final_value": round(ai_portfolio_value, 2),
+            "total_return_pct": round(ai_return, 2),
+            "cagr_pct": round(ai_cagr, 2),
+            "alpha_vs_spy": round(ai_return - spy_return, 2),
+            "alpha_vs_det": round(ai_return - det_return, 2),
+            "agreements": agreements,
+            "disagreements": disagreements,
+        },
+    })
+
+
+def _save_backtest_results(
+    results: dict,
+    filename: str = "data/backtest_results.json",
+) -> None:
+    """Save backtest results to JSON file."""
+    import json
+    from datetime import datetime
+    from pathlib import Path
+
+    filepath = Path(filename)
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+
+    # Load existing results
+    existing = []
+    if filepath.exists():
+        try:
+            with open(filepath) as f:
+                data = json.load(f)
+                existing = data.get("results", [])
+        except Exception:
+            existing = []
+
+    # Add new result with timestamp
+    results["saved_at"] = datetime.now().isoformat()
+    existing.append(results)
+
+    # Keep last 50 results
+    existing = existing[-50:]
+
+    with open(filepath, "w") as f:
+        json.dump({"results": existing}, f, indent=2, default=str)
+
+    print(f"\n✓ Results saved to {filename}")
+
+
+def _get_period_return(prices: pd.DataFrame, symbol: str, start_date: date, end_date: date) -> float:
+    """Calculate return for a symbol over a period."""
+    if not symbol:
+        return 0.0
+
+    sym_prices = prices[prices["symbol"] == symbol].copy()
+    if sym_prices.empty:
+        return 0.0
+
+    sym_prices["date"] = pd.to_datetime(sym_prices["date"])
+
+    start_prices = sym_prices[sym_prices["date"] <= pd.Timestamp(start_date)]
+    end_prices = sym_prices[sym_prices["date"] <= pd.Timestamp(end_date)]
+
+    if start_prices.empty or end_prices.empty:
+        return 0.0
+
+    start_price = start_prices.iloc[-1]["close"]
+    end_price = end_prices.iloc[-1]["close"]
+
+    return (end_price / start_price - 1) * 100
+
+
+def _build_simple_market_context(prices: pd.DataFrame, target_date: date) -> str:
+    """Build simple market context string for the AI."""
+    from datetime import timedelta
+
+    lines = []
+
+    spy_prices = prices[prices["symbol"] == "SPY"].copy()
+    spy_prices["date"] = pd.to_datetime(spy_prices["date"])
+    spy_prices = spy_prices[spy_prices["date"] <= pd.Timestamp(target_date)]
+
+    if not spy_prices.empty:
+        current_price = spy_prices.iloc[-1]["close"]
+        year_ago = target_date - timedelta(days=365)
+        year_prices = spy_prices[spy_prices["date"] >= pd.Timestamp(year_ago)]
+        if not year_prices.empty:
+            year_high = year_prices["close"].max()
+            drawdown = (current_price / year_high - 1) * 100
+            lines.append(f"SPY: ${current_price:.2f} (drawdown from 52w high: {drawdown:.1f}%)")
+
+    lines.append(f"Decision Date: {target_date}")
+
+    return "\n".join(lines)
 
 
 @app.command()
