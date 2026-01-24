@@ -2027,6 +2027,7 @@ def compare(
     capital: float = typer.Option(10000.0, help="Initial capital"),
     failure_file: str = typer.Option("data/failure_learnings.json", help="Path to failure learnings"),
     lookback_years: int = typer.Option(5, "--lookback", "-l", help="Years of failure history to use (3, 5, 7, or 0 for all)"),
+    model: str = typer.Option("sonnet", "--model", "-m", help="AI model: sonnet, opus, haiku"),
     verbose: bool = typer.Option(False, "-v", "--verbose", help="Show detailed decision history"),
 ):
     """Compare SPY vs Deterministic vs AI Expert over a time period.
@@ -2055,6 +2056,7 @@ def compare(
     console.print(f"Period: {start_date} to {end_date}")
     console.print(f"Initial Capital: ${capital:,.2f}")
     console.print(f"Failure Lookback: {'All history' if lookback_years == 0 else f'{lookback_years} years (rolling)'}")
+    console.print(f"AI Model: {model}")
     console.print()
 
     # Fetch price data
@@ -2149,7 +2151,7 @@ def compare(
         console.print("[yellow]No failure learnings found. AI will operate without historical patterns.[/yellow]")
 
     # Initialize AI evaluator
-    ai_evaluator = ClaudeCodeExpertEvaluator(model="sonnet")
+    ai_evaluator = ClaudeCodeExpertEvaluator(model=model)
 
     ai_portfolio_value = capital
     ai_holding: str | None = None
@@ -2312,6 +2314,7 @@ def compare(
         "end_date": str(end_date),
         "initial_capital": capital,
         "lookback_years": lookback_years if lookback_years > 0 else "all",
+        "model": model,
         "years": round(years, 2),
         "spy": {
             "final_value": round(spy_final_value, 2),
@@ -2416,6 +2419,140 @@ def _build_simple_market_context(prices: pd.DataFrame, target_date: date) -> str
     lines.append(f"Decision Date: {target_date}")
 
     return "\n".join(lines)
+
+
+@app.command()
+def monitor(
+    paper: bool = typer.Option(True, "--paper/--real", help="Daemon uses paper trading (default) or real trading"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Daemon uses dry run mode"),
+    ntfy_topic: str = typer.Option("aurel2", "--ntfy-topic", help="Ntfy notification topic"),
+):
+    """Run the daemon monitor agent.
+
+    The monitor:
+    1. Watches daemon health every 60 seconds
+    2. Detects errors (connection failures, crashes, circuit breaker)
+    3. Auto-fixes fixable issues (restarts daemon)
+    4. Sends ntfy notifications for warnings and errors
+    5. Tracks session progress for evaluation
+
+    Examples:
+        aurel2 monitor                # Monitor paper trading daemon
+        aurel2 monitor --real         # Monitor live trading daemon
+        aurel2 monitor --dry-run      # Monitor dry-run daemon
+    """
+    import asyncio
+
+    from aurel2.monitor import DaemonMonitor
+
+    console = Console()
+
+    daemon_monitor = DaemonMonitor(
+        paper=paper,
+        dry_run=dry_run,
+        ntfy_topic=ntfy_topic,
+    )
+
+    try:
+        asyncio.run(daemon_monitor.start())
+    except KeyboardInterrupt:
+        console.print("\nStopped by user.")
+
+
+@app.command()
+def progress():
+    """Show paper trading progress summary.
+
+    Displays:
+    - Overall return and max drawdown
+    - Total trades and win rate
+    - AI agreement rate
+    - Recent session history
+
+    Data is kept for 90 days (3 months).
+    """
+    from aurel2.monitor import SessionTracker
+
+    console = Console()
+
+    tracker = SessionTracker()
+    summary = tracker.get_summary()
+
+    console.print("\n" + "=" * 60)
+    console.print("[bold]Paper Trading Progress[/bold]")
+    console.print("=" * 60)
+
+    if summary["start_date"] is None:
+        console.print("\n[yellow]No session data yet. Start the daemon and monitor to track progress.[/yellow]\n")
+        return
+
+    # Overall metrics
+    console.print(f"\n[bold]Period:[/bold] {summary['start_date']} to today ({summary['days_active']} days active)")
+
+    if summary["initial_value"] and summary["current_value"]:
+        console.print(f"\n[bold]Account:[/bold]")
+        console.print(f"  Initial: ${summary['initial_value']:,.2f}")
+        console.print(f"  Current: ${summary['current_value']:,.2f}")
+
+        if summary["total_return_pct"] is not None:
+            color = "green" if summary["total_return_pct"] >= 0 else "red"
+            console.print(f"  Return: [{color}]{summary['total_return_pct']:+.2f}%[/{color}]")
+
+        if summary["max_drawdown_pct"]:
+            dd_color = "red" if summary["max_drawdown_pct"] > 10 else "yellow" if summary["max_drawdown_pct"] > 5 else "green"
+            console.print(f"  Max Drawdown: [{dd_color}]{-summary['max_drawdown_pct']:.2f}%[/{dd_color}]")
+
+    # Trading stats
+    console.print(f"\n[bold]Trading:[/bold]")
+    console.print(f"  Total Trades: {summary['total_trades']}")
+    if summary["win_rate_pct"] is not None:
+        wr_color = "green" if summary["win_rate_pct"] >= 50 else "red"
+        console.print(f"  Win Rate: [{wr_color}]{summary['win_rate_pct']:.1f}%[/{wr_color}]")
+
+    if summary["ai_agreement_pct"] is not None:
+        console.print(f"  AI Agreement: {summary['ai_agreement_pct']:.1f}%")
+
+    # System health
+    console.print(f"\n[bold]System:[/bold]")
+    console.print(f"  Total Restarts: {summary['total_restarts']}")
+    console.print(f"  Total Errors: {summary['total_errors']}")
+
+    if summary["avg_uptime_hours"]:
+        console.print(f"  Avg Daily Uptime: {summary['avg_uptime_hours']:.1f} hours")
+
+    # Recent sessions
+    recent = tracker.get_recent_sessions(7)
+    if recent:
+        console.print(f"\n[bold]Recent Sessions (Last 7 Days):[/bold]")
+
+        table = Table(show_header=True, box=None, padding=(0, 2))
+        table.add_column("Date", style="dim")
+        table.add_column("Uptime", justify="right")
+        table.add_column("Decisions", justify="right")
+        table.add_column("Trades", justify="right")
+        table.add_column("Return", justify="right")
+        table.add_column("Errors", justify="right")
+
+        for session in recent:
+            uptime_str = f"{session.uptime_minutes // 60}h {session.uptime_minutes % 60}m"
+            return_str = f"{session.daily_return * 100:+.2f}%" if session.daily_return is not None else "-"
+            return_color = "green" if session.daily_return and session.daily_return >= 0 else "red" if session.daily_return else "dim"
+            error_str = str(session.errors) if session.errors > 0 else "-"
+            error_color = "red" if session.errors > 0 else "dim"
+
+            table.add_row(
+                session.date,
+                uptime_str,
+                str(session.decisions) if session.decisions > 0 else "-",
+                str(session.executions) if session.executions > 0 else "-",
+                f"[{return_color}]{return_str}[/{return_color}]",
+                f"[{error_color}]{error_str}[/{error_color}]",
+            )
+
+        console.print(table)
+
+    console.print("\n" + "=" * 60)
+    console.print()
 
 
 @app.command()

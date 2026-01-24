@@ -1,8 +1,10 @@
 """Live trading daemon - main loop, scheduling, polling."""
 
 import asyncio
+import json
 import signal
 from datetime import datetime, time as dt_time, timedelta
+from pathlib import Path
 from typing import Optional
 
 import pytz
@@ -15,6 +17,8 @@ from aurel2.live.pending import PendingManager, PendingStatus
 from aurel2.notifications.ntfy import NtfyNotifier
 
 logger = structlog.get_logger()
+
+HEARTBEAT_FILE = Path("/tmp/aurel2-heartbeat.json")
 
 
 class LiveDaemon:
@@ -61,6 +65,25 @@ class LiveDaemon:
 
         self._running = False
         self._last_check: Optional[datetime] = None
+        self._error_count = 0
+
+    def _write_heartbeat(self) -> None:
+        """Write heartbeat file with current daemon status."""
+        try:
+            pending = self.pending_manager.get_pending()
+            heartbeat = {
+                "timestamp": datetime.now().isoformat(),
+                "connected": self.connection.is_connected,
+                "circuit_breaker": self.connection.circuit_breaker.get_status(),
+                "pending_count": len(pending),
+                "last_check": self._last_check.isoformat() if self._last_check else None,
+                "paper": self.paper,
+                "dry_run": self.dry_run,
+                "error_count": self._error_count,
+            }
+            HEARTBEAT_FILE.write_text(json.dumps(heartbeat, indent=2))
+        except Exception as e:
+            logger.warning("heartbeat_write_error", error=str(e))
 
     async def start(self) -> None:
         """Start the daemon."""
@@ -123,6 +146,9 @@ class LiveDaemon:
         while self._running:
             now = datetime.now(self.timezone)
 
+            # Write heartbeat
+            self._write_heartbeat()
+
             # Check if it's time for daily check
             if self._should_run_check(now):
                 logger.info("daemon_running_daily_check")
@@ -143,6 +169,7 @@ class LiveDaemon:
                 except Exception as e:
                     logger.error("daemon_check_error", error=str(e))
                     print(f"Check error: {e}")
+                    self._error_count += 1
 
             # Poll for pending approvals
             await self._poll_pending()
@@ -209,6 +236,7 @@ class LiveDaemon:
             action=decision.action,
             symbol=decision.symbol,
             current_holding=decision.current_holding,
+            position_size_pct=decision.position_size_pct,
         )
 
         if result.success:
@@ -216,6 +244,7 @@ class LiveDaemon:
                 message=(
                     f"Approved decision executed\n\n"
                     f"Action: {decision.action.upper()} {decision.symbol or ''}\n"
+                    f"Position size: {decision.position_size_pct:.0%}\n"
                     f"Shares: {result.shares:.2f} @ ${result.fill_price:.2f}"
                 ),
                 title="Aurel2: Trade Executed",
@@ -291,6 +320,7 @@ class LiveDaemon:
             action=decision.action,
             symbol=decision.symbol,
             current_holding=decision.current_holding,
+            position_size_pct=decision.position_size_pct,
         )
 
         if result.success:
@@ -298,6 +328,7 @@ class LiveDaemon:
                 message=(
                     f"Timed-out decision auto-executed\n\n"
                     f"Action: {decision.action.upper()} {decision.symbol or ''}\n"
+                    f"Position size: {decision.position_size_pct:.0%}\n"
                     f"Shares: {result.shares:.2f} @ ${result.fill_price:.2f}\n"
                     f"Note: Executed after 1-hour timeout"
                 ),
