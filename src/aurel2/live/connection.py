@@ -18,6 +18,7 @@ logger = structlog.get_logger()
 # Default TWS paths by platform
 TWS_PATHS = {
     "Darwin": [
+        "~/Applications/Trader Workstation/Trader Workstation.app",
         "/Applications/Trader Workstation 10.19/Trader Workstation 10.19.app",
         "/Applications/Trader Workstation/Trader Workstation.app",
         "~/Applications/Trader Workstation 10.19/Trader Workstation 10.19.app",

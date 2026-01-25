@@ -107,9 +107,9 @@ class HealthChecker:
         elif heartbeat.circuit_breaker_state == "open":
             issues.append("Circuit breaker is OPEN")
 
-        # Check logs
+        # Check logs - only report if there are significant errors
         log_errors = self._check_logs()
-        if log_errors.error_count > 0:
+        if log_errors.error_count >= 3:
             issues.append(f"{log_errors.error_count} recent errors in log")
 
         # Determine overall status
@@ -188,21 +188,37 @@ class HealthChecker:
             content = self.log_file.read_text()
             lines = content.strip().split("\n")[-lines_to_check:]
 
-            # Look for error patterns
+            # Patterns that indicate real errors (not benign warnings)
             error_patterns = [
-                r"ERROR",
-                r"error",
-                r"Exception",
-                r"Failed",
                 r"circuit_breaker_opened",
-                r"connection.*failed",
+                r"daemon.*crash",
+                r"execution.*failed",
+                r"order.*rejected",
+                r"connection.*lost",
+                r"Traceback",
+                r"CRITICAL",
             ]
             combined_pattern = "|".join(error_patterns)
+
+            # Patterns to ignore (benign IBKR warnings, deprecation warnings, etc.)
+            ignore_patterns = [
+                r"Error 10089.*market data.*subscription",  # IBKR market data subscription
+                r"Error 300.*Can't find EId",  # IBKR ticker cleanup
+                r"Warning \d+.*farm connection",  # IBKR farm connection status
+                r"DeprecationWarning",
+                r"Pandas4Warning",
+                r"FutureWarning",
+            ]
+            ignore_pattern = "|".join(ignore_patterns)
 
             recent_errors = []
             last_error_time = None
 
             for line in lines:
+                # Skip benign warnings
+                if re.search(ignore_pattern, line, re.IGNORECASE):
+                    continue
+
                 if re.search(combined_pattern, line, re.IGNORECASE):
                     recent_errors.append(line[:200])  # Truncate long lines
 
