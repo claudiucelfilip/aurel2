@@ -1914,6 +1914,8 @@ def live(
     poll_interval: int = typer.Option(5, "--poll-interval", "-p", help="Approval poll interval in minutes"),
     ntfy_topic: str = typer.Option("aurel2", "--ntfy-topic", help="Ntfy notification topic"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Don't execute trades, just simulate"),
+    ai_model: str = typer.Option("sonnet", "--ai-model", "-m", help="AI model: sonnet, opus, haiku"),
+    ai_lookback: int = typer.Option(3, "--ai-lookback", "-l", help="AI failure pattern lookback years (default: 3)"),
 ):
     """Run the live trading daemon.
 
@@ -1925,11 +1927,16 @@ def live(
     5. Polls for approvals every 5 minutes
     6. Auto-executes timed-out decisions after 1 hour
 
+    AI Configuration:
+    - Default: Sonnet with 3-year lookback (best in backtests: +42.86% alpha)
+    - Lookback window filters failure patterns to recent years only
+
     Examples:
         aurel2 live --paper          # Paper trading (default)
         aurel2 live --real           # LIVE trading (caution!)
         aurel2 live --dry-run        # Simulate without executing
         aurel2 live --check-time 09:30  # Check at 9:30 AM
+        aurel2 live --ai-lookback 5  # Use 5-year lookback window
     """
     import asyncio
     from datetime import time as dt_time
@@ -1963,6 +1970,8 @@ def live(
         poll_interval_minutes=poll_interval,
         ntfy_topic=ntfy_topic,
         dry_run=dry_run,
+        ai_model=ai_model,
+        ai_lookback_years=ai_lookback,
     )
 
     try:

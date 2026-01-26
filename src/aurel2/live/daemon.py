@@ -44,6 +44,8 @@ class LiveDaemon:
         poll_interval_minutes: int = 5,
         ntfy_topic: str = "aurel2",
         dry_run: bool = False,
+        ai_model: str = "sonnet",
+        ai_lookback_years: int = 3,
     ):
         self.paper = paper
         self.check_time = check_time
@@ -51,6 +53,8 @@ class LiveDaemon:
         self.poll_interval = timedelta(minutes=poll_interval_minutes)
         self.ntfy_topic = ntfy_topic
         self.dry_run = dry_run
+        self.ai_model = ai_model
+        self.ai_lookback_years = ai_lookback_years
 
         self.connection = IBKRConnection(paper=paper)
         self.pending_manager = PendingManager()
@@ -59,6 +63,8 @@ class LiveDaemon:
             pending_manager=self.pending_manager,
             ntfy_topic=ntfy_topic,
             dry_run=dry_run,
+            ai_model=ai_model,
+            ai_lookback_years=ai_lookback_years,
         )
         self.executor = Executor(self.connection)
         self.notifier = NtfyNotifier(topic=ntfy_topic)
@@ -99,6 +105,7 @@ class LiveDaemon:
         print(f"Aurel2 Live Trading Daemon")
         print(f"Mode: {'PAPER' if self.paper else 'LIVE'}")
         print(f"Check time: {self.check_time.isoformat()} {self.timezone}")
+        print(f"AI Model: {self.ai_model} (lookback: {self.ai_lookback_years}yr)")
         print(f"Dry run: {self.dry_run}")
         print("=" * 60 + "\n")
 

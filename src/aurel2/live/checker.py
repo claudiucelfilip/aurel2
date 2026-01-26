@@ -60,6 +60,8 @@ class Checker:
         dry_run: bool = False,
         use_ai_advisor: bool = True,
         failure_learnings_file: str = "data/failure_learnings.json",
+        ai_model: str = "sonnet",
+        ai_lookback_years: int = 3,
     ):
         self.connection = connection
         self.pending_manager = pending_manager
@@ -83,7 +85,8 @@ class Checker:
         if use_ai_advisor:
             self.ai_advisor = AIAdvisor(
                 failure_file=failure_learnings_file,
-                model="sonnet",  # Uses Claude Code CLI, not API
+                model=ai_model,
+                lookback_years=ai_lookback_years,
             )
 
         # Initialize trade journal for audit trail
@@ -442,6 +445,7 @@ class Checker:
             action=decision.action.value,
             symbol=decision.asset_symbol,
             current_holding=current_holding,
+            position_size_pct=decision.position_size_pct,
         )
 
         # Record execution result in journal
@@ -557,6 +561,7 @@ class Checker:
             market_regime=market_context.get("regime"),
             current_holding=current_holding,
             original_price=original_price,
+            position_size_pct=decision.position_size_pct,
         )
 
         # Post to Vercel endpoint
