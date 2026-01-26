@@ -129,8 +129,46 @@ class AutoFixer:
         # Wait for process to fully terminate
         time.sleep(2)
 
+        # Ensure TWS is running before starting daemon
+        self._ensure_tws_running()
+
         # Start new daemon
         return self._start_daemon()
+
+    def _ensure_tws_running(self) -> bool:
+        """Check if TWS is running, launch it if not."""
+        # Check if TWS process is running
+        for proc in psutil.process_iter(["pid", "name", "cmdline"]):
+            try:
+                name = proc.info.get("name", "").lower()
+                cmdline = " ".join(proc.info.get("cmdline") or []).lower()
+                if "trader workstation" in name or "tws" in name or "trader workstation" in cmdline:
+                    logger.info("tws_already_running", pid=proc.info["pid"])
+                    return True
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                continue
+
+        # TWS not running, try to launch it
+        logger.info("auto_fixer_launching_tws")
+        tws_paths = [
+            Path.home() / "Applications" / "Trader Workstation" / "Trader Workstation.app",
+            Path("/Applications/Trader Workstation 10.19/Trader Workstation 10.19.app"),
+            Path("/Applications/Trader Workstation/Trader Workstation.app"),
+        ]
+
+        for tws_path in tws_paths:
+            if tws_path.exists():
+                try:
+                    subprocess.Popen(["open", str(tws_path)])
+                    logger.info("tws_launched", path=str(tws_path))
+                    # Give TWS time to start
+                    time.sleep(10)
+                    return True
+                except Exception as e:
+                    logger.warning("tws_launch_failed", path=str(tws_path), error=str(e))
+
+        logger.warning("tws_not_found")
+        return False
 
     def _wait_and_restart(self, context: dict) -> FixResult:
         """Wait for circuit breaker reset, then restart."""
