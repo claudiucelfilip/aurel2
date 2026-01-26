@@ -226,7 +226,24 @@ class BacktestEngine:
                         current_holding = AssetClass.CASH
                         current_shares = Decimal("0")
                     else:
-                        buy_value = float(cash)
+                        # Determine position size based on signal type
+                        is_pilot = "PILOT ENTRY" in signal.reason
+                        is_scale_up = "SCALE UP" in signal.reason
+                        pilot_size = getattr(self.strategy, 'pilot_position_size', 0.30)
+
+                        if is_pilot:
+                            # Pilot entry: only use portion of capital
+                            buy_value = float(cash) * pilot_size
+                            remaining_cash = float(cash) * (1 - pilot_size)
+                        elif is_scale_up:
+                            # Scale up: use all remaining cash
+                            buy_value = float(cash)
+                            remaining_cash = 0.0
+                        else:
+                            # Full position
+                            buy_value = float(cash)
+                            remaining_cash = 0.0
+
                         commission = buy_value * self.transaction_cost_pct
                         net_value = buy_value - commission
                         shares_to_buy = Decimal(str(net_value / current_price))
@@ -240,10 +257,11 @@ class BacktestEngine:
                             commission=commission,
                         ))
 
-                        cash = Decimal("0")
-                        current_shares = shares_to_buy
+                        cash = Decimal(str(remaining_cash))
+                        current_shares += shares_to_buy  # Add to existing shares for scale-up
                         current_holding = new_asset_class
 
+                        position_type = "PILOT" if is_pilot else ("SCALE UP" if is_scale_up else "FULL")
                         logger.info(
                             "trade_executed",
                             action="BUY",
@@ -251,6 +269,7 @@ class BacktestEngine:
                             shares=float(shares_to_buy),
                             price=current_price,
                             value=net_value,
+                            position_type=position_type,
                         )
 
             # Record snapshot
