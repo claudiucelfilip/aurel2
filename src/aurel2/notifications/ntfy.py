@@ -1,5 +1,6 @@
 """Ntfy notification service for Aurel2."""
 
+import time
 from typing import Optional
 
 import httpx
@@ -7,19 +8,60 @@ import structlog
 
 logger = structlog.get_logger(__name__)
 
+# Rate limiting: track last notification time per category
+_last_notification_time: dict[str, float] = {}
+_rate_limit_seconds: int = 3600  # 1 hour default
+
 
 class NtfyNotifier:
     """Send push notifications via ntfy.sh."""
 
-    def __init__(self, topic: str, server: str = "https://ntfy.sh") -> None:
+    def __init__(
+        self,
+        topic: str,
+        server: str = "https://ntfy.sh",
+        rate_limit_seconds: int = 3600,
+    ) -> None:
         """Initialize the notifier.
 
         Args:
             topic: The ntfy topic to publish to.
             server: The ntfy server URL. Defaults to https://ntfy.sh.
+            rate_limit_seconds: Minimum seconds between notifications of the same category.
+                Defaults to 3600 (1 hour). Set to 0 to disable rate limiting.
         """
         self.topic = topic
         self.server = server.rstrip("/")
+        self.rate_limit_seconds = rate_limit_seconds
+
+    def _is_rate_limited(self, category: str) -> bool:
+        """Check if a notification category is rate limited.
+
+        Args:
+            category: The notification category (e.g., 'monitor_issue', 'trade_approval').
+
+        Returns:
+            True if the notification should be skipped due to rate limiting.
+        """
+        if self.rate_limit_seconds <= 0:
+            return False
+
+        now = time.time()
+        last_time = _last_notification_time.get(category, 0)
+
+        if now - last_time < self.rate_limit_seconds:
+            logger.debug(
+                "notification_rate_limited",
+                category=category,
+                seconds_until_allowed=int(self.rate_limit_seconds - (now - last_time)),
+            )
+            return True
+
+        return False
+
+    def _record_notification(self, category: str) -> None:
+        """Record that a notification was sent for rate limiting purposes."""
+        _last_notification_time[category] = time.time()
 
     def send(
         self,
@@ -29,6 +71,7 @@ class NtfyNotifier:
         tags: Optional[list[str]] = None,
         click_url: Optional[str] = None,
         actions: Optional[list[str]] = None,
+        category: Optional[str] = None,
     ) -> bool:
         """Send a notification to ntfy.
 
@@ -39,10 +82,14 @@ class NtfyNotifier:
             tags: List of emoji tags (e.g., ['warning', 'chart_with_upwards_trend']).
             click_url: URL to open when notification is clicked.
             actions: List of action buttons in ntfy format.
+            category: Optional category for rate limiting (e.g., 'monitor_issue').
+                Notifications in the same category are rate limited.
 
         Returns:
             True if notification was sent successfully, False otherwise.
         """
+        if category and self._is_rate_limited(category):
+            return False
         url = f"{self.server}/{self.topic}"
         headers: dict[str, str] = {}
 
@@ -60,11 +107,14 @@ class NtfyNotifier:
         try:
             response = httpx.post(url, content=message, headers=headers)
             if response.status_code == 200:
+                if category:
+                    self._record_notification(category)
                 logger.info(
                     "notification_sent",
                     topic=self.topic,
                     title=title,
                     priority=priority,
+                    category=category,
                 )
                 return True
             else:

@@ -44,12 +44,11 @@ class DaemonMonitor:
         self.error_analyzer = ErrorAnalyzer()
         self.auto_fixer = AutoFixer(paper=paper, dry_run=dry_run)
         self.session_tracker = SessionTracker()
-        self.notifier = NtfyNotifier(topic=ntfy_topic)
+        self.notifier = NtfyNotifier(topic=ntfy_topic, rate_limit_seconds=3600)
 
         self._running = False
         self._consecutive_unhealthy = 0
         self._last_health_report: Optional[HealthReport] = None
-        self._last_notification_time: Optional[datetime] = None
         self._minutes_since_start = 0
 
     async def start(self) -> None:
@@ -70,7 +69,7 @@ class DaemonMonitor:
         # Setup signal handlers
         self._setup_signals()
 
-        # Send startup notification
+        # Send startup notification (no rate limit for startup)
         self.notifier.send(
             message="Daemon monitor started",
             title="Aurel2: Monitor Started",
@@ -140,7 +139,7 @@ class DaemonMonitor:
             # Reset auto-fixer attempts on recovery
             self.auto_fixer.reset_attempts()
 
-            # Notify recovery
+            # Notify recovery (no rate limit - recovery is important)
             self.notifier.send(
                 message="Daemon has recovered and is healthy",
                 title="Aurel2: Daemon Recovered",
@@ -233,13 +232,7 @@ class DaemonMonitor:
                     self._notify_fix_failure(error, result.message)
 
     def _notify_error(self, error: AnalyzedError) -> None:
-        """Send notification for an error."""
-        # Rate limit notifications (max one per 5 minutes for same category)
-        if self._last_notification_time:
-            elapsed = (datetime.now() - self._last_notification_time).total_seconds()
-            if elapsed < 300:  # 5 minutes
-                return
-
+        """Send notification for an error (rate limited to 1 per hour per category)."""
         priority = {
             ErrorSeverity.INFO: "low",
             ErrorSeverity.WARNING: "default",
@@ -265,32 +258,31 @@ class DaemonMonitor:
             title=f"Aurel2: {error.severity.value.upper()} - {error.category.value}",
             priority=priority,
             tags=tags,
+            category=f"error_{error.category.value}",
         )
 
-        self._last_notification_time = datetime.now()
-
     def _notify_fix_success(self, error: AnalyzedError, message: str) -> None:
-        """Notify about successful auto-fix."""
+        """Notify about successful auto-fix (rate limited)."""
         self.notifier.send(
             message=f"Auto-fixed: {error.category.value}\n\n{message}",
             title="Aurel2: Auto-Fix Applied",
             tags=["wrench", "white_check_mark"],
             priority="default",
+            category=f"fix_success_{error.category.value}",
         )
-        self._last_notification_time = datetime.now()
 
     def _notify_fix_failure(self, error: AnalyzedError, message: str) -> None:
-        """Notify about failed auto-fix."""
+        """Notify about failed auto-fix (rate limited)."""
         self.notifier.send(
             message=f"Auto-fix FAILED: {error.category.value}\n\n{message}\n\nManual intervention required.",
             title="Aurel2: Auto-Fix Failed",
             tags=["x", "wrench"],
             priority="high",
+            category=f"fix_failure_{error.category.value}",
         )
-        self._last_notification_time = datetime.now()
 
     def _escalate(self, errors: list[AnalyzedError], report: HealthReport) -> None:
-        """Escalate issues that cannot be auto-fixed."""
+        """Escalate issues that cannot be auto-fixed (rate limited)."""
         issue_summary = "\n".join(f"• {e.message}" for e in errors)
 
         self.notifier.send(
@@ -303,8 +295,8 @@ class DaemonMonitor:
             title="Aurel2: ESCALATION - Manual Intervention Required",
             tags=["rotating_light", "sos"],
             priority="urgent",
+            category="escalation",
         )
-        self._last_notification_time = datetime.now()
 
     def _setup_signals(self) -> None:
         """Setup signal handlers."""
