@@ -1,4 +1,4 @@
-"""IBKR connection management and TWS launcher."""
+"""IBKR connection management and IB Gateway launcher."""
 
 import asyncio
 import subprocess
@@ -53,8 +53,8 @@ class IBKRConnection:
     Manages IBKR connection lifecycle.
 
     Handles:
-    - Connecting to TWS/Gateway
-    - Launching TWS if not running
+    - Connecting to IB Gateway (preferred) or TWS
+    - Launching IB Gateway if not running
     - Reconnecting on disconnect
     - Heartbeat to keep connection alive
     """
@@ -63,10 +63,13 @@ class IBKRConnection:
         self,
         paper: bool = True,
         host: str = "127.0.0.1",
+        port: int | None = None,
         client_id: int | None = None,
     ):
         self.paper = paper
-        self.port = 7497 if paper else 7496
+        # Default ports: IB Gateway paper=4002, live=4001
+        # Can be overridden (e.g., Docker uses 4004/4003 inside container)
+        self.port = port if port is not None else (4002 if paper else 4001)
         self.host = host
         # Use random client ID if not specified to avoid conflicts
         if client_id is None:
@@ -131,17 +134,17 @@ class IBKRConnection:
             if attempt < max_retries - 1:
                 await asyncio.sleep(10)
 
-        # Connection failed - try to launch TWS
+        # Connection failed - try to launch IB Gateway
         if launch_tws_if_needed:
-            logger.info("ibkr_launching_tws")
-            launched = self._launch_tws()
+            logger.info("ibkr_launching_gateway")
+            launched = self._launch_gateway()
 
             if launched:
                 result = await self._wait_for_login()
                 if result:
                     self.circuit_breaker.record_success()
                 else:
-                    self.circuit_breaker.record_failure("TWS login timeout")
+                    self.circuit_breaker.record_failure("IB Gateway login timeout")
                 return result
 
         # All retries failed
@@ -202,16 +205,16 @@ class IBKRConnection:
             logger.error("ibkr_get_position_error", symbol=symbol, error=str(e))
             return None
 
-    def _launch_tws(self) -> bool:
-        """Launch TWS application."""
+    def _launch_gateway(self) -> bool:
+        """Launch IB Gateway application."""
         system = platform.system()
-        paths = TWS_PATHS.get(system, [])
+        paths = GATEWAY_PATHS.get(system, [])
 
         for path_str in paths:
             path = Path(path_str).expanduser()
 
             if path.exists():
-                logger.info("ibkr_launching_tws", path=str(path))
+                logger.info("ibkr_launching_gateway", path=str(path))
 
                 try:
                     if system == "Darwin":
@@ -223,19 +226,19 @@ class IBKRConnection:
 
                     return True
                 except Exception as e:
-                    logger.warning("ibkr_launch_failed", path=str(path), error=str(e))
+                    logger.warning("ibkr_gateway_launch_failed", path=str(path), error=str(e))
 
-        logger.error("ibkr_tws_not_found", searched_paths=paths)
+        logger.error("ibkr_gateway_not_found", searched_paths=paths)
         print("\n" + "=" * 60)
-        print("Could not find TWS. Please start it manually.")
+        print("Could not find IB Gateway. Please start it manually.")
         print(f"Expected locations: {paths}")
         print("=" * 60 + "\n")
         return False
 
     async def _wait_for_login(self, timeout_minutes: int = 5) -> bool:
-        """Wait for user to log in to TWS."""
+        """Wait for user to log in to IB Gateway."""
         print("\n" + "=" * 60)
-        print("TWS launched. Please log in to your account.")
+        print("IB Gateway launched. Please log in to your account.")
         print(f"Waiting up to {timeout_minutes} minutes for connection...")
         print("=" * 60 + "\n")
 
@@ -271,7 +274,7 @@ class IBKRConnection:
             await asyncio.sleep(check_interval)
 
         logger.error("ibkr_login_timeout", timeout_minutes=timeout_minutes)
-        print(f"\nTimeout waiting for TWS login after {timeout_minutes} minutes.")
+        print(f"\nTimeout waiting for IB Gateway login after {timeout_minutes} minutes.")
         return False
 
     def _start_heartbeat(self) -> None:

@@ -40,15 +40,19 @@ class IBKRBroker(BaseBroker):
     Interactive Brokers integration.
 
     Requires:
-    - IB Gateway or TWS running locally
-    - API connections enabled in IB Gateway/TWS settings
+    - IB Gateway running locally (preferred) or TWS
+    - API connections enabled in IB Gateway settings
     - pip install ib_insync
 
     Usage:
-        broker = IBKRBroker(host="127.0.0.1", port=7497)  # 7497=paper, 7496=live
+        broker = IBKRBroker(host="127.0.0.1", port=4002)  # IB Gateway: 4002=paper, 4001=live
         await broker.connect()
         positions = await broker.get_positions()
         await broker.disconnect()
+
+    Port reference:
+        IB Gateway: 4001 (live), 4002 (paper)
+        TWS: 7496 (live), 7497 (paper)
     """
 
     # Symbol mappings: our symbols -> IBKR contract details
@@ -66,7 +70,7 @@ class IBKRBroker(BaseBroker):
     def __init__(
         self,
         host: str = "127.0.0.1",
-        port: int = 7497,  # 7497 = paper trading, 7496 = live
+        port: int = 4002,  # IB Gateway: 4002 = paper, 4001 = live
         client_id: int = 1,
     ):
         if not HAS_IB_INSYNC:
@@ -140,7 +144,7 @@ class IBKRBroker(BaseBroker):
             raise ConnectionError("Not connected to IBKR")
 
         positions = []
-        ib_positions = await self.ib.positionsAsync()
+        ib_positions = await self.ib.reqPositionsAsync()
         for pos in ib_positions:
             contract = pos.contract
 

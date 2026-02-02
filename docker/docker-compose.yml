@@ -1,0 +1,91 @@
+name: aurel2-trading
+
+services:
+  # IB Gateway - headless IBKR connection
+  ib-gateway:
+    image: ghcr.io/gnzsnz/ib-gateway:stable
+    restart: unless-stopped
+    environment:
+      TWS_USERID: ${TWS_USERID}
+      TWS_PASSWORD: ${TWS_PASSWORD}
+      TRADING_MODE: ${TRADING_MODE:-paper}
+      READ_ONLY_API: ${READ_ONLY_API:-no}
+      VNC_SERVER_PASSWORD: ${VNC_SERVER_PASSWORD:-}
+      TWOFA_TIMEOUT_ACTION: ${TWOFA_TIMEOUT_ACTION:-restart}
+      AUTO_RESTART_TIME: ${AUTO_RESTART_TIME:-11:59 PM}
+      RELOGIN_AFTER_TWOFA_TIMEOUT: ${RELOGIN_AFTER_TWOFA_TIMEOUT:-yes}
+      EXISTING_SESSION_DETECTED_ACTION: ${EXISTING_SESSION_DETECTED_ACTION:-primary}
+      TIME_ZONE: ${TIME_ZONE:-Europe/Bucharest}
+    volumes:
+      - ib-gateway-settings:/home/ibgateway/Jts
+    ports:
+      # VNC for debugging (optional - only if VNC_SERVER_PASSWORD is set)
+      - "127.0.0.1:5900:5900"
+    networks:
+      - trading-net
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 4003 || nc -z localhost 4004"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
+  # Aurel2 Trading Daemon
+  aurel2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      ib-gateway:
+        condition: service_healthy
+    environment:
+      # IBKR connection (connects to ib-gateway container)
+      IBKR_HOST: ib-gateway
+      IBKR_PORT: ${IBKR_PORT:-4004}
+
+      # Trading settings (read by CLI via envvar)
+      CHECK_TIME: ${CHECK_TIME:-16:00}
+      POLL_INTERVAL: ${POLL_INTERVAL:-5}
+      DRY_RUN: ${DRY_RUN:-false}
+      NTFY_TOPIC: ${NTFY_TOPIC:-aurel2}
+
+      # AI settings
+      AI_MODEL: ${AI_MODEL:-sonnet}
+      AI_LOOKBACK_YEARS: ${AI_LOOKBACK_YEARS:-3}
+    volumes:
+      # Persist aurel2 data (portfolio, logs, pending orders)
+      - aurel2-data:/root/.aurel2
+
+      # Claude Code auth (mount from host after authenticating)
+      - ${CLAUDE_CONFIG_PATH:-./claude-config}:/root/.claude:ro
+    networks:
+      - trading-net
+    # Command uses environment variables via typer's envvar support
+    command: ["live", "--paper"]
+
+  # Dashboard (optional web UI)
+  dashboard:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - aurel2
+    volumes:
+      - aurel2-data:/root/.aurel2:ro
+    ports:
+      - "${DASHBOARD_PORT:-8080}:8080"
+    networks:
+      - trading-net
+    command: ["dashboard", "--host", "0.0.0.0", "--port", "8080"]
+    profiles:
+      - dashboard
+
+networks:
+  trading-net:
+    driver: bridge
+
+volumes:
+  ib-gateway-settings:
+  aurel2-data:

@@ -32,7 +32,7 @@ assets:
 broker:
   type: ibkr
   host: "127.0.0.1"
-  port: 7497
+  port: 4002  # IB Gateway paper trading (4001 for live)
 
 risk:
   max_position_pct: 1.0

@@ -19,6 +19,7 @@ build/
 # Environment
 .env
 .env.local
+docker/.env
 
 # Data
 *.db

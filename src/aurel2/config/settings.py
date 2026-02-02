@@ -36,7 +36,7 @@ class BrokerConfig(BaseModel):
     """Broker configuration."""
     type: str = "ibkr"
     host: str = "127.0.0.1"
-    port: int = 7497
+    port: int = 4002  # IB Gateway paper trading (4001 for live)
 
 
 class RiskConfig(BaseModel):
