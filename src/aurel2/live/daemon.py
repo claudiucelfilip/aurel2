@@ -46,6 +46,8 @@ class LiveDaemon:
         dry_run: bool = False,
         ai_model: str = "sonnet",
         ai_lookback_years: int = 3,
+        ibkr_host: str = "127.0.0.1",
+        ibkr_port: int | None = None,
     ):
         self.paper = paper
         self.check_time = check_time
@@ -56,7 +58,7 @@ class LiveDaemon:
         self.ai_model = ai_model
         self.ai_lookback_years = ai_lookback_years
 
-        self.connection = IBKRConnection(paper=paper)
+        self.connection = IBKRConnection(paper=paper, host=ibkr_host, port=ibkr_port)
         self.pending_manager = PendingManager()
         self.checker = Checker(
             connection=self.connection,
@@ -246,6 +248,16 @@ class LiveDaemon:
             position_size_pct=decision.position_size_pct,
         )
 
+        # Record execution in trade journal (use linked journal ID if available)
+        journal_id = decision.journal_decision_id or decision.id
+        self.checker.journal.record_execution(
+            decision_id=journal_id,
+            success=result.success,
+            shares=result.shares,
+            fill_price=result.fill_price,
+            error=result.message if not result.success else None,
+        )
+
         if result.success:
             self.notifier.send(
                 message=(
@@ -328,6 +340,16 @@ class LiveDaemon:
             symbol=decision.symbol,
             current_holding=decision.current_holding,
             position_size_pct=decision.position_size_pct,
+        )
+
+        # Record execution in trade journal (use linked journal ID if available)
+        journal_id = decision.journal_decision_id or decision.id
+        self.checker.journal.record_execution(
+            decision_id=journal_id,
+            success=result.success,
+            shares=result.shares,
+            fill_price=result.fill_price,
+            error=result.message if not result.success else None,
         )
 
         if result.success:

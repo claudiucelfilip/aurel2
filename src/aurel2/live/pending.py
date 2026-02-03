@@ -59,6 +59,12 @@ class PendingDecision:
     market_regime: Optional[str] = None
     current_holding: Optional[str] = None
 
+    # Position sizing from regime detection (0.0 to 1.0)
+    position_size_pct: float = 1.0
+
+    # Link to trade journal entry (for updating execution status)
+    journal_decision_id: Optional[str] = None
+
     def timeout_seconds(self) -> int:
         """Get timeout in seconds based on urgency."""
         # Both NON_ROUTINE and URGENT have 1 hour timeout
@@ -130,6 +136,8 @@ class PendingManager:
         market_regime: Optional[str] = None,
         current_holding: Optional[str] = None,
         original_price: Optional[float] = None,
+        position_size_pct: float = 1.0,
+        journal_decision_id: Optional[str] = None,
     ) -> PendingDecision:
         """Create a new pending decision."""
         decision_id = str(uuid.uuid4())[:8]
@@ -154,6 +162,8 @@ class PendingManager:
             strategies=strategies or [],
             market_regime=market_regime,
             current_holding=current_holding,
+            position_size_pct=position_size_pct,
+            journal_decision_id=journal_decision_id,
         )
 
         self.decisions[decision_id] = decision

@@ -300,7 +300,7 @@ class Checker:
         else:
             # NON_ROUTINE or URGENT - create pending approval
             return await self._create_pending_decision(
-                decision, ai_advice, signals, market_context, current_holding, account_value
+                decision, ai_advice, signals, market_context, current_holding, account_value, decision_id
             )
 
     async def _fetch_prices(self) -> pd.DataFrame:
@@ -498,6 +498,7 @@ class Checker:
         market_context: dict,
         current_holding: Optional[str],
         account_value: Optional[float],
+        journal_decision_id: str,
     ) -> CheckResult:
         """Create a pending decision requiring approval."""
         logger.info(
@@ -562,6 +563,7 @@ class Checker:
             current_holding=current_holding,
             original_price=original_price,
             position_size_pct=decision.position_size_pct,
+            journal_decision_id=journal_decision_id,
         )
 
         # Post to Vercel endpoint

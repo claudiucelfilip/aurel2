@@ -1,20 +1,17 @@
-"""FastAPI dashboard application."""
+"""FastAPI dashboard application - displays live IBKR positions."""
 
-from datetime import date
-from pathlib import Path
+import os
 import json
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+from datetime import date, datetime, timedelta
+from pathlib import Path
 
-import pandas as pd
-from fastapi import FastAPI, Request, Form, Query
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from aurel2.persistence.portfolio import PortfolioStore
-from aurel2.data.providers.yahoo import YahooFinanceProvider
-from aurel2.data.momentum import calculate_momentum_scores
-from aurel2.core.models import Asset, AssetClass, SignalAction
-from aurel2.strategies.dual_momentum import DualMomentumStrategy
-from aurel2.engine.backtest import BacktestEngine
+import yfinance as yf
 
 app = FastAPI(title="Aurel2 Dashboard")
 
@@ -22,379 +19,379 @@ app = FastAPI(title="Aurel2 Dashboard")
 templates_dir = Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=str(templates_dir))
 
-# Asset definitions
-ASSETS = {
-    AssetClass.US_STOCKS: Asset(
-        symbol="SPY", name="S&P 500 US Stocks",
-        asset_class=AssetClass.US_STOCKS, yahoo_symbol="SPY"
-    ),
-    AssetClass.GLOBAL_STOCKS: Asset(
-        symbol="EFA", name="International Developed Markets",
-        asset_class=AssetClass.GLOBAL_STOCKS, yahoo_symbol="EFA"
-    ),
-    AssetClass.BONDS: Asset(
-        symbol="AGG", name="US Aggregate Bonds",
-        asset_class=AssetClass.BONDS, yahoo_symbol="AGG"
-    ),
-    AssetClass.CASH: Asset(
-        symbol="CASH", name="Cash / Money Market",
-        asset_class=AssetClass.CASH
-    ),
-}
+# IBKR connection settings from environment
+IBKR_HOST = os.environ.get("IBKR_HOST", "127.0.0.1")
+IBKR_PORT = int(os.environ.get("IBKR_PORT", "4002"))
 
-UCITS_MAP = {
-    AssetClass.US_STOCKS: {"symbol": "CSPX", "name": "iShares Core S&P 500 UCITS ETF (Acc)", "isin": "IE00B5BMR087"},
-    AssetClass.GLOBAL_STOCKS: {"symbol": "VWRA", "name": "Vanguard FTSE All-World UCITS ETF (Acc)", "isin": "IE00BK5BQT80"},
-    AssetClass.BONDS: {"symbol": "AGGH", "name": "iShares Core Global Aggregate Bond UCITS ETF (Acc)", "isin": "IE00BDBRDM35"},
-    AssetClass.CASH: {"symbol": "CASH", "name": "Cash", "isin": "N/A"},
-}
+# Data directory
+DATA_DIR = Path(os.environ.get("AUREL2_DATA_DIR", str(Path.home() / ".aurel2")))
+SNAPSHOTS_FILE = DATA_DIR / "snapshots.json"
 
-SYMBOL_TO_CLASS = {
-    "CSPX": AssetClass.US_STOCKS, "SPY": AssetClass.US_STOCKS,
-    "VWRA": AssetClass.GLOBAL_STOCKS, "EFA": AssetClass.GLOBAL_STOCKS,
-    "AGGH": AssetClass.BONDS, "AGG": AssetClass.BONDS,
-}
+# Thread pool for running blocking IBKR calls
+executor = ThreadPoolExecutor(max_workers=2)
 
 
-def get_momentum_data():
-    """Calculate current momentum scores."""
-    from dateutil.relativedelta import relativedelta
-
-    check_date = date.today()
-    provider = YahooFinanceProvider()
-    symbols = [a.yahoo_symbol for a in ASSETS.values() if a.yahoo_symbol]
-    start = check_date - relativedelta(months=14)
-
-    prices = provider.get_multi_prices(symbols, start, check_date)
-
-    scores = calculate_momentum_scores(
-        prices=prices,
-        assets=ASSETS,
-        calc_date=check_date,
-        lookback_months=12,
-        cash_rate=0.04,
-    )
-
-    return scores
+def load_snapshots() -> list[dict]:
+    """Load historical portfolio snapshots."""
+    if SNAPSHOTS_FILE.exists():
+        try:
+            return json.loads(SNAPSHOTS_FILE.read_text())
+        except Exception:
+            return []
+    return []
 
 
-def get_recommendation(scores, portfolio):
-    """Generate trading recommendation based on scores and portfolio."""
-    sorted_scores = sorted(scores.items(), key=lambda x: x[1].momentum_12m, reverse=True)
-    winner_class, winner_score = sorted_scores[0]
+def save_snapshot(total_value: float, cash: float, positions_value: float):
+    """Save today's snapshot (one per day)."""
+    snapshots = load_snapshots()
+    today = date.today().isoformat()
 
-    # Find current holding
-    current_holding = None
-    current_class = None
-    for h in portfolio.holdings:
-        if h.symbol.upper() in SYMBOL_TO_CLASS:
-            current_holding = h
-            current_class = SYMBOL_TO_CLASS[h.symbol.upper()]
+    # Update or add today's snapshot
+    for snap in snapshots:
+        if snap["date"] == today:
+            snap["total_value"] = total_value
+            snap["cash"] = cash
+            snap["positions_value"] = positions_value
             break
-
-    recommendation = {
-        "winner_class": winner_class,
-        "winner_score": winner_score,
-        "winner_ucits": UCITS_MAP[winner_class],
-        "current_holding": current_holding,
-        "current_class": current_class,
-        "action": "HOLD",
-        "details": "",
-        "tax_warning": None,
-    }
-
-    if current_holding is None:
-        if winner_score.momentum_12m > 0.04:
-            recommendation["action"] = "BUY"
-            recommendation["details"] = f"Buy {UCITS_MAP[winner_class]['symbol']} ({winner_score.momentum_12m:.1%} momentum)"
-        else:
-            recommendation["action"] = "STAY_CASH"
-            recommendation["details"] = "All assets underperforming cash"
     else:
-        current_score = scores.get(current_class)
-        if current_class == winner_class:
-            recommendation["action"] = "HOLD"
-            recommendation["details"] = f"You own the winner ({winner_score.momentum_12m:.1%} momentum)"
-        elif current_score:
-            diff = winner_score.momentum_12m - current_score.momentum_12m
-            if diff > 0.10:
-                recommendation["action"] = "SWITCH"
-                recommendation["details"] = f"Sell {current_holding.symbol} → Buy {UCITS_MAP[winner_class]['symbol']} (diff: {diff:.1%})"
+        snapshots.append({
+            "date": today,
+            "total_value": total_value,
+            "cash": cash,
+            "positions_value": positions_value,
+        })
 
-                if not current_holding.is_long_term():
-                    days_left = current_holding.days_until_long_term()
-                    recommendation["tax_warning"] = f"Selling now = 3% tax. Wait {days_left} days for 1% tax."
-            else:
-                recommendation["action"] = "HOLD"
-                recommendation["details"] = f"Difference ({diff:.1%}) below 10% threshold"
+    # Keep last 365 days
+    snapshots = sorted(snapshots, key=lambda x: x["date"])[-365:]
 
-    return recommendation
+    SNAPSHOTS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    SNAPSHOTS_FILE.write_text(json.dumps(snapshots, indent=2))
 
 
-def get_next_rebalance():
-    """Get next quarterly rebalance date."""
-    today = date.today()
-    year = today.year
-    month = today.month
+def get_heartbeat() -> dict | None:
+    """Get daemon heartbeat status."""
+    heartbeat_file = DATA_DIR / "heartbeat.json"
+    if heartbeat_file.exists():
+        try:
+            data = json.loads(heartbeat_file.read_text())
+            # Calculate how long ago
+            ts = data.get("timestamp", 0)
+            ago = int(datetime.now().timestamp() - ts)
+            data["seconds_ago"] = ago
+            data["status"] = "healthy" if ago < 300 else "stale"
+            return data
+        except Exception:
+            pass
+    return None
 
-    quarter_ends = [(3, 31), (6, 30), (9, 30), (12, 31)]
-    for q_month, q_day in quarter_ends:
-        if month < q_month or (month == q_month and today.day < q_day):
-            return date(year, q_month, q_day)
-    return date(year + 1, 3, 31)
+
+def _sync_get_ibkr_data() -> dict:
+    """Fetch positions and account data directly from IBKR (runs in its own event loop)."""
+
+    async def _fetch():
+        from aurel2.broker.ibkr import IBKRBroker
+        import random
+
+        # Retry up to 3 times with different client IDs
+        last_error = None
+        for attempt in range(3):
+            try:
+                client_id = 990 + random.randint(0, 9)
+                broker = IBKRBroker(host=IBKR_HOST, port=IBKR_PORT, client_id=client_id)
+                connected = await broker.connect()
+
+                if connected:
+                    break
+                last_error = "Could not connect to IBKR"
+            except Exception as e:
+                last_error = str(e)
+
+            # Wait before retry
+            if attempt < 2:
+                await asyncio.sleep(2)
+        else:
+            return {"connected": False, "error": last_error or "Connection failed after 3 attempts"}
+
+        try:
+            positions = await broker.get_positions()
+            account = await broker.get_account_summary()
+
+            # Get live prices from Yahoo for accurate P&L
+            positions_data = []
+            for p in positions:
+                # Get current price from Yahoo Finance for accurate P&L
+                try:
+                    ticker = yf.Ticker(p.symbol)
+                    current_price = ticker.info.get("regularMarketPrice") or ticker.info.get("previousClose") or p.market_price
+                except Exception:
+                    current_price = p.market_price
+
+                market_value = p.shares * current_price
+                cost_basis = p.shares * p.avg_cost
+                unrealized_pnl = market_value - cost_basis
+                pnl_pct = ((current_price / p.avg_cost) - 1) * 100 if p.avg_cost else 0
+
+                positions_data.append({
+                    "symbol": p.symbol,
+                    "shares": p.shares,
+                    "avg_cost": p.avg_cost,
+                    "market_price": current_price,
+                    "market_value": market_value,
+                    "unrealized_pnl": unrealized_pnl,
+                    "pnl_pct": pnl_pct,
+                })
+
+            account_data = {
+                "total_value": account.total_value if account else 0,
+                "cash_balance": account.cash_balance if account else 0,
+                "buying_power": account.buying_power if account else 0,
+            } if account else None
+
+            # Save daily snapshot
+            if account_data:
+                positions_value = sum(p["market_value"] for p in positions_data)
+                save_snapshot(
+                    account_data["total_value"],
+                    account_data["cash_balance"],
+                    positions_value,
+                )
+
+            return {
+                "connected": True,
+                "positions": positions_data,
+                "account": account_data,
+            }
+        finally:
+            await broker.disconnect()
+
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            return loop.run_until_complete(asyncio.wait_for(_fetch(), timeout=30))
+        finally:
+            loop.close()
+    except asyncio.TimeoutError:
+        return {"connected": False, "error": "Connection timed out"}
+    except Exception as e:
+        return {"connected": False, "error": str(e)}
+
+
+async def get_ibkr_data() -> dict:
+    """Async wrapper that runs IBKR fetch in a separate thread."""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(executor, _sync_get_ibkr_data)
 
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
-    """Main dashboard view."""
-    store = PortfolioStore()
-    portfolio = store.load()
-    scores = get_momentum_data()
-    recommendation = get_recommendation(scores, portfolio)
-    next_rebalance = get_next_rebalance()
+    """Main dashboard view - shows live IBKR positions."""
+    data = await get_ibkr_data()
+    heartbeat = get_heartbeat()
+    snapshots = load_snapshots()
 
-    # Prepare momentum data for template
-    momentum_data = []
-    sorted_scores = sorted(scores.items(), key=lambda x: x[1].momentum_12m, reverse=True)
-    for asset_class, score in sorted_scores:
-        is_winner = asset_class == recommendation["winner_class"]
-        is_held = recommendation["current_class"] == asset_class
-        momentum_data.append({
-            "asset_class": asset_class.value,
-            "name": score.asset.name,
-            "momentum": score.momentum_12m,
-            "price": score.price,
-            "is_winner": is_winner,
-            "is_held": is_held,
-            "ucits": UCITS_MAP[asset_class],
-        })
+    # Get comparison chart data
+    positions = data.get("positions", [])
+    account = data.get("account")
+    chart_data = get_comparison_chart_data(positions, account) if account else None
+
+    # Add first trade date info for display
+    first_trade_date = get_first_trade_date()
 
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
-        "portfolio": portfolio,
-        "momentum_data": momentum_data,
-        "recommendation": recommendation,
-        "next_rebalance": next_rebalance,
         "today": date.today(),
+        "connected": data.get("connected", False),
+        "error": data.get("error"),
+        "positions": positions,
+        "account": data.get("account"),
+        "heartbeat": heartbeat,
+        "snapshots": snapshots,
+        "chart_data": chart_data,
+        "first_trade_date": first_trade_date,
     })
 
 
-@app.get("/api/momentum")
-async def api_momentum():
-    """API endpoint for momentum data."""
-    scores = get_momentum_data()
-    result = {}
-    for asset_class, score in scores.items():
-        result[asset_class.value] = {
-            "momentum": score.momentum_12m,
-            "price": score.price,
-            "is_positive": score.is_positive,
-        }
-    return result
+@app.get("/api/positions")
+async def api_positions():
+    """API endpoint for live IBKR positions."""
+    return await get_ibkr_data()
 
 
-@app.get("/api/portfolio")
-async def api_portfolio():
-    """API endpoint for portfolio data."""
-    store = PortfolioStore()
-    portfolio = store.load()
-    return {
-        "cash": portfolio.cash,
-        "total_invested": portfolio.total_invested,
-        "holdings": [h.to_dict() for h in portfolio.holdings],
-    }
+@app.get("/api/snapshots")
+async def api_snapshots():
+    """API endpoint for historical snapshots."""
+    return load_snapshots()
 
 
-@app.post("/api/buy")
-async def api_buy(
-    symbol: str = Form(...),
-    shares: float = Form(...),
-    price: float = Form(...),
-    broker: str = Form("tradeville"),
-):
-    """Record a buy."""
-    store = PortfolioStore()
+def get_first_trade_date() -> date | None:
+    """Get the date of the first executed trade from the journal."""
+    journal_file = DATA_DIR / "trade_journal.json"
+    if not journal_file.exists():
+        # Fall back to data directory in project
+        journal_file = Path("data/trade_journal.json")
 
-    known_etfs = {
-        "VWRA": ("Vanguard FTSE All-World UCITS ETF (Acc)", "IE00BK5BQT80"),
-        "CSPX": ("iShares Core S&P 500 UCITS ETF (Acc)", "IE00B5BMR087"),
-        "AGGH": ("iShares Core Global Aggregate Bond UCITS ETF (Acc)", "IE00BDBRDM35"),
-    }
-
-    symbol = symbol.upper()
-    name, isin = known_etfs.get(symbol, (symbol, None))
-
-    store.add_holding(
-        symbol=symbol,
-        name=name,
-        shares=shares,
-        price=price,
-        entry_date=date.today(),
-        broker=broker,
-        isin=isin,
-    )
-
-    return {"status": "ok", "message": f"Recorded {shares} shares of {symbol}"}
+    if journal_file.exists():
+        try:
+            entries = json.loads(journal_file.read_text())
+            for entry in entries:
+                if entry.get("executed") and entry.get("action") == "buy":
+                    ts = entry.get("timestamp", "")
+                    if ts:
+                        return datetime.fromisoformat(ts).date()
+        except Exception:
+            pass
+    return None
 
 
-@app.post("/api/sell")
-async def api_sell(symbol: str = Form(...)):
-    """Record a sale."""
-    store = PortfolioStore()
-    holding = store.remove_holding(symbol)
+def get_comparison_chart_data(positions: list[dict], account: dict) -> dict:
+    """Get chart data showing actual portfolio value vs benchmarks.
 
-    if holding:
-        return {"status": "ok", "message": f"Removed {symbol} from portfolio"}
+    Shows:
+    - Flat cash period before first trade
+    - Actual portfolio performance after trade
+    - SPY benchmark (what if we'd bought SPY instead)
+    - Position benchmark (e.g., GLD - buy and hold from start)
+    """
+    if not account:
+        return {"dates": [], "portfolio": [], "spy": [], "position": []}
+
+    current_total = account.get("total_value", 0)
+    current_cash = account.get("cash_balance", 0)
+
+    # Determine chart start date - from first trade or 30 days back
+    first_trade = get_first_trade_date()
+    if first_trade:
+        # Start a few days before first trade to show cash period
+        start_date = first_trade - timedelta(days=3)
     else:
-        return {"status": "error", "message": f"No holding found for {symbol}"}
+        start_date = date.today() - timedelta(days=30)
 
+    end_date = date.today()
 
-@app.get("/backtest", response_class=HTMLResponse)
-async def backtest_page(request: Request):
-    """Backtest visualization page."""
-    return templates.TemplateResponse("backtest.html", {
-        "request": request,
-        "today": date.today(),
-    })
+    # Calculate starting capital (cost basis of positions + current cash)
+    starting_capital = current_cash
+    for p in positions:
+        starting_capital += p["shares"] * p["avg_cost"]
 
+    # Get SPY data for benchmark
+    try:
+        spy = yf.Ticker("SPY")
+        spy_hist = spy.history(start=start_date.isoformat(), end=end_date.isoformat())
+        if spy_hist.empty:
+            return {"dates": [], "portfolio": [], "spy": [], "position": []}
+    except Exception:
+        return {"dates": [], "portfolio": [], "spy": [], "position": []}
 
-@app.get("/api/backtest")
-async def api_backtest(
-    start: str = Query("2010-01-01"),
-    end: str = Query(None),
-    capital: float = Query(10000.0),
-):
-    """Run backtest and return chart data."""
-    from dateutil.relativedelta import relativedelta
+    # Get historical prices for current positions
+    position_hist = {}
+    main_position_symbol = None
+    for p in positions:
+        symbol = p["symbol"]
+        if main_position_symbol is None:
+            main_position_symbol = symbol  # Use first/largest position for benchmark
+        try:
+            ticker = yf.Ticker(symbol)
+            hist = ticker.history(start=start_date.isoformat(), end=end_date.isoformat())
+            if not hist.empty:
+                position_hist[symbol] = {
+                    "prices": hist["Close"],
+                    "shares": p["shares"],
+                    "avg_cost": p["avg_cost"],
+                }
+        except Exception:
+            pass
 
-    start_date = date.fromisoformat(start)
-    end_date = date.fromisoformat(end) if end else date.today()
+    # Calculate values for each day
+    dates = []
+    portfolio_values = []
+    spy_values = []
+    position_values = []  # Buy-and-hold the main position from day 1
 
-    # Fetch price data - use full 11-asset universe
-    from aurel2.core.assets import ASSET_REGISTRY, get_all_yahoo_symbols
-    provider = YahooFinanceProvider()
-    symbols = get_all_yahoo_symbols()
-    prices = provider.get_multi_prices(symbols, start_date, end_date)
+    spy_start = float(spy_hist["Close"].iloc[0])
 
-    # Create strategy with full asset registry
-    assets = ASSET_REGISTRY
+    # Get position start price for buy-and-hold benchmark
+    position_start = None
+    if main_position_symbol and main_position_symbol in position_hist:
+        pos_prices = position_hist[main_position_symbol]["prices"]
+        if len(pos_prices) > 0:
+            position_start = float(pos_prices.iloc[0])
 
-    strategy = DualMomentumStrategy(
-        assets=assets,
-        lookback_months=12,
-        switch_threshold=0.10,
-        cash_rate=0.04,
-    )
+    for idx, row in spy_hist.iterrows():
+        current_date = idx.date() if hasattr(idx, 'date') else idx
+        date_str = idx.strftime("%Y-%m-%d")
+        dates.append(date_str)
 
-    # Run backtest
-    engine = BacktestEngine(
-        strategy=strategy,
-        initial_capital=capital,
-        transaction_cost_pct=0.001,
-    )
+        # Before first trade: portfolio is all cash
+        if first_trade and current_date < first_trade:
+            portfolio_val = starting_capital
+        else:
+            # After first trade: calculate actual portfolio value
+            portfolio_val = current_cash
+            for symbol, data in position_hist.items():
+                prices = data["prices"]
+                shares = data["shares"]
 
-    result = engine.run(
-        prices=prices,
-        start_date=start_date,
-        end_date=end_date,
-        frequency="quarterly",
-        benchmark_symbol="SPY",
-    )
+                if idx in prices.index:
+                    price = float(prices[idx])
+                else:
+                    earlier = prices[prices.index <= idx]
+                    price = float(earlier.iloc[-1]) if len(earlier) > 0 else data["avg_cost"]
 
-    # Build chart data
-    # Portfolio value over time
-    portfolio_series = []
-    for snap in result.snapshots:
-        portfolio_series.append({
-            "date": snap.date.isoformat(),
-            "value": float(snap.total_value),
-        })
+                portfolio_val += shares * price
 
-    # Benchmark (S&P 500) value over time
-    spy_prices = prices[prices["symbol"] == "SPY"].copy()
-    spy_prices["date"] = pd.to_datetime(spy_prices["date"])
-    spy_prices = spy_prices.sort_values("date")
+        portfolio_values.append(round(portfolio_val, 0))
 
-    # Get starting SPY price
-    start_spy = spy_prices[spy_prices["date"] >= pd.Timestamp(start_date)]
-    if not start_spy.empty:
-        start_spy_price = float(start_spy.iloc[0]["close"])
-        spy_shares = capital / start_spy_price
+        # SPY benchmark: what if we had invested starting_capital in SPY from day 1
+        spy_price = float(row["Close"])
+        spy_val = (spy_price / spy_start) * starting_capital
+        spy_values.append(round(spy_val, 0))
 
-        benchmark_series = []
-        # Sample monthly for chart
-        for _, row in spy_prices.iterrows():
-            benchmark_series.append({
-                "date": row["date"].strftime("%Y-%m-%d"),
-                "value": float(row["close"]) * spy_shares,
-            })
-    else:
-        benchmark_series = []
+        # Position benchmark: what if we had bought the main position from day 1
+        if position_start and main_position_symbol in position_hist:
+            pos_prices = position_hist[main_position_symbol]["prices"]
+            if idx in pos_prices.index:
+                pos_price = float(pos_prices[idx])
+            else:
+                earlier = pos_prices[pos_prices.index <= idx]
+                pos_price = float(earlier.iloc[-1]) if len(earlier) > 0 else position_start
+            pos_val = (pos_price / position_start) * starting_capital
+            position_values.append(round(pos_val, 0))
+        else:
+            position_values.append(round(starting_capital, 0))
 
-    # Trade markers
-    trades = []
-    for t in result.trades:
-        if t.action == SignalAction.BUY:
-            trades.append({
-                "date": t.date.isoformat(),
-                "action": "BUY",
-                "symbol": t.asset.symbol,
-                "price": t.price,
-                "value": float(t.shares) * t.price,
-            })
-        elif t.action == SignalAction.SELL:
-            trades.append({
-                "date": t.date.isoformat(),
-                "action": "SELL",
-                "symbol": t.asset.symbol,
-                "price": t.price,
-                "value": float(t.shares) * t.price,
-            })
-
-    # Signals for tooltip info
-    signals = []
-    for s in result.signals:
-        scores_data = {}
-        for ac, score in s.momentum_scores.items():
-            scores_data[ac.value] = round(score.momentum_12m * 100, 2)
-
-        signals.append({
-            "date": s.date.isoformat(),
-            "action": s.action.value,
-            "asset": s.asset.symbol if s.asset else "CASH",
-            "reason": s.reason,
-            "momentum_scores": scores_data,
-        })
+    # Anchor the last portfolio point to the real IBKR account value
+    if portfolio_values and current_total > 0:
+        portfolio_values[-1] = round(current_total, 0)
 
     return {
-        "portfolio": portfolio_series,
-        "benchmark": benchmark_series,
-        "trades": trades,
-        "signals": signals,
-        "metrics": {
-            "total_return": round(result.total_return * 100, 2),
-            "cagr": round(result.cagr * 100, 2),
-            "max_drawdown": round(result.max_drawdown * 100, 2),
-            "sharpe_ratio": round(result.sharpe_ratio, 2),
-            "num_trades": result.num_trades,
-            "benchmark_return": round((result.benchmark_final / capital - 1) * 100, 2) if result.benchmark_final else 0,
-            "alpha": round((result.total_return - (result.benchmark_final / capital - 1)) * 100, 2) if result.benchmark_final else 0,
-        },
-        "start_date": start_date.isoformat(),
-        "end_date": end_date.isoformat(),
-        "initial_capital": capital,
-        "final_value": round(result.final_value, 2),
-        "benchmark_final": round(result.benchmark_final, 2) if result.benchmark_final else None,
+        "dates": dates,
+        "portfolio": portfolio_values,
+        "spy": spy_values,
+        "position": position_values,
+        "position_symbol": main_position_symbol,
+        "starting_value": round(starting_capital, 0),
+        "current_value": round(current_total, 0),
+        "first_trade_date": first_trade.isoformat() if first_trade else None,
     }
 
 
-@app.get("/settings", response_class=HTMLResponse)
-async def settings_page(request: Request):
-    """Settings page for broker connections."""
-    return templates.TemplateResponse("settings.html", {
-        "request": request,
-        "today": date.today(),
-    })
+@app.get("/api/chart")
+async def api_chart():
+    """API endpoint for chart data."""
+    data = await get_ibkr_data()
+    positions = data.get("positions", [])
+    account = data.get("account")
+    return get_comparison_chart_data(positions, account) if account else {}
+
+
+@app.get("/api/status")
+async def api_status():
+    """API endpoint for daemon status."""
+    return {
+        "heartbeat": get_heartbeat(),
+        "snapshots_count": len(load_snapshots()),
+    }
 
 
 def run_dashboard(host: str = "127.0.0.1", port: int = 8000):

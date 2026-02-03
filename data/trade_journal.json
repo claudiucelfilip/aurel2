@@ -1,0 +1,677 @@
+[
+  {
+    "id": "b0936300",
+    "timestamp": "2026-01-22T16:14:15.906540",
+    "entry_type": "decision",
+    "action": "buy",
+    "symbol": "GLD",
+    "confidence": 0.9051177865270656,
+    "decision_type": "non_routine",
+    "strategy_signals": {
+      "dual_momentum": {
+        "action": "buy",
+        "confidence": 0.8,
+        "asset_symbol": "GLD",
+        "reasoning": "Initial buy: gold has highest momentum (74.35%)"
+      },
+      "mean_reversion": {
+        "action": "hold",
+        "confidence": 0.5,
+        "asset_symbol": null,
+        "reasoning": "RSI 49.6 in normal range [25-75]"
+      },
+      "multi_timeframe": {
+        "action": "buy",
+        "confidence": 0.9012963849690521,
+        "asset_symbol": "EFA",
+        "reasoning": "Initial buy: intl_developed has highest blended momentum (11.04%)"
+      }
+    },
+    "ai_agrees": true,
+    "ai_action": "buy",
+    "ai_asset": "GLD",
+    "ai_reasoning": "GLD has dominant momentum (+74%) in stable bull market. No pattern match to past failures which centered on high VIX environments or late exits/entries.",
+    "ai_confidence": 0.85,
+    "failure_patterns": [],
+    "market_regime": "bull",
+    "executed": false,
+    "shares": 0.0,
+    "fill_price": 0.0,
+    "slippage_pct": 0.0,
+    "execution_error": null,
+    "account_value_before": null,
+    "account_value_after": null,
+    "current_holding_before": null,
+    "current_holding_after": null
+  },
+  {
+    "id": "45f72ca9",
+    "timestamp": "2026-01-22T16:14:44.943220",
+    "entry_type": "decision",
+    "action": "buy",
+    "symbol": "GLD",
+    "confidence": 0.9051177865270656,
+    "decision_type": "non_routine",
+    "strategy_signals": {
+      "dual_momentum": {
+        "action": "buy",
+        "confidence": 0.8,
+        "asset_symbol": "GLD",
+        "reasoning": "Initial buy: gold has highest momentum (74.35%)"
+      },
+      "mean_reversion": {
+        "action": "hold",
+        "confidence": 0.5,
+        "asset_symbol": null,
+        "reasoning": "RSI 49.6 in normal range [25-75]"
+      },
+      "multi_timeframe": {
+        "action": "buy",
+        "confidence": 0.9012963849690521,
+        "asset_symbol": "EFA",
+        "reasoning": "Initial buy: intl_developed has highest blended momentum (11.04%)"
+      }
+    },
+    "ai_agrees": true,
+    "ai_action": "buy",
+    "ai_asset": "GLD",
+    "ai_reasoning": "No historical pattern match. Strong gold momentum in calm market conditions is a valid signal, not a failure-prone scenario.",
+    "ai_confidence": 0.85,
+    "failure_patterns": [],
+    "market_regime": "bull",
+    "executed": false,
+    "shares": 0.0,
+    "fill_price": 0.0,
+    "slippage_pct": 0.0,
+    "execution_error": null,
+    "account_value_before": null,
+    "account_value_after": null,
+    "current_holding_before": null,
+    "current_holding_after": null
+  },
+  {
+    "id": "25b300de",
+    "timestamp": "2026-01-22T16:32:38.723860",
+    "entry_type": "decision",
+    "action": "buy",
+    "symbol": "GLD",
+    "confidence": 0.9058323111131464,
+    "decision_type": "non_routine",
+    "strategy_signals": {
+      "dual_momentum": {
+        "action": "buy",
+        "confidence": 0.8,
+        "asset_symbol": "GLD",
+        "reasoning": "Initial buy: gold has highest momentum (74.76%)"
+      },
+      "mean_reversion": {
+        "action": "hold",
+        "confidence": 0.5,
+        "asset_symbol": null,
+        "reasoning": "RSI 54.0 in normal range [25-75]"
+      },
+      "multi_timeframe": {
+        "action": "buy",
+        "confidence": 0.9184329461795269,
+        "asset_symbol": "EFA",
+        "reasoning": "Initial buy: intl_developed has highest blended momentum (11.55%)"
+      }
+    },
+    "ai_agrees": true,
+    "ai_action": "buy",
+    "ai_asset": "GLD",
+    "ai_reasoning": "No historical pattern match. Gold momentum is exceptionally strong (74.76%), and we're entering from cash in a calm market with low VIX. This is precisely when momentum systems perform best - not during crisis periods.",
+    "ai_confidence": 0.85,
+    "failure_patterns": [],
+    "market_regime": "bull",
+    "executed": false,
+    "shares": 0.0,
+    "fill_price": 0.0,
+    "slippage_pct": 0.0,
+    "execution_error": null,
+    "account_value_before": null,
+    "account_value_after": null,
+    "current_holding_before": null,
+    "current_holding_after": null
+  },
+  {
+    "id": "046ab4ea",
+    "timestamp": "2026-01-23T13:07:50.486295",
+    "entry_type": "decision",
+    "action": "buy",
+    "symbol": "GLD",
+    "confidence": 0.9056386870236596,
+    "decision_type": "non_routine",
+    "strategy_signals": {
+      "dual_momentum": {
+        "action": "buy",
+        "confidence": 0.8,
+        "asset_symbol": "GLD",
+        "reasoning": "Initial buy: gold has highest momentum (77.82%)"
+      },
+      "mean_reversion": {
+        "action": "hold",
+        "confidence": 0.5,
+        "asset_symbol": null,
+        "reasoning": "RSI 52.9 in normal range [25-75]"
+      },
+      "multi_timeframe": {
+        "action": "buy",
+        "confidence": 0.9137635930402057,
+        "asset_symbol": "EFA",
+        "reasoning": "Initial buy: intl_developed has highest blended momentum (11.41%)"
+      }
+    },
+    "ai_agrees": true,
+    "ai_action": "buy",
+    "ai_asset": "GLD",
+    "ai_reasoning": "No historical pattern match. GLD showing exceptionally strong momentum (77.82%) in stable conditions - this is exactly when momentum systems work best, not when they fail.",
+    "ai_confidence": 0.85,
+    "failure_patterns": [],
+    "market_regime": "bull",
+    "executed": false,
+    "shares": 0.0,
+    "fill_price": 0.0,
+    "slippage_pct": 0.0,
+    "execution_error": null,
+    "account_value_before": null,
+    "account_value_after": null,
+    "current_holding_before": null,
+    "current_holding_after": null
+  },
+  {
+    "id": "f43cc3c8",
+    "timestamp": "2026-01-23T13:28:42.918324",
+    "entry_type": "decision",
+    "action": "buy",
+    "symbol": "GLD",
+    "confidence": 0.9056386897917647,
+    "decision_type": "non_routine",
+    "strategy_signals": {
+      "dual_momentum": {
+        "action": "buy",
+        "confidence": 0.8,
+        "asset_symbol": "GLD",
+        "reasoning": "Initial buy: gold has highest momentum (77.82%)"
+      },
+      "mean_reversion": {
+        "action": "hold",
+        "confidence": 0.5,
+        "asset_symbol": null,
+        "reasoning": "RSI 52.9 in normal range [25-75]"
+      },
+      "multi_timeframe": {
+        "action": "buy",
+        "confidence": 0.9137636596576306,
+        "asset_symbol": "EFA",
+        "reasoning": "Initial buy: intl_developed has highest blended momentum (11.41%)"
+      }
+    },
+    "ai_agrees": true,
+    "ai_action": "buy",
+    "ai_asset": "GLD",
+    "ai_reasoning": "No historical failure pattern match. The system is doing exactly what it should: rotating from cash to the highest momentum asset (GLD at 77.82%) in a calm, bullish environment. Past failures show the system struggles during volatility spikes and trend reversals - neither is happening now.",
+    "ai_confidence": 0.85,
+    "failure_patterns": [],
+    "market_regime": "bull",
+    "executed": false,
+    "shares": 0.0,
+    "fill_price": 0.0,
+    "slippage_pct": 0.0,
+    "execution_error": null,
+    "account_value_before": null,
+    "account_value_after": null,
+    "current_holding_before": null,
+    "current_holding_after": null
+  },
+  {
+    "id": "8896f40b",
+    "timestamp": "2026-01-23T16:01:50.535883",
+    "entry_type": "decision",
+    "action": "buy",
+    "symbol": "GLD",
+    "confidence": 0.9056386897917647,
+    "decision_type": "non_routine",
+    "strategy_signals": {
+      "dual_momentum": {
+        "action": "buy",
+        "confidence": 0.8,
+        "asset_symbol": "GLD",
+        "reasoning": "Initial buy: gold has highest momentum (77.82%)"
+      },
+      "mean_reversion": {
+        "action": "hold",
+        "confidence": 0.5,
+        "asset_symbol": null,
+        "reasoning": "RSI 52.9 in normal range [25-75]"
+      },
+      "multi_timeframe": {
+        "action": "buy",
+        "confidence": 0.9137636596576306,
+        "asset_symbol": "EFA",
+        "reasoning": "Initial buy: intl_developed has highest blended momentum (11.41%)"
+      }
+    },
+    "ai_agrees": true,
+    "ai_action": "buy",
+    "ai_asset": "GLD",
+    "ai_reasoning": "No override needed. Gold's 77.82% momentum in a calm market with SPY near highs suggests legitimate rotation, not a momentum system failure pattern.",
+    "ai_confidence": 0.85,
+    "failure_patterns": [],
+    "market_regime": "bull",
+    "executed": false,
+    "shares": 0.0,
+    "fill_price": 0.0,
+    "slippage_pct": 0.0,
+    "execution_error": null,
+    "account_value_before": 1004835.04,
+    "account_value_after": null,
+    "current_holding_before": null,
+    "current_holding_after": null
+  },
+  {
+    "id": "56d72bc0",
+    "timestamp": "2026-01-23T18:37:18.602924",
+    "entry_type": "decision",
+    "action": "buy",
+    "symbol": "GLD",
+    "confidence": 0.9041628979179246,
+    "decision_type": "non_routine",
+    "strategy_signals": {
+      "dual_momentum": {
+        "action": "buy",
+        "confidence": 0.8,
+        "asset_symbol": "GLD",
+        "reasoning": "Initial buy: gold has highest momentum (80.32%)"
+      },
+      "mean_reversion": {
+        "action": "hold",
+        "confidence": 0.5,
+        "asset_symbol": null,
+        "reasoning": "RSI 53.9 in normal range [25-75]"
+      },
+      "multi_timeframe": {
+        "action": "buy",
+        "confidence": 0.8787940569574739,
+        "asset_symbol": "EFA",
+        "reasoning": "Initial buy: intl_developed has highest blended momentum (10.36%)"
+      }
+    },
+    "ai_agrees": true,
+    "ai_action": "buy",
+    "ai_asset": "GLD",
+    "ai_reasoning": "No pattern match to historical failures. Market is calm and healthy, system is making initial position entry with strong conviction - this is when momentum systems work best.",
+    "ai_confidence": 0.8,
+    "failure_patterns": [],
+    "market_regime": "bull",
+    "executed": true,
+    "shares": 1870.0,
+    "fill_price": 453.86,
+    "slippage_pct": 0.0,
+    "execution_error": null,
+    "account_value_before": 1011560.41,
+    "account_value_after": null,
+    "current_holding_before": null,
+    "current_holding_after": "GLD"
+  },
+  {
+    "id": "494bb64e",
+    "timestamp": "2026-01-24T16:03:39.377643",
+    "entry_type": "decision",
+    "action": "hold",
+    "symbol": null,
+    "confidence": 0.6027343751611657,
+    "decision_type": "non_routine",
+    "strategy_signals": {
+      "dual_momentum": {
+        "action": "hold",
+        "confidence": 0.8,
+        "asset_symbol": "GLD",
+        "reasoning": "Holding gold (79.15%). Winner gold (79.15%) diff 0.00% < threshold 10.00%"
+      },
+      "mean_reversion": {
+        "action": "hold",
+        "confidence": 0.5,
+        "asset_symbol": "GLD",
+        "reasoning": "RSI 53.2 in normal range [25-75]"
+      },
+      "multi_timeframe": {
+        "action": "buy",
+        "confidence": 0.894500508610041,
+        "asset_symbol": "EFA",
+        "reasoning": "No data for current holding gold, switching to intl_developed"
+      }
+    },
+    "ai_agrees": true,
+    "ai_action": "hold",
+    "ai_asset": "GLD",
+    "ai_reasoning": "No historical pattern match and stable bull market conditions. GLD holding is performing (79.15% momentum vs winner at same level). The multi-timeframe EFA suggestion is not strong enough to override given dual momentum confidence at 80% and mean reversion neutral.",
+    "ai_confidence": 0.75,
+    "failure_patterns": [],
+    "market_regime": "bull",
+    "executed": false,
+    "shares": 0.0,
+    "fill_price": 0.0,
+    "slippage_pct": 0.0,
+    "execution_error": null,
+    "account_value_before": 1012647.56,
+    "account_value_after": null,
+    "current_holding_before": "GLD",
+    "current_holding_after": null
+  },
+  {
+    "id": "e6161e1c",
+    "timestamp": "2026-01-25T20:05:02.794114",
+    "entry_type": "decision",
+    "action": "hold",
+    "symbol": null,
+    "confidence": 0.6027343751611657,
+    "decision_type": "non_routine",
+    "strategy_signals": {
+      "dual_momentum": {
+        "action": "hold",
+        "confidence": 0.8,
+        "asset_symbol": "GLD",
+        "reasoning": "Holding gold (79.15%). Winner gold (79.15%) diff 0.00% < threshold 10.00%"
+      },
+      "mean_reversion": {
+        "action": "hold",
+        "confidence": 0.5,
+        "asset_symbol": "GLD",
+        "reasoning": "RSI 53.2 in normal range [25-75]"
+      },
+      "multi_timeframe": {
+        "action": "buy",
+        "confidence": 0.894500508610041,
+        "asset_symbol": "EFA",
+        "reasoning": "No data for current holding gold, switching to intl_developed"
+      }
+    },
+    "ai_agrees": true,
+    "ai_action": "hold",
+    "ai_asset": "GLD",
+    "ai_reasoning": "No pattern match to historical failures. Market is stable (0.9% drawdown), regime is bullish, and there's no VIX spike or clear missed opportunity signal. The system's recommendation to hold GLD appears reasonable given current conditions.",
+    "ai_confidence": 0.75,
+    "failure_patterns": [],
+    "market_regime": "bull",
+    "executed": false,
+    "shares": 0.0,
+    "fill_price": 0.0,
+    "slippage_pct": 0.0,
+    "execution_error": null,
+    "account_value_before": 1012647.56,
+    "account_value_after": null,
+    "current_holding_before": "GLD",
+    "current_holding_after": null
+  },
+  {
+    "id": "d0b4b505",
+    "timestamp": "2026-01-26T16:03:32.412255",
+    "entry_type": "decision",
+    "action": "hold",
+    "symbol": null,
+    "confidence": 0.6027343751611657,
+    "decision_type": "non_routine",
+    "strategy_signals": {
+      "dual_momentum": {
+        "action": "hold",
+        "confidence": 0.8,
+        "asset_symbol": "GLD",
+        "reasoning": "Holding gold (79.15%). Winner gold (79.15%) diff 0.00% < threshold 10.00%"
+      },
+      "mean_reversion": {
+        "action": "hold",
+        "confidence": 0.5,
+        "asset_symbol": "GLD",
+        "reasoning": "RSI 53.2 in normal range [25-75]"
+      },
+      "multi_timeframe": {
+        "action": "buy",
+        "confidence": 0.894500508610041,
+        "asset_symbol": "EFA",
+        "reasoning": "No data for current holding gold, switching to intl_developed"
+      }
+    },
+    "ai_agrees": true,
+    "ai_action": "hold",
+    "ai_asset": "GLD",
+    "ai_reasoning": "No historical pattern match warrants override. Market is stable with low drawdown. The multi-timeframe signal suggesting EFA is worth monitoring but not urgent enough to override the deterministic hold decision in current calm conditions.",
+    "ai_confidence": 0.75,
+    "failure_patterns": [],
+    "market_regime": "bull",
+    "executed": false,
+    "shares": 0.0,
+    "fill_price": 0.0,
+    "slippage_pct": 0.0,
+    "execution_error": null,
+    "account_value_before": 1022413.96,
+    "account_value_after": null,
+    "current_holding_before": "GLD",
+    "current_holding_after": null
+  },
+  {
+    "id": "9f7d9fe9",
+    "timestamp": "2026-01-26T22:39:59.448630",
+    "entry_type": "decision",
+    "action": "hold",
+    "symbol": null,
+    "confidence": 0.5948528458854276,
+    "decision_type": "non_routine",
+    "strategy_signals": {
+      "dual_momentum": {
+        "action": "hold",
+        "confidence": 0.8,
+        "asset_symbol": "GLD",
+        "reasoning": "Holding gold (81.35%). Winner gold (81.35%) diff 0.00% < threshold 10.00%"
+      },
+      "mean_reversion": {
+        "action": "hold",
+        "confidence": 0.5,
+        "asset_symbol": "GLD",
+        "reasoning": "RSI 57.3 in normal range [25-75]"
+      },
+      "multi_timeframe": {
+        "action": "buy",
+        "confidence": 0.924333757670635,
+        "asset_symbol": "EFA",
+        "reasoning": "No data for current holding gold, switching to intl_developed"
+      }
+    },
+    "ai_agrees": true,
+    "ai_action": "hold",
+    "ai_asset": "GLD",
+    "ai_reasoning": "No historical pattern match and current holding (GLD) is performing well with strong momentum. Multi-timeframe suggests EFA, but this appears to be a data issue rather than a genuine rotation signal.",
+    "ai_confidence": 0.75,
+    "failure_patterns": [],
+    "market_regime": "bull",
+    "executed": false,
+    "shares": 0.0,
+    "fill_price": 0.0,
+    "slippage_pct": 0.0,
+    "execution_error": null,
+    "account_value_before": 1021256.7,
+    "account_value_after": null,
+    "current_holding_before": "GLD",
+    "current_holding_after": null
+  },
+  {
+    "id": "1a89f0a2",
+    "timestamp": "2026-01-29T18:58:57.971955",
+    "entry_type": "decision",
+    "action": "hold",
+    "symbol": null,
+    "confidence": 0.590368039598934,
+    "decision_type": "non_routine",
+    "strategy_signals": {
+      "dual_momentum": {
+        "action": "hold",
+        "confidence": 0.8,
+        "asset_symbol": "GLD",
+        "reasoning": "Holding gold (87.11%). Winner gold (87.11%) diff 0.00% < threshold 10.00%"
+      },
+      "mean_reversion": {
+        "action": "hold",
+        "confidence": 0.5,
+        "asset_symbol": "GLD",
+        "reasoning": "RSI 48.7 in normal range [25-75]"
+      },
+      "multi_timeframe": {
+        "action": "buy",
+        "confidence": 0.9416652864430168,
+        "asset_symbol": "EFA",
+        "reasoning": "No data for current holding gold, switching to intl_developed"
+      }
+    },
+    "ai_agrees": true,
+    "ai_action": "hold",
+    "ai_asset": "GLD",
+    "ai_reasoning": "GLD has strong momentum (87.11%) in calm market conditions. No historical failure pattern detected that would justify overriding the deterministic HOLD decision.",
+    "ai_confidence": 0.85,
+    "failure_patterns": [],
+    "market_regime": "bull",
+    "executed": false,
+    "shares": 0.0,
+    "fill_price": 0.0,
+    "slippage_pct": 0.0,
+    "execution_error": null,
+    "account_value_before": 1041360.45,
+    "account_value_after": null,
+    "current_holding_before": "GLD",
+    "current_holding_after": null
+  },
+  {
+    "id": "c55a169d",
+    "timestamp": "2026-02-02T16:34:37.176725",
+    "entry_type": "decision",
+    "action": "hold",
+    "symbol": null,
+    "confidence": 0.5836896953368325,
+    "decision_type": "non_routine",
+    "strategy_signals": {
+      "dual_momentum": {
+        "action": "hold",
+        "confidence": 0.8,
+        "asset_symbol": "GLD",
+        "reasoning": "Holding gold (68.95%). Winner gold (68.95%) diff 0.00% < threshold 10.00%"
+      },
+      "mean_reversion": {
+        "action": "hold",
+        "confidence": 0.5,
+        "asset_symbol": "GLD",
+        "reasoning": "RSI 52.7 in normal range [25-75]"
+      },
+      "multi_timeframe": {
+        "action": "buy",
+        "confidence": 0.967967330659387,
+        "asset_symbol": "EFA",
+        "reasoning": "No data for current holding gold, switching to intl_developed"
+      }
+    },
+    "ai_agrees": true,
+    "ai_action": "hold",
+    "ai_asset": "GLD",
+    "ai_reasoning": "GLD's 68.95% momentum is exceptional and stable. No historical pattern suggests this is a mistake. Multi-timeframe suggests EFA, but with 97% confidence on low conviction data ('no data for current holding'), while dual momentum shows 80% confidence to hold GLD. Trust the established position.",
+    "ai_confidence": 0.85,
+    "failure_patterns": [],
+    "market_regime": "bull",
+    "executed": false,
+    "shares": 0.0,
+    "fill_price": 0.0,
+    "slippage_pct": 0.0,
+    "execution_error": null,
+    "account_value_before": 977115.27,
+    "account_value_after": null,
+    "current_holding_before": "GLD",
+    "current_holding_after": null
+  },
+  {
+    "id": "2e5bd4da",
+    "timestamp": "2026-02-02T20:20:12.961973",
+    "entry_type": "decision",
+    "action": "hold",
+    "symbol": null,
+    "confidence": 0.5798775856950487,
+    "decision_type": "non_routine",
+    "strategy_signals": {
+      "dual_momentum": {
+        "action": "hold",
+        "confidence": 0.8,
+        "asset_symbol": "GLD",
+        "reasoning": "Holding gold (65.73%). Winner gold (65.73%) diff 0.00% < threshold 10.00%"
+      },
+      "mean_reversion": {
+        "action": "hold",
+        "confidence": 0.5,
+        "asset_symbol": "GLD",
+        "reasoning": "RSI 58.9 in normal range [25-75]"
+      },
+      "multi_timeframe": {
+        "action": "buy",
+        "confidence": 0.9832525825535545,
+        "asset_symbol": "EFA",
+        "reasoning": "No data for current holding gold, switching to intl_developed"
+      }
+    },
+    "ai_agrees": true,
+    "ai_action": "hold",
+    "ai_asset": "GLD",
+    "ai_reasoning": "No historical failure pattern detected. Market is stable (VIX calm, SPY at highs), and GLD momentum is strong. The Multi-Timeframe signal suggesting EFA is likely based on missing data rather than genuine opportunity.",
+    "ai_confidence": 0.8,
+    "failure_patterns": [],
+    "market_regime": "bull",
+    "executed": false,
+    "shares": 0.0,
+    "fill_price": 0.0,
+    "slippage_pct": 0.0,
+    "execution_error": null,
+    "account_value_before": 965068.6,
+    "account_value_after": null,
+    "current_holding_before": "GLD",
+    "current_holding_after": null
+  },
+  {
+    "id": "82f6e814",
+    "timestamp": "2026-02-03T00:15:36.002619",
+    "entry_type": "decision",
+    "action": "buy",
+    "symbol": "EFA",
+    "confidence": 0.85,
+    "decision_type": "non_routine",
+    "strategy_signals": {
+      "dual_momentum": {
+        "action": "hold",
+        "confidence": 0.8,
+        "asset_symbol": "GLD",
+        "reasoning": "Holding gold (64.32%). Winner gold (64.32%) diff 0.00% < threshold 10.00%"
+      },
+      "mean_reversion": {
+        "action": "hold",
+        "confidence": 0.5,
+        "asset_symbol": "GLD",
+        "reasoning": "RSI 57.8 in normal range [25-75]"
+      },
+      "multi_timeframe": {
+        "action": "buy",
+        "confidence": 0.9802700527552248,
+        "asset_symbol": "EFA",
+        "reasoning": "No data for current holding gold, switching to intl_developed"
+      }
+    },
+    "ai_agrees": false,
+    "ai_action": "buy",
+    "ai_asset": "EFA",
+    "ai_reasoning": "Multi-timeframe strategy shows 98% confidence BUY signal for EFA. SPY at ATH with 0% drawdown suggests bull market strength spreading to international markets. Gold momentum (64%) is strong but not exceptional, and EFA likely offers better upside in current risk-on environment. Capturing an opportunity the rules-based system missed.",
+    "ai_confidence": 0.85,
+    "failure_patterns": [],
+    "market_regime": "bull",
+    "executed": false,
+    "shares": 0.0,
+    "fill_price": 0.0,
+    "slippage_pct": 0.0,
+    "execution_error": null,
+    "account_value_before": null,
+    "account_value_after": null,
+    "current_holding_before": "GLD",
+    "current_holding_after": null
+  }
+]
