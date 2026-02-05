@@ -35,6 +35,11 @@ except ImportError:
     logger.warning("ib_insync not installed. Run: pip install ib_insync")
 
 
+class ClientIdConflictError(Exception):
+    """Raised when the IBKR client ID is already in use."""
+    pass
+
+
 class IBKRBroker(BaseBroker):
     """
     Interactive Brokers integration.
@@ -82,13 +87,27 @@ class IBKRBroker(BaseBroker):
         self.ib = IB()
         self._connected = False
         self._server_connected = True  # Track IBKR server connectivity (Error 1100/1102)
+        self._client_id_conflict = False
 
     @property
     def is_connected(self) -> bool:
         return self._connected and self.ib.isConnected() and self._server_connected
 
     async def connect(self) -> bool:
-        """Connect to IB Gateway/TWS."""
+        """Connect to IB Gateway/TWS.
+
+        Raises ClientIdConflictError if the client ID is already in use,
+        allowing the caller to retry with a different ID.
+        """
+        self._client_id_conflict = False
+
+        # Listen for error 326 (client ID conflict) during connection
+        def on_connect_error(reqId, errorCode, errorString, contract=None):
+            if errorCode == 326:
+                self._client_id_conflict = True
+
+        self.ib.errorEvent += on_connect_error
+
         try:
             logger.info("connecting_to_ibkr", host=self.host, port=self.port)
             await self.ib.connectAsync(
@@ -99,14 +118,21 @@ class IBKRBroker(BaseBroker):
             self._connected = True
             self._server_connected = True
 
-            # Register error handler to track IBKR server connectivity
+            # Register permanent error handler for server connectivity
+            self.ib.errorEvent -= on_connect_error
             self.ib.errorEvent += self._on_error
 
             logger.info("connected_to_ibkr")
             return True
         except Exception as e:
-            logger.error("ibkr_connection_failed", error=str(e))
+            self.ib.errorEvent -= on_connect_error
             self._connected = False
+            if self._client_id_conflict:
+                logger.warning("ibkr_client_id_conflict", client_id=self.client_id)
+                raise ClientIdConflictError(
+                    f"Client ID {self.client_id} already in use"
+                ) from e
+            logger.error("ibkr_connection_failed", error=str(e))
             return False
 
     def _on_error(self, reqId: int, errorCode: int, errorString: str, contract: Any = None) -> None:

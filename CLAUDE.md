@@ -35,8 +35,10 @@ Dashboard: http://46.225.75.110:8080
 
 ### Debugging Connection Issues
 - `src/aurel2/live/connection.py` - IBKR connection management
-- `src/aurel2/broker/ibkr.py` - Broker implementation, error handling
+- `src/aurel2/broker/ibkr.py` - Broker implementation, error handling (`ClientIdConflictError`)
 - `src/aurel2/live/circuit_breaker.py` - Failure protection
+- **Client ID conflicts** (error 326) are handled automatically — the connection
+  manager picks a new random ID and retries. No manual restart needed.
 
 ### Modifying Trading Logic
 - `src/aurel2/agent/orchestrator.py` - Central decision engine

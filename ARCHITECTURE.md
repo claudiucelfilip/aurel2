@@ -496,6 +496,9 @@ Manages IBKR Gateway connection via `ib_insync`.
 - Heartbeat to keep connection alive
 - Circuit breaker for failure protection
 - Automatic reconnection with exponential backoff
+- **Client ID conflict auto-recovery**: If the IBKR client ID is already in use
+  (error 326, e.g. stale connection after container restart), automatically picks
+  a new random client ID and retries immediately without counting as a failure
 
 ### Circuit Breaker
 

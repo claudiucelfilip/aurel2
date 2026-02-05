@@ -9,7 +9,7 @@ from typing import Optional
 
 import structlog
 
-from aurel2.broker.ibkr import IBKRBroker
+from aurel2.broker.ibkr import IBKRBroker, ClientIdConflictError
 from aurel2.live.circuit_breaker import CircuitBreaker
 from aurel2.broker.base import AccountSummary, BrokerPosition
 
@@ -128,6 +128,18 @@ class IBKRConnection:
                     self._start_heartbeat()
                     self.circuit_breaker.record_success()
                     return True
+            except ClientIdConflictError:
+                # Stale connection holding our client ID — pick a new one and retry
+                import random
+                old_id = self.client_id
+                self.client_id = random.randint(100, 999)
+                logger.warning(
+                    "ibkr_client_id_conflict_retry",
+                    old_client_id=old_id,
+                    new_client_id=self.client_id,
+                )
+                # Don't count this as a normal failure or sleep — retry immediately
+                continue
             except Exception as e:
                 logger.warning("ibkr_connect_failed", error=str(e), attempt=attempt + 1)
 
