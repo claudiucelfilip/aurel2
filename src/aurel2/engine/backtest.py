@@ -1,4 +1,10 @@
-"""Backtesting engine for momentum strategies."""
+"""Backtesting engine that mirrors the full live trading path.
+
+Runs the same pipeline as production:
+  1. All 3 strategies (dual momentum, mean reversion, multi-timeframe)
+  2. Orchestrator (weighted voting, regime detection, position sizing)
+  3. AI Advisor (failure learning review, potential override)
+"""
 
 from dataclasses import dataclass, field
 from datetime import date
@@ -8,8 +14,12 @@ import pandas as pd
 import numpy as np
 import structlog
 
+from aurel2.core.assets import ASSET_REGISTRY
 from aurel2.core.models import Asset, AssetClass, Signal, SignalAction, Trade, PortfolioSnapshot
 from aurel2.strategies.dual_momentum import DualMomentumStrategy
+from aurel2.strategies.mean_reversion import MeanReversionStrategy
+from aurel2.strategies.multi_timeframe import MultiTimeframeTrendStrategy
+from aurel2.agent.orchestrator import AgentOrchestrator, AgentDecision, DecisionType
 
 logger = structlog.get_logger()
 
@@ -61,12 +71,11 @@ class BacktestResult:
                 max_dd = dd
         self.max_drawdown = max_dd
 
-        # Sharpe ratio (annualized, assuming 0% risk-free for simplicity)
+        # Sharpe ratio (annualized, assuming 0% risk-free)
         if len(values) > 1:
             returns = pd.Series(values).pct_change().dropna()
             if len(returns) > 0 and returns.std() > 0:
-                # Annualize based on rebalance frequency (assume quarterly = 4 per year)
-                periods_per_year = 4  # quarterly
+                periods_per_year = 12  # monthly rebalance
                 self.sharpe_ratio = (returns.mean() * periods_per_year) / (returns.std() * np.sqrt(periods_per_year))
 
         # Trade stats
@@ -96,28 +105,134 @@ class BacktestResult:
 
 
 class BacktestEngine:
-    """Engine for running strategy backtests."""
+    """Engine that mirrors the full live trading path for backtesting.
+
+    Creates all components internally (3 strategies, orchestrator, AI advisor)
+    and runs the same decision pipeline as production on each rebalance date.
+    """
 
     def __init__(
         self,
-        strategy: DualMomentumStrategy,
         initial_capital: float = 10000.0,
         transaction_cost_pct: float = 0.001,
+        use_ai: bool = True,
     ):
-        self.strategy = strategy
+        self.dual_momentum = DualMomentumStrategy(assets=ASSET_REGISTRY)
+        self.mean_reversion = MeanReversionStrategy()
+        self.multi_timeframe = MultiTimeframeTrendStrategy()
+        self.orchestrator = AgentOrchestrator()
+
+        # Deferred import to avoid circular: backtest -> advisor -> failure_analyzer -> backtest
+        self.ai_advisor = None
+        if use_ai:
+            from aurel2.agent.advisor import AIAdvisor
+            self.ai_advisor = AIAdvisor()
         self.initial_capital = initial_capital
         self.transaction_cost_pct = transaction_cost_pct
+
+        # Tradeable symbols for AI override validation
+        self._tradeable_symbols = {
+            a.symbol for a in ASSET_REGISTRY.values() if a.symbol != "CASH"
+        }
+
+    def _normalize_signal(self, signal) -> dict:
+        """Normalize strategy signals to a common dict format.
+
+        Mirrors checker._run_strategies signal normalization (lines 400-433).
+        Handles both Signal (dual momentum) and StrategySignal (other two).
+        """
+        action = signal.action.value if hasattr(signal.action, 'value') else str(signal.action)
+        confidence = getattr(signal, 'confidence', 0.8)
+
+        asset_symbol = None
+        if hasattr(signal, 'asset') and signal.asset:
+            asset_symbol = signal.asset.symbol
+        elif hasattr(signal, 'asset_class') and signal.asset_class:
+            if signal.asset_class in ASSET_REGISTRY:
+                asset_symbol = ASSET_REGISTRY[signal.asset_class].symbol
+
+        reasoning = getattr(signal, 'reasoning', None) or getattr(signal, 'reason', '')
+
+        is_pilot = False
+        if hasattr(signal, 'reason') and signal.reason and 'PILOT' in signal.reason:
+            is_pilot = True
+
+        return {
+            "action": action,
+            "confidence": confidence,
+            "asset_symbol": asset_symbol,
+            "reasoning": reasoning,
+            "pilot_position": is_pilot,
+        }
+
+    def _build_market_context(self, prices: pd.DataFrame, calc_date: date) -> dict:
+        """Build market context from price data.
+
+        Mirrors checker._build_market_context (lines 474-507).
+        Uses only data available up to calc_date for point-in-time correctness.
+        """
+        context = {}
+
+        try:
+            spy_prices = prices[prices["symbol"] == "SPY"].copy()
+            if not spy_prices.empty:
+                spy_prices["date"] = pd.to_datetime(spy_prices["date"])
+                # Only use data up to calc_date
+                spy_prices = spy_prices[spy_prices["date"] <= pd.Timestamp(calc_date)]
+                if spy_prices.empty:
+                    return context
+
+                spy_prices = spy_prices.sort_values("date")
+                current_price = float(spy_prices.iloc[-1]["close"])
+                context["spy_price"] = current_price
+
+                if len(spy_prices) >= 200:
+                    ma_200 = spy_prices.tail(200)["close"].mean()
+                    context["ma_200"] = float(ma_200)
+
+                year_high = float(spy_prices.tail(252)["close"].max())
+                drawdown = (current_price / year_high) - 1
+                context["drawdown"] = abs(drawdown)
+
+                if context["drawdown"] < 0.05:
+                    context["regime"] = "bull"
+                elif context["drawdown"] < 0.15:
+                    context["regime"] = "sideways"
+                else:
+                    context["regime"] = "bear"
+
+        except Exception as e:
+            logger.warning("backtest_market_context_error", error=str(e))
+
+        return context
+
+    def _get_price(self, prices: pd.DataFrame, symbol: str, as_of: date) -> float | None:
+        """Get the price of a symbol as of a date."""
+        symbol_prices = prices[prices["symbol"] == symbol].copy()
+        if symbol_prices.empty:
+            return None
+        symbol_prices["date"] = pd.to_datetime(symbol_prices["date"])
+        rows = symbol_prices[symbol_prices["date"] <= pd.Timestamp(as_of)]
+        if rows.empty:
+            return None
+        return float(rows.iloc[-1]["close"])
+
+    def _symbol_to_asset_class(self, symbol: str) -> AssetClass | None:
+        """Look up the AssetClass for a given symbol."""
+        for ac, asset in ASSET_REGISTRY.items():
+            if asset.symbol == symbol or asset.yahoo_symbol == symbol:
+                return ac
+        return None
 
     def run(
         self,
         prices: pd.DataFrame,
         start_date: date,
         end_date: date,
-        frequency: str = "quarterly",
+        frequency: str = "monthly",
         benchmark_symbol: str | None = None,
     ) -> BacktestResult:
-        """
-        Run backtest simulation.
+        """Run backtest simulation using the full live trading path.
 
         Args:
             prices: Historical price data (date, close, symbol)
@@ -129,68 +244,239 @@ class BacktestEngine:
         Returns:
             BacktestResult with all metrics
         """
-        logger.info("starting_backtest", start=str(start_date), end=str(end_date))
+        logger.info("starting_backtest", start=str(start_date), end=str(end_date),
+                     mode="full_live_path", use_ai=self.ai_advisor is not None)
 
-        # Generate rebalance dates
-        rebalance_dates = self.strategy.get_rebalance_dates(start_date, end_date, frequency)
+        # Generate rebalance dates using dual momentum's schedule
+        rebalance_dates = self.dual_momentum.get_rebalance_dates(start_date, end_date, frequency)
         logger.info("rebalance_dates", count=len(rebalance_dates))
 
         # Initialize portfolio
         cash = Decimal(str(self.initial_capital))
         current_holding: AssetClass | None = None
+        current_holding_symbol: str | None = None
         current_shares = Decimal("0")
 
         trades: list[Trade] = []
-        signals: list[Signal] = []
+        all_signals: list[Signal] = []
         snapshots: list[PortfolioSnapshot] = []
 
         for rebal_date in rebalance_dates:
-            # Generate signal
-            signal = self.strategy.generate_signal(
-                prices=prices,
-                calc_date=rebal_date,
-                current_holding=current_holding,
-            )
-            signals.append(signal)
+            # ================================================================
+            # Step 1: Run all 3 strategies (mirrors checker._run_strategies)
+            # ================================================================
+            signals = {}
+            for name, strategy in [
+                ("dual_momentum", self.dual_momentum),
+                ("mean_reversion", self.mean_reversion),
+                ("multi_timeframe", self.multi_timeframe),
+            ]:
+                try:
+                    signal = strategy.generate_signal(
+                        prices=prices,
+                        calc_date=rebal_date,
+                        current_holding=current_holding,
+                    )
+                    signals[name] = self._normalize_signal(signal)
+
+                    # Keep raw dual momentum signal for the signals log
+                    if name == "dual_momentum" and hasattr(signal, 'momentum_scores'):
+                        all_signals.append(signal)
+
+                except Exception as e:
+                    logger.error("backtest_strategy_error", strategy=name,
+                                 date=str(rebal_date), error=str(e))
+                    signals[name] = {
+                        "action": "hold",
+                        "confidence": 0.0,
+                        "error": str(e),
+                    }
 
             logger.info(
-                "signal_generated",
+                "backtest_signals",
                 date=str(rebal_date),
-                action=signal.action.value,
-                asset=signal.asset.symbol if signal.asset else "None",
-                reason=signal.reason,
+                dm=signals.get("dual_momentum", {}).get("action"),
+                mr=signals.get("mean_reversion", {}).get("action"),
+                mtf=signals.get("multi_timeframe", {}).get("action"),
             )
 
-            # Get current price for the signal asset
-            if signal.asset and signal.asset.yahoo_symbol:
-                symbol = signal.asset.yahoo_symbol
-                symbol_prices = prices[prices["symbol"] == symbol].copy()
-                symbol_prices["date"] = pd.to_datetime(symbol_prices["date"])
-                current_price_row = symbol_prices[symbol_prices["date"] <= pd.Timestamp(rebal_date)]
+            # ================================================================
+            # Step 2: Market context (mirrors checker._build_market_context)
+            # ================================================================
+            market_context = self._build_market_context(prices, rebal_date)
 
-                if not current_price_row.empty:
-                    current_price = float(current_price_row.iloc[-1]["close"])
-                else:
-                    current_price = None
-            else:
-                current_price = 1.0  # Cash
+            # ================================================================
+            # Step 3: Orchestrator analysis (mirrors checker step 6)
+            # ================================================================
+            decision = self.orchestrator.analyze(
+                signals=signals,
+                market_context=market_context,
+            )
 
-            # Execute trades based on signal
-            if signal.action == SignalAction.BUY:
-                # Sell current holding if any
-                if current_holding and current_shares > 0:
-                    # Get sell price
-                    old_asset = self.strategy.assets[current_holding]
-                    old_symbol = old_asset.yahoo_symbol or old_asset.symbol
-                    old_prices = prices[prices["symbol"] == old_symbol].copy()
-                    old_prices["date"] = pd.to_datetime(old_prices["date"])
-                    old_price_row = old_prices[old_prices["date"] <= pd.Timestamp(rebal_date)]
+            logger.info(
+                "backtest_decision",
+                date=str(rebal_date),
+                type=decision.decision_type.value,
+                action=decision.action.value,
+                asset=decision.asset_symbol,
+                confidence=f"{decision.confidence:.2f}",
+                position_size=f"{decision.position_size_pct:.0%}",
+                regime=decision.regime.value if decision.regime else None,
+            )
 
-                    if not old_price_row.empty:
-                        sell_price = float(old_price_row.iloc[-1]["close"])
+            # ================================================================
+            # Step 4: AI Advisor review (mirrors checker step 7)
+            # ================================================================
+            if self.ai_advisor:
+                try:
+                    ai_advice = self.ai_advisor.review(
+                        deterministic_action=decision.action.value,
+                        deterministic_asset=decision.asset_symbol,
+                        strategy_signals=signals,
+                        market_context=market_context,
+                        prices=prices,
+                        current_holding=current_holding_symbol,
+                        target_date=rebal_date,
+                    )
+
+                    # Override logic (mirrors checker lines 225-249)
+                    ai_asset_tradeable = (
+                        ai_advice.recommended_asset is None
+                        or ai_advice.recommended_asset in self._tradeable_symbols
+                    )
+                    if (not ai_advice.agrees_with_deterministic
+                            and ai_advice.confidence > 0.85
+                            and ai_asset_tradeable):
+                        logger.info(
+                            "backtest_ai_override",
+                            date=str(rebal_date),
+                            old_action=decision.action.value,
+                            old_asset=decision.asset_symbol,
+                            new_action=ai_advice.recommended_action,
+                            new_asset=ai_advice.recommended_asset,
+                        )
+                        decision = AgentDecision(
+                            decision_type=DecisionType.NON_ROUTINE,
+                            action=SignalAction(ai_advice.recommended_action),
+                            asset_symbol=ai_advice.recommended_asset,
+                            reasoning=f"AI Override: {ai_advice.reasoning}",
+                            confidence=ai_advice.confidence,
+                            strategy_signals=signals,
+                            requires_approval=True,
+                            timeout_hours=1.0,
+                            urgency=decision.urgency,
+                            market_context=market_context,
+                            position_size_pct=decision.position_size_pct,
+                            regime=decision.regime,
+                        )
+
+                except Exception as e:
+                    logger.error("backtest_ai_error", date=str(rebal_date), error=str(e))
+
+            # ================================================================
+            # Step 5: Execute trade using decision
+            # ================================================================
+            action = decision.action
+            target_symbol = decision.asset_symbol
+            position_size_pct = decision.position_size_pct
+
+            if action == SignalAction.BUY and target_symbol:
+                target_asset_class = self._symbol_to_asset_class(target_symbol)
+                target_asset = ASSET_REGISTRY.get(target_asset_class) if target_asset_class else None
+
+                if target_asset_class == AssetClass.CASH:
+                    # Move to cash
+                    if current_holding and current_shares > 0:
+                        sell_price = self._get_price(
+                            prices,
+                            ASSET_REGISTRY[current_holding].yahoo_symbol or ASSET_REGISTRY[current_holding].symbol,
+                            rebal_date,
+                        )
+                        if sell_price:
+                            sell_value = float(current_shares) * sell_price
+                            commission = sell_value * self.transaction_cost_pct
+                            trades.append(Trade(
+                                date=rebal_date,
+                                asset=ASSET_REGISTRY[current_holding],
+                                action=SignalAction.SELL,
+                                shares=current_shares,
+                                price=sell_price,
+                                commission=commission,
+                            ))
+                            cash += Decimal(str(sell_value - commission))
+                            current_shares = Decimal("0")
+
+                    current_holding = AssetClass.CASH
+                    current_holding_symbol = "CASH"
+
+                elif target_asset and target_asset.yahoo_symbol:
+                    buy_price = self._get_price(prices, target_asset.yahoo_symbol, rebal_date)
+                    if buy_price:
+                        # Sell current holding first
+                        if current_holding and current_holding != AssetClass.CASH and current_shares > 0:
+                            old_asset = ASSET_REGISTRY[current_holding]
+                            sell_price = self._get_price(
+                                prices,
+                                old_asset.yahoo_symbol or old_asset.symbol,
+                                rebal_date,
+                            )
+                            if sell_price:
+                                sell_value = float(current_shares) * sell_price
+                                commission = sell_value * self.transaction_cost_pct
+                                trades.append(Trade(
+                                    date=rebal_date,
+                                    asset=old_asset,
+                                    action=SignalAction.SELL,
+                                    shares=current_shares,
+                                    price=sell_price,
+                                    commission=commission,
+                                ))
+                                cash += Decimal(str(sell_value - commission))
+                                current_shares = Decimal("0")
+
+                        # Buy new asset with position sizing from orchestrator
+                        buy_value = float(cash) * position_size_pct
+                        remaining_cash = float(cash) - buy_value
+                        commission = buy_value * self.transaction_cost_pct
+                        net_value = buy_value - commission
+                        shares_to_buy = Decimal(str(net_value / buy_price))
+
+                        trades.append(Trade(
+                            date=rebal_date,
+                            asset=target_asset,
+                            action=SignalAction.BUY,
+                            shares=shares_to_buy,
+                            price=buy_price,
+                            commission=commission,
+                        ))
+
+                        cash = Decimal(str(remaining_cash))
+                        current_shares = shares_to_buy
+                        current_holding = target_asset_class
+                        current_holding_symbol = target_symbol
+
+                        logger.info(
+                            "backtest_trade",
+                            date=str(rebal_date),
+                            action="BUY",
+                            asset=target_symbol,
+                            shares=float(shares_to_buy),
+                            price=buy_price,
+                            position_size=f"{position_size_pct:.0%}",
+                        )
+
+            elif action == SignalAction.SELL:
+                # Sell current holding, go to cash
+                if current_holding and current_holding != AssetClass.CASH and current_shares > 0:
+                    old_asset = ASSET_REGISTRY[current_holding]
+                    sell_price = self._get_price(
+                        prices,
+                        old_asset.yahoo_symbol or old_asset.symbol,
+                        rebal_date,
+                    )
+                    if sell_price:
                         sell_value = float(current_shares) * sell_price
                         commission = sell_value * self.transaction_cost_pct
-
                         trades.append(Trade(
                             date=rebal_date,
                             asset=old_asset,
@@ -199,81 +485,28 @@ class BacktestEngine:
                             price=sell_price,
                             commission=commission,
                         ))
-
                         cash += Decimal(str(sell_value - commission))
                         current_shares = Decimal("0")
+                        current_holding = AssetClass.CASH
+                        current_holding_symbol = "CASH"
 
                         logger.info(
-                            "trade_executed",
+                            "backtest_trade",
+                            date=str(rebal_date),
                             action="SELL",
-                            asset=old_symbol,
+                            asset=old_asset.symbol,
                             shares=float(current_shares),
                             price=sell_price,
-                            value=sell_value,
-                        )
-
-                # Buy new asset
-                if signal.asset and current_price:
-                    # Determine new asset class
-                    new_asset_class = None
-                    for ac, asset in self.strategy.assets.items():
-                        if asset.symbol == signal.asset.symbol:
-                            new_asset_class = ac
-                            break
-
-                    if new_asset_class == AssetClass.CASH:
-                        # Just hold cash
-                        current_holding = AssetClass.CASH
-                        current_shares = Decimal("0")
-                    else:
-                        # Determine position size based on signal type
-                        is_pilot = "PILOT ENTRY" in signal.reason
-                        is_scale_up = "SCALE UP" in signal.reason
-                        pilot_size = getattr(self.strategy, 'pilot_position_size', 0.30)
-
-                        if is_pilot:
-                            # Pilot entry: only use portion of capital
-                            buy_value = float(cash) * pilot_size
-                            remaining_cash = float(cash) * (1 - pilot_size)
-                        elif is_scale_up:
-                            # Scale up: use all remaining cash
-                            buy_value = float(cash)
-                            remaining_cash = 0.0
-                        else:
-                            # Full position
-                            buy_value = float(cash)
-                            remaining_cash = 0.0
-
-                        commission = buy_value * self.transaction_cost_pct
-                        net_value = buy_value - commission
-                        shares_to_buy = Decimal(str(net_value / current_price))
-
-                        trades.append(Trade(
-                            date=rebal_date,
-                            asset=signal.asset,
-                            action=SignalAction.BUY,
-                            shares=shares_to_buy,
-                            price=current_price,
-                            commission=commission,
-                        ))
-
-                        cash = Decimal(str(remaining_cash))
-                        current_shares += shares_to_buy  # Add to existing shares for scale-up
-                        current_holding = new_asset_class
-
-                        position_type = "PILOT" if is_pilot else ("SCALE UP" if is_scale_up else "FULL")
-                        logger.info(
-                            "trade_executed",
-                            action="BUY",
-                            asset=signal.asset.symbol,
-                            shares=float(shares_to_buy),
-                            price=current_price,
-                            value=net_value,
-                            position_type=position_type,
                         )
 
             # Record snapshot
-            if current_holding and current_holding != AssetClass.CASH and current_shares > 0 and current_price:
+            current_price = None
+            if current_holding and current_holding != AssetClass.CASH and current_shares > 0:
+                held_asset = ASSET_REGISTRY.get(current_holding)
+                if held_asset and held_asset.yahoo_symbol:
+                    current_price = self._get_price(prices, held_asset.yahoo_symbol, rebal_date)
+
+            if current_price and current_shares > 0:
                 total_value = float(current_shares) * current_price + float(cash)
             else:
                 total_value = float(cash)
@@ -295,12 +528,10 @@ class BacktestEngine:
             if not bench_prices.empty:
                 bench_prices["date"] = pd.to_datetime(bench_prices["date"])
 
-                # Get price at start
                 start_row = bench_prices[bench_prices["date"] >= pd.Timestamp(start_date)]
                 if not start_row.empty:
                     start_price = float(start_row.iloc[0]["close"])
 
-                    # Get price at end
                     end_row = bench_prices[bench_prices["date"] <= pd.Timestamp(end_date)]
                     if not end_row.empty:
                         end_price = float(end_row.iloc[-1]["close"])
@@ -313,7 +544,7 @@ class BacktestEngine:
             initial_capital=self.initial_capital,
             final_value=final_value,
             trades=trades,
-            signals=signals,
+            signals=all_signals,
             snapshots=snapshots,
             benchmark_final=benchmark_final,
         )

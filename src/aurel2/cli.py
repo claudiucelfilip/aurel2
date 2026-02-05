@@ -42,11 +42,12 @@ def backtest(
     start: str = typer.Option("2015-01-01", help="Start date (YYYY-MM-DD)"),
     end: str = typer.Option(None, help="End date (YYYY-MM-DD), defaults to today"),
     capital: float = typer.Option(10000.0, help="Initial capital"),
-    frequency: str = typer.Option("quarterly", help="Rebalance frequency: monthly or quarterly"),
+    frequency: str = typer.Option("monthly", help="Rebalance frequency: monthly or quarterly"),
+    no_ai: bool = typer.Option(False, "--no-ai", help="Skip AI advisor for faster iteration"),
     config: Path = typer.Option(None, help="Config file path"),
     verbose: bool = typer.Option(False, "-v", "--verbose", help="Verbose output"),
 ):
-    """Run a backtest of the dual momentum strategy."""
+    """Run a backtest mirroring the full live trading path (3 strategies + orchestrator + AI)."""
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
 
@@ -57,6 +58,7 @@ def backtest(
     typer.echo(f"Running backtest from {start_date} to {end_date}")
     typer.echo(f"Initial capital: ${capital:,.2f}")
     typer.echo(f"Rebalance frequency: {frequency}")
+    typer.echo(f"AI advisor: {'disabled' if no_ai else 'enabled'}")
 
     # Load settings
     settings = load_settings(config)
@@ -64,7 +66,6 @@ def backtest(
     # Use full asset registry (11 assets) for consistency with compare command
     from aurel2.core.assets import ASSET_REGISTRY, get_all_yahoo_symbols
     assets = ASSET_REGISTRY
-    cash_rate = settings.assets.cash_rate if settings.assets else 0.04
 
     # Fetch price data
     typer.echo("\nFetching historical data...")
@@ -74,28 +75,16 @@ def backtest(
     prices = provider.get_multi_prices(symbols, start_date, end_date)
     typer.echo(f"Fetched {len(prices)} price records")
 
-    # Create strategy
-    strategy = DualMomentumStrategy(
-        assets=assets,
-        lookback_months=settings.strategy.lookback_months,
-        switch_threshold=settings.strategy.switch_threshold,
-        cash_rate=cash_rate,
-    )
-
-    # Run backtest
+    # Run backtest with full live path
     typer.echo("\nRunning backtest...")
     engine = BacktestEngine(
-        strategy=strategy,
         initial_capital=capital,
         transaction_cost_pct=settings.risk.transaction_cost_pct,
+        use_ai=not no_ai,
     )
 
     # Use SPY as benchmark
     benchmark = "SPY"
-    if benchmark not in [a.yahoo_symbol for a in assets.values()]:
-        # Fetch benchmark data
-        bench_prices = provider.get_prices(benchmark, start_date, end_date)
-        prices = pd.concat([prices, bench_prices], ignore_index=True)
 
     result = engine.run(
         prices=prices,
