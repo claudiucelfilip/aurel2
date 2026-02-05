@@ -44,6 +44,7 @@ class Executor:
         action: str,
         symbol: Optional[str],
         current_holding: Optional[str] = None,
+        position_size_pct: float = 1.0,
     ) -> ExecutionResult:
         """
         Execute a trading decision.
@@ -52,6 +53,8 @@ class Executor:
             action: "buy", "sell", or "hold"
             symbol: Target symbol for buy, or symbol to sell
             current_holding: Current position symbol (for switch detection)
+            position_size_pct: Position size as percentage (0.0 to 1.0) based on
+                regime detection and confidence. Defaults to 1.0 (100%).
 
         Returns:
             ExecutionResult with success status and details
@@ -81,9 +84,9 @@ class Executor:
         if action == "buy":
             # Check if this is a switch (sell current, buy new)
             if current_holding and current_holding.upper() != symbol.upper():
-                return await self._execute_switch(current_holding, symbol)
+                return await self._execute_switch(current_holding, symbol, position_size_pct)
             else:
-                return await self._execute_buy(symbol)
+                return await self._execute_buy(symbol, position_size_pct)
 
         return ExecutionResult(
             success=False,
@@ -92,9 +95,15 @@ class Executor:
             message=f"Unknown action: {action}",
         )
 
-    async def _execute_buy(self, symbol: str) -> ExecutionResult:
-        """Execute a buy order using available cash."""
-        logger.info("executor_buy_start", symbol=symbol)
+    async def _execute_buy(self, symbol: str, position_size_pct: float = 1.0) -> ExecutionResult:
+        """Execute a buy order using available cash.
+
+        Args:
+            symbol: The symbol to buy.
+            position_size_pct: Position size as percentage of buying power (0.0 to 1.0).
+                This is determined by regime detection and confidence scoring.
+        """
+        logger.info("executor_buy_start", symbol=symbol, position_size_pct=position_size_pct)
 
         try:
             # Get account summary for available cash
@@ -117,9 +126,21 @@ class Executor:
                     message=f"Could not get market price for {symbol}",
                 )
 
-            # Calculate shares to buy (use 99% of buying power to leave buffer)
-            available = summary.buying_power * 0.99
+            # Apply position sizing: use position_size_pct of buying power
+            # Then apply 99% buffer for execution safety
+            # E.g., 80% position_size in volatile market -> use 80% * 99% = 79.2% of buying power
+            effective_pct = position_size_pct * 0.99
+            available = summary.buying_power * effective_pct
             shares = int(available / price)
+
+            logger.info(
+                "executor_position_sizing",
+                symbol=symbol,
+                position_size_pct=f"{position_size_pct:.0%}",
+                buying_power=summary.buying_power,
+                effective_amount=available,
+                shares=shares,
+            )
 
             if shares <= 0:
                 return ExecutionResult(
@@ -275,15 +296,30 @@ class Executor:
                 message=f"Sell error: {str(e)}",
             )
 
-    async def _execute_switch(self, sell_symbol: str, buy_symbol: str) -> ExecutionResult:
-        """Execute a position switch: sell current, buy new."""
-        logger.info("executor_switch_start", sell=sell_symbol, buy=buy_symbol)
+    async def _execute_switch(
+        self, sell_symbol: str, buy_symbol: str, position_size_pct: float = 1.0
+    ) -> ExecutionResult:
+        """Execute a position switch: sell current, buy new.
+
+        Args:
+            sell_symbol: Symbol to sell (current holding).
+            buy_symbol: Symbol to buy (new position).
+            position_size_pct: Position size as percentage for the buy leg (0.0 to 1.0).
+                Note: Sell is always 100% of position, but buy may be reduced based on regime.
+        """
+        logger.info(
+            "executor_switch_start",
+            sell=sell_symbol,
+            buy=buy_symbol,
+            position_size_pct=position_size_pct,
+        )
 
         try:
-            # Use the broker's atomic switch operation
+            # Use the broker's atomic switch operation with position sizing
             sell_result, buy_result = await self.connection.broker.execute_switch(
                 sell_symbol=sell_symbol,
                 buy_symbol=buy_symbol,
+                position_size_pct=position_size_pct,
             )
 
             # Check results

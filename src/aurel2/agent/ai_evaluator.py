@@ -931,6 +931,7 @@ Respond with ONLY valid JSON matching the specified format (no markdown code blo
 
         try:
             # Call claude CLI with the prompt
+            # Use shorter timeout to fail fast if auth is broken
             result = subprocess.run(
                 [
                     "claude",
@@ -940,7 +941,7 @@ Respond with ONLY valid JSON matching the specified format (no markdown code blo
                 ],
                 capture_output=True,
                 text=True,
-                timeout=180,  # Expert mode may take longer
+                timeout=60,  # Reduced from 180s - fail fast if issues
             )
 
             if result.returncode != 0:

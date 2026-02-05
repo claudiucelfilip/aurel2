@@ -288,8 +288,11 @@ class IBKRConnection:
             self._heartbeat_task.cancel()
             self._heartbeat_task = None
 
-    async def _heartbeat_loop(self, interval_seconds: int = 600) -> None:
-        """Send periodic heartbeat to keep IBKR connection alive."""
+    async def _heartbeat_loop(self, interval_seconds: int = 60) -> None:
+        """Send periodic heartbeat to keep IBKR connection alive and reconnect if needed."""
+        reconnect_attempts = 0
+        max_reconnect_attempts = 3
+
         while True:
             try:
                 await asyncio.sleep(interval_seconds)
@@ -298,9 +301,29 @@ class IBKRConnection:
                     # Request account summary as a heartbeat
                     await self.broker.get_account_summary()
                     logger.debug("ibkr_heartbeat_sent")
+                    reconnect_attempts = 0  # Reset on success
                 else:
-                    logger.warning("ibkr_heartbeat_connection_lost")
-                    break
+                    logger.warning("ibkr_heartbeat_connection_lost", reconnect_attempts=reconnect_attempts)
+
+                    # Attempt to reconnect
+                    if reconnect_attempts < max_reconnect_attempts:
+                        reconnect_attempts += 1
+                        logger.info("ibkr_heartbeat_reconnecting", attempt=reconnect_attempts)
+
+                        # Try to reconnect
+                        connected = await self.connect(launch_tws_if_needed=False, max_retries=1)
+                        if connected:
+                            logger.info("ibkr_heartbeat_reconnected")
+                            reconnect_attempts = 0
+                        else:
+                            # Wait longer between reconnect attempts
+                            await asyncio.sleep(30)
+                    else:
+                        logger.error("ibkr_heartbeat_max_reconnects_exceeded")
+                        # Continue loop but don't attempt more reconnects until success
+                        await asyncio.sleep(300)  # Wait 5 min before trying again
+                        reconnect_attempts = 0  # Reset to allow retry cycle
+
             except asyncio.CancelledError:
                 break
             except Exception as e:

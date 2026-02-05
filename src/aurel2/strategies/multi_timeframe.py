@@ -37,19 +37,21 @@ class MultiTimeframeTrendStrategy(BaseStrategy):
     """Multi-timeframe trend strategy using blended momentum.
 
     This strategy:
-    - Calculates momentum over multiple lookback periods (default: 3, 6, 12 months)
+    - Calculates momentum over multiple lookback periods (default: 1, 3, 6, 12 months)
     - Computes a weighted average (blended momentum) using configurable weights
     - Signals BUY for the asset with highest blended momentum
     - Uses a switch threshold to reduce unnecessary trading
 
-    The blended approach provides faster reaction than pure 12-month momentum
-    while the averaging effect helps reduce whipsaws during volatile periods.
+    TUNED PARAMETERS (v2):
+    - Added 1-month lookback for faster reaction
+    - Increased short-term weights for faster trend detection
+    - Reduced switch threshold for quicker adaptation
 
     Attributes:
         name: Strategy identifier ("multi_timeframe_trend")
-        lookback_months: List of lookback periods in months (default [3, 6, 12])
-        weights: Corresponding weights for each lookback (default [0.4, 0.35, 0.25])
-        switch_threshold: Minimum momentum difference to trigger a switch (default 0.05)
+        lookback_months: List of lookback periods in months (default [1, 3, 6, 12])
+        weights: Corresponding weights for each lookback (default [0.30, 0.30, 0.25, 0.15])
+        switch_threshold: Minimum momentum difference to trigger a switch (default 0.03)
         target_assets: Asset classes this strategy trades
     """
 
@@ -59,22 +61,23 @@ class MultiTimeframeTrendStrategy(BaseStrategy):
         self,
         lookback_months: list[int] | None = None,
         weights: list[float] | None = None,
-        switch_threshold: float = 0.05,
+        switch_threshold: float = 0.03,  # Reduced from 0.05 for faster adaptation
         target_assets: list[AssetClass] | None = None,
     ):
         """Initialize the multi-timeframe trend strategy.
 
         Args:
-            lookback_months: List of lookback periods in months (default [3, 6, 12])
-            weights: Weights for each lookback period (default [0.4, 0.35, 0.25])
-            switch_threshold: Minimum momentum difference to trigger asset switch
+            lookback_months: List of lookback periods in months (default [1, 3, 6, 12])
+            weights: Weights for each lookback period (default [0.30, 0.30, 0.25, 0.15])
+            switch_threshold: Minimum momentum difference to trigger asset switch (default 0.03)
             target_assets: List of asset classes to trade
 
         Raises:
             ValueError: If weights length doesn't match lookback_months length
         """
-        self.lookback_months = lookback_months or [3, 6, 12]
-        self.weights = weights or [0.4, 0.35, 0.25]
+        # Added 1-month lookback, increased short-term weights
+        self.lookback_months = lookback_months or [1, 3, 6, 12]
+        self.weights = weights or [0.30, 0.30, 0.25, 0.15]  # More weight on short-term
         self.switch_threshold = switch_threshold
         self.target_assets = target_assets or [
             AssetClass.US_STOCKS,
@@ -233,6 +236,7 @@ class MultiTimeframeTrendStrategy(BaseStrategy):
                 confidence=0.0,
                 reasoning="Insufficient data to calculate momentum",
                 metadata={
+                    "momentum_1m": None,
                     "momentum_3m": None,
                     "momentum_6m": None,
                     "momentum_12m": None,
@@ -266,6 +270,7 @@ class MultiTimeframeTrendStrategy(BaseStrategy):
 
         # Build metadata from winner
         metadata = {
+            "momentum_1m": winner_momenta.get("momentum_1m"),
             "momentum_3m": winner_momenta.get("momentum_3m"),
             "momentum_6m": winner_momenta.get("momentum_6m"),
             "momentum_12m": winner_momenta.get("momentum_12m"),

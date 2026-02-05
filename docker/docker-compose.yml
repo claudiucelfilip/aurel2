@@ -24,7 +24,7 @@ services:
     networks:
       - trading-net
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 4003 || nc -z localhost 4004"]
+      test: ["CMD-SHELL", "timeout 2 bash -c '</dev/tcp/localhost/4003' 2>/dev/null || timeout 2 bash -c '</dev/tcp/localhost/4004' 2>/dev/null"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -53,12 +53,13 @@ services:
       # AI settings
       AI_MODEL: ${AI_MODEL:-sonnet}
       AI_LOOKBACK_YEARS: ${AI_LOOKBACK_YEARS:-3}
+
     volumes:
       # Persist aurel2 data (portfolio, logs, pending orders)
       - aurel2-data:/root/.aurel2
 
-      # Claude Code auth (mount from host after authenticating)
-      - ${CLAUDE_CONFIG_PATH:-./claude-config}:/root/.claude:ro
+      # Claude Code auth (mount from host - needs to be writable for CLI)
+      - ${CLAUDE_CONFIG_PATH:-./claude-config}:/root/.claude
     networks:
       - trading-net
     # Command uses environment variables via typer's envvar support
@@ -72,8 +73,11 @@ services:
     restart: unless-stopped
     depends_on:
       - aurel2
+    environment:
+      IBKR_HOST: ib-gateway
+      IBKR_PORT: ${IBKR_PORT:-4004}
     volumes:
-      - aurel2-data:/root/.aurel2:ro
+      - aurel2-data:/root/.aurel2
     ports:
       - "${DASHBOARD_PORT:-8080}:8080"
     networks:

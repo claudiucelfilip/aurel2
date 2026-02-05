@@ -152,11 +152,16 @@ class LiveDaemon:
 
     async def _run_loop(self) -> None:
         """Main daemon loop."""
+        heartbeat_interval = 60  # Write heartbeat every 60 seconds
+        last_heartbeat = datetime.min
+
         while self._running:
             now = datetime.now(self.timezone)
 
-            # Write heartbeat
-            self._write_heartbeat()
+            # Write heartbeat every minute
+            if (datetime.now() - last_heartbeat).total_seconds() >= heartbeat_interval:
+                self._write_heartbeat()
+                last_heartbeat = datetime.now()
 
             # Check if it's time for daily check
             if self._should_run_check(now):
@@ -248,6 +253,18 @@ class LiveDaemon:
             position_size_pct=decision.position_size_pct,
         )
 
+        # Get post-trade state for journal
+        account_after = None
+        holding_after = None
+        if result.success:
+            try:
+                summary = await self.connection.get_account_summary()
+                if summary:
+                    account_after = summary.total_value
+                holding_after = await self.executor.get_current_holding()
+            except Exception:
+                pass
+
         # Record execution in trade journal (use linked journal ID if available)
         journal_id = decision.journal_decision_id or decision.id
         self.checker.journal.record_execution(
@@ -256,6 +273,8 @@ class LiveDaemon:
             shares=result.shares,
             fill_price=result.fill_price,
             error=result.message if not result.success else None,
+            account_value_after=account_after,
+            current_holding_after=holding_after,
         )
 
         if result.success:
@@ -342,6 +361,18 @@ class LiveDaemon:
             position_size_pct=decision.position_size_pct,
         )
 
+        # Get post-trade state for journal
+        account_after = None
+        holding_after = None
+        if result.success:
+            try:
+                summary = await self.connection.get_account_summary()
+                if summary:
+                    account_after = summary.total_value
+                holding_after = await self.executor.get_current_holding()
+            except Exception:
+                pass
+
         # Record execution in trade journal (use linked journal ID if available)
         journal_id = decision.journal_decision_id or decision.id
         self.checker.journal.record_execution(
@@ -350,6 +381,8 @@ class LiveDaemon:
             shares=result.shares,
             fill_price=result.fill_price,
             error=result.message if not result.success else None,
+            account_value_after=account_after,
+            current_holding_after=holding_after,
         )
 
         if result.success:

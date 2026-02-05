@@ -3,6 +3,7 @@
 import os
 import json
 import asyncio
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -66,6 +67,144 @@ def save_snapshot(total_value: float, cash: float, positions_value: float):
 
     SNAPSHOTS_FILE.parent.mkdir(parents=True, exist_ok=True)
     SNAPSHOTS_FILE.write_text(json.dumps(snapshots, indent=2))
+
+
+def load_pending_decisions() -> list[dict]:
+    """Load pending decisions awaiting approval."""
+    pending_file = DATA_DIR / "pending_decisions.json"
+    if not pending_file.exists():
+        # Fall back to project data dir
+        pending_file = Path("data/pending_decisions.json")
+
+    if pending_file.exists():
+        try:
+            data = json.loads(pending_file.read_text())
+            decisions = data.get("decisions", {})
+            pending = []
+            for d in decisions.values():
+                if d.get("status") == "pending":
+                    # Calculate time remaining
+                    created = datetime.fromisoformat(d["created_at"])
+                    timeout = timedelta(hours=1)
+                    deadline = created + timeout
+                    remaining = deadline - datetime.now()
+                    if remaining.total_seconds() > 0:
+                        mins = int(remaining.total_seconds() // 60)
+                        d["time_remaining_mins"] = mins
+                    else:
+                        d["time_remaining_mins"] = 0
+                    pending.append(d)
+            return pending
+        except Exception:
+            return []
+    return []
+
+
+def load_trade_history(page: int = 1, per_page: int = 10) -> dict:
+    """Load trade journal and compute summary stats with pagination."""
+    journal_file = DATA_DIR / "trade_journal.json"
+    if not journal_file.exists():
+        journal_file = Path("data/trade_journal.json")
+
+    # Load pending decisions for status cross-reference
+    pending_statuses = {}
+    pending_file = DATA_DIR / "pending_decisions.json"
+    if not pending_file.exists():
+        pending_file = Path("data/pending_decisions.json")
+    if pending_file.exists():
+        try:
+            pdata = json.loads(pending_file.read_text())
+            for d in pdata.get("decisions", {}).values():
+                jid = d.get("journal_decision_id")
+                if jid:
+                    pending_statuses[jid] = d.get("status", "pending")
+                # Also map by decision id itself
+                pending_statuses[d["id"]] = d.get("status", "pending")
+        except Exception:
+            pass
+
+    result = {
+        "total_decisions": 0,
+        "executed_trades": 0,
+        "all_decisions": [],
+        "first_account_value": None,
+        "latest_account_value": None,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": 1,
+    }
+
+    if journal_file.exists():
+        try:
+            entries = json.loads(journal_file.read_text())
+            result["total_decisions"] = len(entries)
+            result["executed_trades"] = sum(1 for e in entries if e.get("executed"))
+
+            # Get first and latest account values for overall P&L
+            for entry in entries:
+                val = entry.get("account_value_before")
+                if val and val > 0:
+                    if result["first_account_value"] is None:
+                        result["first_account_value"] = val
+                    result["latest_account_value"] = val
+
+            # All non-hold decisions, newest first
+            all_sorted = sorted(
+                [e for e in entries if e.get("action") != "hold"],
+                key=lambda e: e.get("timestamp", ""),
+                reverse=True,
+            )
+
+            # Enrich with status and formatted time
+            for entry in all_sorted:
+                ts = entry.get("timestamp", "")
+                if ts:
+                    try:
+                        dt = datetime.fromisoformat(ts)
+                        entry["formatted_time"] = dt.strftime("%b %d, %H:%M")
+                    except Exception:
+                        entry["formatted_time"] = ts[:16]
+
+                # Compute original deterministic action for AI override display
+                if not entry.get("ai_agrees", True):
+                    # Derive deterministic action from strategy signals majority
+                    sigs = entry.get("strategy_signals", {})
+                    actions = [s.get("action", "hold") for s in sigs.values() if isinstance(s, dict)]
+                    if actions:
+                        det_action = Counter(actions).most_common(1)[0][0]
+                    else:
+                        det_action = "hold"
+                    # Deterministic asset from the majority action's signals
+                    det_assets = [s.get("asset_symbol") for s in sigs.values()
+                                  if isinstance(s, dict) and s.get("action") == det_action and s.get("asset_symbol")]
+                    det_asset = det_assets[0] if det_assets else None
+                    entry["deterministic_action"] = det_action
+                    entry["deterministic_asset"] = det_asset
+
+                # Determine status
+                eid = entry.get("id", "")
+                if entry.get("execution_error"):
+                    entry["status"] = "failed"
+                elif entry.get("executed") and entry.get("shares", 0) > 0:
+                    entry["status"] = "executed"
+                elif entry.get("executed") or pending_statuses.get(eid) == "executed":
+                    entry["status"] = "finalized"
+                elif eid in pending_statuses:
+                    entry["status"] = pending_statuses[eid]
+                elif entry.get("action") == "hold":
+                    entry["status"] = "hold"
+                else:
+                    entry["status"] = "no_action"
+
+            # Paginate
+            total = len(all_sorted)
+            result["total_pages"] = max(1, (total + per_page - 1) // per_page)
+            start = (page - 1) * per_page
+            result["all_decisions"] = all_sorted[start:start + per_page]
+        except Exception:
+            pass
+
+    return result
 
 
 def get_heartbeat() -> dict | None:
@@ -141,6 +280,9 @@ def _sync_get_ibkr_data() -> dict:
                     "pnl_pct": pnl_pct,
                 })
 
+            # Filter out 0-share positions (closed positions still reported by IBKR)
+            positions_data = [p for p in positions_data if p["shares"] != 0]
+
             account_data = {
                 "total_value": account.total_value if account else 0,
                 "cash_balance": account.cash_balance if account else 0,
@@ -184,19 +326,35 @@ async def get_ibkr_data() -> dict:
 
 
 @app.get("/", response_class=HTMLResponse)
-async def dashboard(request: Request):
+async def dashboard(request: Request, period: str = "1m", page: int = 1):
     """Main dashboard view - shows live IBKR positions."""
+    if period not in PERIOD_DAYS:
+        period = "1m"
+    if page < 1:
+        page = 1
+
     data = await get_ibkr_data()
     heartbeat = get_heartbeat()
     snapshots = load_snapshots()
+    pending_decisions = load_pending_decisions()
+    trade_history = load_trade_history(page=page)
 
     # Get comparison chart data
     positions = data.get("positions", [])
     account = data.get("account")
-    chart_data = get_comparison_chart_data(positions, account) if account else None
+    chart_data = get_comparison_chart_data(positions, account, period=period) if account else None
 
     # Add first trade date info for display
     first_trade_date = get_first_trade_date()
+
+    # Calculate overall gain/loss
+    overall_gain = None
+    overall_gain_pct = None
+    if account and trade_history["first_account_value"]:
+        starting = trade_history["first_account_value"]
+        current = account["total_value"]
+        overall_gain = current - starting
+        overall_gain_pct = ((current / starting) - 1) * 100 if starting else 0
 
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
@@ -209,6 +367,12 @@ async def dashboard(request: Request):
         "snapshots": snapshots,
         "chart_data": chart_data,
         "first_trade_date": first_trade_date,
+        "pending_decisions": pending_decisions,
+        "trade_history": trade_history,
+        "overall_gain": overall_gain,
+        "overall_gain_pct": overall_gain_pct,
+        "period": period,
+        "page": page,
     })
 
 
@@ -244,7 +408,16 @@ def get_first_trade_date() -> date | None:
     return None
 
 
-def get_comparison_chart_data(positions: list[dict], account: dict) -> dict:
+PERIOD_DAYS = {
+    "1w": 7,
+    "1m": 30,
+    "6m": 180,
+    "1y": 365,
+    "5y": 1825,
+}
+
+
+def get_comparison_chart_data(positions: list[dict], account: dict, period: str = "1m") -> dict:
     """Get chart data showing actual portfolio value vs benchmarks.
 
     Shows:
@@ -259,13 +432,18 @@ def get_comparison_chart_data(positions: list[dict], account: dict) -> dict:
     current_total = account.get("total_value", 0)
     current_cash = account.get("cash_balance", 0)
 
-    # Determine chart start date - from first trade or 30 days back
+    # Determine chart start date from period
+    days = PERIOD_DAYS.get(period, 30)
+    start_date = date.today() - timedelta(days=days)
+
+    # For shorter periods, clamp to first trade date if we have one
     first_trade = get_first_trade_date()
-    if first_trade:
-        # Start a few days before first trade to show cash period
-        start_date = first_trade - timedelta(days=3)
-    else:
-        start_date = date.today() - timedelta(days=30)
+    if first_trade and start_date < first_trade - timedelta(days=3):
+        # For long periods, start a few days before first trade
+        pass  # keep the requested start_date
+    elif first_trade:
+        # For short periods, allow going back before first trade to show cash period
+        start_date = min(start_date, first_trade - timedelta(days=3))
 
     end_date = date.today()
 
@@ -377,12 +555,14 @@ def get_comparison_chart_data(positions: list[dict], account: dict) -> dict:
 
 
 @app.get("/api/chart")
-async def api_chart():
+async def api_chart(period: str = "1m"):
     """API endpoint for chart data."""
+    if period not in PERIOD_DAYS:
+        period = "1m"
     data = await get_ibkr_data()
     positions = data.get("positions", [])
     account = data.get("account")
-    return get_comparison_chart_data(positions, account) if account else {}
+    return get_comparison_chart_data(positions, account, period=period) if account else {}
 
 
 @app.get("/api/status")

@@ -3,6 +3,12 @@
 This module provides the AgentBacktestEngine class that backtests the AI agent's
 decision-making over historical data, simulating all 3 strategies generating signals
 and the agent's weighted voting to select actions.
+
+Enhanced (v2):
+- Uses position sizing based on confidence and agreement
+- Tracks rolling strategy accuracy to update weights dynamically
+- Supports regime-aware strategy selection
+- Compares original vs improved orchestrator
 """
 
 from dataclasses import dataclass, field
@@ -14,7 +20,7 @@ import numpy as np
 import pandas as pd
 import structlog
 
-from aurel2.agent.orchestrator import AgentOrchestrator, DecisionType
+from aurel2.agent.orchestrator import AgentOrchestrator, DecisionType, MarketRegime
 from aurel2.core.assets import ASSET_REGISTRY, get_asset
 from aurel2.core.models import Asset, AssetClass, Signal, SignalAction, Trade
 from aurel2.strategies.base import StrategySignal
@@ -39,6 +45,9 @@ class AgentDecisionRecord:
         strategy_signals: What each strategy recommended.
         market_regime: Description of the market regime at decision time.
         executed: Whether the trade was executed.
+        position_size_pct: Position size as percentage of portfolio.
+        regime: Detected market regime enum.
+        forward_return: Return over the next period (for accuracy tracking).
     """
 
     date: date
@@ -50,6 +59,9 @@ class AgentDecisionRecord:
     strategy_signals: dict[str, Any]
     market_regime: str
     executed: bool
+    position_size_pct: float = 1.0
+    regime: MarketRegime | None = None
+    forward_return: float | None = None
 
 
 @dataclass
@@ -101,6 +113,11 @@ class AgentBacktestResult:
     max_drawdown: float = 0.0
     sharpe_ratio: float = 0.0
     num_trades: int = 0
+
+    # New v2 metrics
+    avg_position_size: float = 1.0
+    regime_distribution: dict[str, int] = field(default_factory=dict)
+    strategy_final_accuracies: dict[str, float] = field(default_factory=dict)
 
     def calculate_metrics(self) -> None:
         """Calculate performance metrics from equity curve."""
@@ -161,7 +178,7 @@ class AgentBacktestResult:
     def print_summary(self) -> None:
         """Print a summary of agent backtest results."""
         print("\n" + "=" * 70)
-        print("AGENT BACKTEST RESULTS")
+        print("AGENT BACKTEST RESULTS (v2 - Enhanced)")
         print("=" * 70)
         print(f"Period: {self.start_date} to {self.end_date}")
         print(f"Initial Capital: ${self.initial_capital:,.2f}")
@@ -172,6 +189,7 @@ class AgentBacktestResult:
         print(f"Max Drawdown: {self.max_drawdown:.2%}")
         print(f"Sharpe Ratio: {self.sharpe_ratio:.2f}")
         print(f"Number of Trades: {self.num_trades}")
+        print(f"Avg Position Size: {self.avg_position_size:.1%}")
         print("-" * 70)
         print("DECISION ANALYSIS")
         print(f"  Total Decisions: {len(self.decisions)}")
@@ -179,6 +197,15 @@ class AgentBacktestResult:
         print(f"  Non-Routine: {self.non_routine_count}")
         print(f"  Urgent: {self.urgent_count}")
         print(f"  Strategy Agreement Rate: {self.strategy_agreement_rate:.1%}")
+        print("-" * 70)
+        print("REGIME DISTRIBUTION")
+        for regime, count in sorted(self.regime_distribution.items(), key=lambda x: -x[1]):
+            pct = count / len(self.decisions) * 100 if self.decisions else 0
+            print(f"  {regime}: {count} ({pct:.1f}%)")
+        print("-" * 70)
+        print("STRATEGY ROLLING ACCURACIES (Final)")
+        for strategy, accuracy in sorted(self.strategy_final_accuracies.items()):
+            print(f"  {strategy}: {accuracy:.1%}")
         print("-" * 70)
         print("COMPARISON VS BENCHMARKS")
         if self.benchmark_return is not None:
@@ -197,50 +224,68 @@ class AgentBacktestResult:
 class AgentBacktestEngine:
     """Backtest the AI agent's decision-making over historical data.
 
+    Enhanced (v2):
+    - Uses position sizing based on confidence and agreement
+    - Tracks rolling strategy accuracy to update weights dynamically
+    - Supports regime-aware strategy selection
+
     Simulates:
     - All 3 strategies generating signals
-    - Agent's weighted voting to select action
+    - Agent's regime-aware weighted voting to select action
     - Decision classification (ROUTINE/NON_ROUTINE/URGENT)
+    - Confidence-based position sizing
     - Trade execution (assumes all decisions approved)
 
     Attributes:
         initial_capital: Starting capital for the backtest.
         transaction_cost_pct: Transaction cost as a percentage of trade value.
+        use_enhanced_features: Whether to use v2 enhanced features.
     """
 
     def __init__(
         self,
         initial_capital: float = 10000.0,
         transaction_cost_pct: float = 0.001,
+        use_enhanced_features: bool = True,
     ) -> None:
         """Initialize the agent backtest engine.
 
         Args:
             initial_capital: Starting capital (default $10,000).
             transaction_cost_pct: Transaction cost percentage (default 0.1%).
+            use_enhanced_features: Whether to use v2 enhanced features (default True).
         """
         self.initial_capital = initial_capital
         self.transaction_cost_pct = transaction_cost_pct
+        self.use_enhanced_features = use_enhanced_features
 
-        # Initialize strategies
+        # Initialize strategies with tuned parameters
         self.dual_momentum = DualMomentumStrategy(
             assets=ASSET_REGISTRY,
             lookback_months=12,
             switch_threshold=0.10,
         )
         self.mean_reversion = MeanReversionStrategy(
-            rsi_oversold=30,
-            rsi_overbought=70,
+            rsi_oversold=25,  # Tightened from 30
+            rsi_overbought=75,  # Tightened from 70
+            rsi_extreme_oversold=20,
             rsi_period=14,
         )
         self.multi_timeframe = MultiTimeframeTrendStrategy(
-            lookback_months=[3, 6, 12],
-            weights=[0.4, 0.35, 0.25],
-            switch_threshold=0.05,
+            lookback_months=[1, 3, 6, 12],  # Added 1-month
+            weights=[0.30, 0.30, 0.25, 0.15],  # More short-term weight
+            switch_threshold=0.03,  # Reduced from 0.05
         )
 
-        # Initialize orchestrator
-        self.orchestrator = AgentOrchestrator()
+        # Initialize orchestrator with enhanced features
+        self.orchestrator = AgentOrchestrator(
+            use_dynamic_weights=use_enhanced_features,
+            use_position_sizing=use_enhanced_features,
+            use_regime_selection=use_enhanced_features,
+        )
+
+        # Track pending accuracy updates
+        self._pending_accuracy: list[tuple[str, str, float | None]] = []  # (strategy, action, entry_price)
 
     def _get_check_dates(
         self,
@@ -472,7 +517,6 @@ class AgentBacktestEngine:
         cash = Decimal(str(self.initial_capital))
         current_holding: AssetClass | None = None
         current_shares = Decimal("0")
-        last_action: SignalAction | None = None
 
         decisions: list[AgentDecisionRecord] = []
         trades: list[Trade] = []
@@ -511,17 +555,30 @@ class AgentBacktestEngine:
             market_context = {
                 "drawdown": drawdown,
                 "volatility": "extreme" if "volatile" in market_regime else "normal",
+                "regime": market_regime,  # Pass regime string for orchestrator
             }
 
             # Use orchestrator to analyze and decide
             decision = self.orchestrator.analyze(signals, market_context)
 
-            # Only act on signal changes (not continuous HOLD)
-            action_changed = decision.action != last_action
-            should_execute = (
-                decision.action != SignalAction.HOLD
-                and action_changed
-            )
+            # Determine target asset for this decision
+            target_asset_class = self._get_target_asset_class(decision, signals)
+
+            # Execute if:
+            # 1. Action is BUY and (no current holding OR target differs from current)
+            # 2. Action is SELL and we have a holding
+            # This handles both initial buys and asset switches
+            should_execute = False
+            if decision.action == SignalAction.BUY:
+                # Execute if we have no position, or target differs from current
+                if current_holding is None or current_holding == AssetClass.CASH:
+                    should_execute = True
+                elif target_asset_class and target_asset_class != current_holding:
+                    should_execute = True  # Asset switch
+            elif decision.action == SignalAction.SELL:
+                # Execute sell if we have a holding
+                if current_holding and current_holding != AssetClass.CASH:
+                    should_execute = True
 
             # Record the decision
             decision_record = AgentDecisionRecord(
@@ -534,6 +591,8 @@ class AgentBacktestEngine:
                 strategy_signals=signals,
                 market_regime=market_regime,
                 executed=should_execute,
+                position_size_pct=decision.position_size_pct,
+                regime=decision.regime,
             )
             decisions.append(decision_record)
 
@@ -549,7 +608,7 @@ class AgentBacktestEngine:
 
                 # Execute trade
                 if decision.action == SignalAction.BUY:
-                    target_asset_class = self._get_target_asset_class(decision, signals)
+                    # target_asset_class already determined above
 
                     # Sell current holding if any
                     if current_holding and current_holding != AssetClass.CASH and current_shares > 0:
@@ -582,7 +641,9 @@ class AgentBacktestEngine:
                         buy_price = self._get_price(prices, buy_symbol, check_date)
 
                         if buy_price and buy_price > 0:
-                            buy_value = float(cash)
+                            # Apply position sizing
+                            position_size = decision.position_size_pct
+                            buy_value = float(cash) * position_size
                             commission = buy_value * self.transaction_cost_pct
                             net_value = buy_value - commission
                             shares_to_buy = Decimal(str(net_value / buy_price))
@@ -598,7 +659,9 @@ class AgentBacktestEngine:
                                 )
                             )
 
-                            cash = Decimal("0")
+                            # Keep remainder in cash if position size < 100%
+                            remaining_cash = float(cash) * (1.0 - position_size)
+                            cash = Decimal(str(remaining_cash))
                             current_shares = shares_to_buy
                             current_holding = target_asset_class
                     else:
@@ -631,8 +694,6 @@ class AgentBacktestEngine:
                             cash += Decimal(str(sell_value - commission))
                             current_shares = Decimal("0")
                             current_holding = AssetClass.CASH
-
-                last_action = decision.action
 
             # Record equity curve point
             current_value = float(cash)
@@ -680,7 +741,96 @@ class AgentBacktestEngine:
             prices, start_date, end_date, "multi_timeframe", result.total_return
         )
 
+        # Calculate v2 metrics
+        self._calculate_v2_metrics(result, decisions, prices)
+
         return result
+
+    def _calculate_v2_metrics(
+        self,
+        result: AgentBacktestResult,
+        decisions: list[AgentDecisionRecord],
+        prices: pd.DataFrame,
+    ) -> None:
+        """Calculate v2 enhanced metrics.
+
+        Args:
+            result: The backtest result to update.
+            decisions: List of decision records.
+            prices: Price DataFrame for forward return calculation.
+        """
+        # Average position size
+        position_sizes = [d.position_size_pct for d in decisions if d.executed]
+        if position_sizes:
+            result.avg_position_size = sum(position_sizes) / len(position_sizes)
+
+        # Regime distribution
+        regime_counts: dict[str, int] = {}
+        for d in decisions:
+            regime_str = d.regime.value if d.regime else "unknown"
+            regime_counts[regime_str] = regime_counts.get(regime_str, 0) + 1
+        result.regime_distribution = regime_counts
+
+        # Calculate forward returns and strategy accuracy
+        self._update_strategy_accuracies(decisions, prices)
+
+        # Get final accuracies from orchestrator
+        result.strategy_final_accuracies = self.orchestrator.get_strategy_accuracies()
+
+    def _update_strategy_accuracies(
+        self,
+        decisions: list[AgentDecisionRecord],
+        prices: pd.DataFrame,
+    ) -> None:
+        """Update strategy accuracies based on forward returns.
+
+        For each decision, look at what each strategy recommended and
+        whether that recommendation led to a positive outcome over the
+        next period.
+
+        Args:
+            decisions: List of decision records.
+            prices: Price DataFrame.
+        """
+        for i, decision in enumerate(decisions):
+            if not decision.executed:
+                continue
+
+            # Get the next decision date (or use 5 trading days ahead)
+            if i + 1 < len(decisions):
+                next_date = decisions[i + 1].date
+            else:
+                # Last decision - skip accuracy update
+                continue
+
+            # Calculate forward return for the asset
+            if decision.asset_class and decision.asset_class != AssetClass.CASH:
+                try:
+                    asset = get_asset(decision.asset_class)
+                    symbol = asset.yahoo_symbol or asset.symbol
+                    entry_price = self._get_price(prices, symbol, decision.date)
+                    exit_price = self._get_price(prices, symbol, next_date)
+
+                    if entry_price and exit_price and entry_price > 0:
+                        forward_return = (exit_price / entry_price) - 1
+
+                        # Update each strategy's accuracy
+                        for strategy_name, signal in decision.strategy_signals.items():
+                            signal_action = signal.get("action", "hold")
+
+                            # Was this strategy's recommendation correct?
+                            if signal_action == "buy":
+                                was_correct = forward_return > 0
+                            elif signal_action == "sell":
+                                was_correct = forward_return < 0
+                            else:  # hold
+                                # Hold is "correct" if return was small (< 2%)
+                                was_correct = abs(forward_return) < 0.02
+
+                            self.orchestrator.update_accuracy(strategy_name, was_correct)
+
+                except (KeyError, ValueError):
+                    pass
 
     def _get_target_asset_class(
         self,

@@ -122,16 +122,27 @@ class FailureAnalysis:
         logger.info("loaded_failure_analysis", filepath=filepath, num_failures=len(failure_events))
         return analysis
 
-    def to_prompt_text(self, as_of_date: date | None = None) -> str:
+    def to_prompt_text(
+        self,
+        as_of_date: date | None = None,
+        lookback_years: int | None = None,
+    ) -> str:
         """Convert analysis to text for AI prompt.
 
         Args:
             as_of_date: Only include failures BEFORE this date (point-in-time safe).
                        If None, includes all failures (use for analysis only, not live).
+            lookback_years: Only include failures from the last N years before as_of_date.
+                           If None, includes all past failures. Recommended: 5 years.
         """
         # Filter to only failures before the as_of_date (NO FUTURE LEAKAGE)
         if as_of_date:
             past_failures = [f for f in self.failure_events if f.date < as_of_date]
+
+            # Apply lookback window if specified
+            if lookback_years is not None:
+                cutoff_date = as_of_date - timedelta(days=lookback_years * 365)
+                past_failures = [f for f in past_failures if f.date >= cutoff_date]
             worst = sorted(past_failures, key=lambda x: -x.opportunity_cost)[:10]
             failure_types = {}
             for f in past_failures:

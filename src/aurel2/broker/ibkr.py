@@ -81,10 +81,11 @@ class IBKRBroker(BaseBroker):
         self.client_id = client_id
         self.ib = IB()
         self._connected = False
+        self._server_connected = True  # Track IBKR server connectivity (Error 1100/1102)
 
     @property
     def is_connected(self) -> bool:
-        return self._connected and self.ib.isConnected()
+        return self._connected and self.ib.isConnected() and self._server_connected
 
     async def connect(self) -> bool:
         """Connect to IB Gateway/TWS."""
@@ -96,12 +97,28 @@ class IBKRBroker(BaseBroker):
                 clientId=self.client_id,
             )
             self._connected = True
+            self._server_connected = True
+
+            # Register error handler to track IBKR server connectivity
+            self.ib.errorEvent += self._on_error
+
             logger.info("connected_to_ibkr")
             return True
         except Exception as e:
             logger.error("ibkr_connection_failed", error=str(e))
             self._connected = False
             return False
+
+    def _on_error(self, reqId: int, errorCode: int, errorString: str, contract: Any = None) -> None:
+        """Handle IBKR error events to track server connectivity."""
+        # Error 1100: Connectivity between IBKR and server lost
+        if errorCode == 1100:
+            logger.warning("ibkr_server_connectivity_lost", error_code=errorCode, message=errorString)
+            self._server_connected = False
+        # Error 1101/1102: Connectivity restored
+        elif errorCode in (1101, 1102):
+            logger.info("ibkr_server_connectivity_restored", error_code=errorCode, message=errorString)
+            self._server_connected = True
 
     async def disconnect(self) -> None:
         """Disconnect from IB."""

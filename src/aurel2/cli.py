@@ -1910,12 +1910,14 @@ def learn(
 @app.command()
 def live(
     paper: bool = typer.Option(True, "--paper/--real", help="Use paper trading (default) or real trading"),
-    check_time: str = typer.Option("16:00", "--check-time", "-t", help="Daily check time (HH:MM in Romania timezone)"),
-    poll_interval: int = typer.Option(5, "--poll-interval", "-p", help="Approval poll interval in minutes"),
-    ntfy_topic: str = typer.Option("aurel2", "--ntfy-topic", help="Ntfy notification topic"),
-    dry_run: bool = typer.Option(False, "--dry-run", help="Don't execute trades, just simulate"),
-    ai_model: str = typer.Option("sonnet", "--ai-model", "-m", help="AI model: sonnet, opus, haiku"),
-    ai_lookback: int = typer.Option(3, "--ai-lookback", "-l", help="AI failure pattern lookback years (default: 3)"),
+    check_time: str = typer.Option("16:00", "--check-time", "-t", help="Daily check time (HH:MM in Romania timezone)", envvar="CHECK_TIME"),
+    poll_interval: int = typer.Option(5, "--poll-interval", "-p", help="Approval poll interval in minutes", envvar="POLL_INTERVAL"),
+    ntfy_topic: str = typer.Option("aurel2", "--ntfy-topic", help="Ntfy notification topic", envvar="NTFY_TOPIC"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Don't execute trades, just simulate", envvar="DRY_RUN"),
+    ai_model: str = typer.Option("sonnet", "--ai-model", "-m", help="AI model: sonnet, opus, haiku", envvar="AI_MODEL"),
+    ai_lookback: int = typer.Option(3, "--ai-lookback", "-l", help="AI failure pattern lookback years (default: 3)", envvar="AI_LOOKBACK_YEARS"),
+    ibkr_host: str = typer.Option("127.0.0.1", "--ibkr-host", help="IBKR Gateway host", envvar="IBKR_HOST"),
+    ibkr_port: int = typer.Option(None, "--ibkr-port", help="IBKR Gateway port (default: 4002 paper, 4001 live)", envvar="IBKR_PORT"),
 ):
     """Run the live trading daemon.
 
@@ -1931,14 +1933,20 @@ def live(
     - Default: Sonnet with 3-year lookback (best in backtests: +42.86% alpha)
     - Lookback window filters failure patterns to recent years only
 
+    Environment Variables:
+        IBKR_HOST, IBKR_PORT, CHECK_TIME, POLL_INTERVAL, NTFY_TOPIC,
+        DRY_RUN, AI_MODEL, AI_LOOKBACK_YEARS
+
     Examples:
         aurel2 live --paper          # Paper trading (default)
         aurel2 live --real           # LIVE trading (caution!)
         aurel2 live --dry-run        # Simulate without executing
         aurel2 live --check-time 09:30  # Check at 9:30 AM
         aurel2 live --ai-lookback 5  # Use 5-year lookback window
+        aurel2 live --ibkr-host ib-gateway  # Docker: connect to ib-gateway container
     """
     import asyncio
+    import os
     from datetime import time as dt_time
 
     from aurel2.live.daemon import LiveDaemon
@@ -1953,8 +1961,8 @@ def live(
         console.print(f"[red]Invalid check time format: {check_time}. Use HH:MM.[/red]")
         raise typer.Exit(1)
 
-    # Warn about real trading
-    if not paper:
+    # Warn about real trading (skip in non-interactive mode)
+    if not paper and os.isatty(0):
         console.print("\n[bold red]WARNING: LIVE TRADING MODE[/bold red]")
         console.print("You are about to run with REAL money!")
         console.print("Make sure you understand the risks.\n")
@@ -1972,6 +1980,8 @@ def live(
         dry_run=dry_run,
         ai_model=ai_model,
         ai_lookback_years=ai_lookback,
+        ibkr_host=ibkr_host,
+        ibkr_port=ibkr_port,
     )
 
     try:
@@ -2435,6 +2445,8 @@ def monitor(
     paper: bool = typer.Option(True, "--paper/--real", help="Daemon uses paper trading (default) or real trading"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Daemon uses dry run mode"),
     ntfy_topic: str = typer.Option("aurel2", "--ntfy-topic", help="Ntfy notification topic"),
+    ai: bool = typer.Option(False, "--ai", help="Enable AI-powered analysis using Claude Code CLI"),
+    ai_model: str = typer.Option("sonnet", "--ai-model", help="Claude model for AI analysis (sonnet, opus, haiku)"),
 ):
     """Run the daemon monitor agent.
 
@@ -2445,10 +2457,18 @@ def monitor(
     4. Sends ntfy notifications for warnings and errors
     5. Tracks session progress for evaluation
 
+    With --ai flag:
+    - Uses Claude Code CLI for intelligent root cause analysis
+    - Learns from historical incident patterns
+    - Makes autonomous decisions on fix actions
+    - Falls back to deterministic rules if AI fails
+
     Examples:
         aurel2 monitor                # Monitor paper trading daemon
         aurel2 monitor --real         # Monitor live trading daemon
         aurel2 monitor --dry-run      # Monitor dry-run daemon
+        aurel2 monitor --ai           # Monitor with AI-powered analysis
+        aurel2 monitor --ai --ai-model opus  # Use opus model for AI
     """
     import asyncio
 
@@ -2460,6 +2480,8 @@ def monitor(
         paper=paper,
         dry_run=dry_run,
         ntfy_topic=ntfy_topic,
+        ai_enabled=ai,
+        ai_model=ai_model,
     )
 
     try:

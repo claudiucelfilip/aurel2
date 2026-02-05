@@ -1,0 +1,277 @@
+{
+  "decisions": {
+    "73055a33": {
+      "id": "73055a33",
+      "created_at": "2026-01-22T15:18:32.749299",
+      "urgency": "non_routine",
+      "action": "buy",
+      "symbol": "GLD",
+      "reasoning": "[BULL] Strategy disagreement: ['buy', 'hold', 'buy']. Weighted vote: BUY (2/3 agree, position: 81%)",
+      "confidence": 0.9051177865270656,
+      "status": "executed",
+      "executed_at": "2026-01-22T16:32:41.599135",
+      "approval_url": "https://approval-endpoint.vercel.app/api/decision/73055a33",
+      "original_price": null,
+      "deterministic_action": "buy",
+      "deterministic_asset": "GLD",
+      "ai_agrees": true,
+      "ai_action": "buy",
+      "ai_asset": "GLD",
+      "ai_reasoning": "GLD's 74.35% momentum is exceptionally strong and significantly above other assets. This is a clear signal, not a marginal whipsaw situation (<5% gap). No historical pattern suggests this setup leads to failure.",
+      "strategies": [
+        {
+          "name": "Dual Momentum",
+          "action": "BUY",
+          "confidence": 0.8
+        },
+        {
+          "name": "Mean Reversion",
+          "action": "HOLD",
+          "confidence": 0.5
+        },
+        {
+          "name": "Multi Timeframe",
+          "action": "BUY",
+          "confidence": 0.9012963849690521
+        }
+      ],
+      "market_regime": "bull",
+      "current_holding": null,
+      "position_size_pct": 1.0
+    },
+    "883a49bc": {
+      "id": "883a49bc",
+      "created_at": "2026-01-22T16:32:38.726039",
+      "urgency": "non_routine",
+      "action": "buy",
+      "symbol": "GLD",
+      "reasoning": "[BULL] Strategy disagreement: ['buy', 'hold', 'buy']. Weighted vote: BUY (2/3 agree, position: 81%)",
+      "confidence": 0.9058323111131464,
+      "status": "executed",
+      "executed_at": "2026-01-22T17:32:49.651716",
+      "approval_url": "https://approval-endpoint.vercel.app/api/decision/883a49bc",
+      "original_price": null,
+      "deterministic_action": "buy",
+      "deterministic_asset": "GLD",
+      "ai_agrees": true,
+      "ai_action": "buy",
+      "ai_asset": "GLD",
+      "ai_reasoning": "No historical pattern match. Gold momentum is exceptionally strong (74.76%), and we're entering from cash in a calm market with low VIX. This is precisely when momentum systems perform best - not during crisis periods.",
+      "strategies": [
+        {
+          "name": "Dual Momentum",
+          "action": "BUY",
+          "confidence": 0.8
+        },
+        {
+          "name": "Mean Reversion",
+          "action": "HOLD",
+          "confidence": 0.5
+        },
+        {
+          "name": "Multi Timeframe",
+          "action": "BUY",
+          "confidence": 0.9184329461795269
+        }
+      ],
+      "market_regime": "bull",
+      "current_holding": null,
+      "position_size_pct": 1.0
+    },
+    "5ae3488a": {
+      "id": "5ae3488a",
+      "created_at": "2026-01-23T13:07:50.488748",
+      "urgency": "non_routine",
+      "action": "buy",
+      "symbol": "GLD",
+      "reasoning": "[BULL] Strategy disagreement: ['buy', 'hold', 'buy']. Weighted vote: BUY (2/3 agree, position: 81%)",
+      "confidence": 0.9056386870236596,
+      "status": "executed",
+      "executed_at": "2026-01-23T13:31:51.212587",
+      "approval_url": "https://approval-endpoint.vercel.app/api/decision/5ae3488a",
+      "original_price": null,
+      "deterministic_action": "buy",
+      "deterministic_asset": "GLD",
+      "ai_agrees": true,
+      "ai_action": "buy",
+      "ai_asset": "GLD",
+      "ai_reasoning": "No historical pattern match. GLD showing exceptionally strong momentum (77.82%) in stable conditions - this is exactly when momentum systems work best, not when they fail.",
+      "strategies": [
+        {
+          "name": "Dual Momentum",
+          "action": "BUY",
+          "confidence": 0.8
+        },
+        {
+          "name": "Mean Reversion",
+          "action": "HOLD",
+          "confidence": 0.5
+        },
+        {
+          "name": "Multi Timeframe",
+          "action": "BUY",
+          "confidence": 0.9137635930402057
+        }
+      ],
+      "market_regime": "bull",
+      "current_holding": null,
+      "position_size_pct": 0.80839355850391
+    },
+    "d0ef3cec": {
+      "id": "d0ef3cec",
+      "created_at": "2026-01-23T13:28:42.920900",
+      "urgency": "non_routine",
+      "action": "buy",
+      "symbol": "GLD",
+      "reasoning": "[BULL] Strategy disagreement: ['buy', 'hold', 'buy']. Weighted vote: BUY (2/3 agree, position: 81%)",
+      "confidence": 0.9056386897917647,
+      "status": "executed",
+      "executed_at": "2026-01-23T14:09:46.274683",
+      "approval_url": "https://approval-endpoint.vercel.app/api/decision/d0ef3cec",
+      "original_price": null,
+      "deterministic_action": "buy",
+      "deterministic_asset": "GLD",
+      "ai_agrees": true,
+      "ai_action": "buy",
+      "ai_asset": "GLD",
+      "ai_reasoning": "No historical failure pattern match. The system is doing exactly what it should: rotating from cash to the highest momentum asset (GLD at 77.82%) in a calm, bullish environment. Past failures show the system struggles during volatility spikes and trend reversals - neither is happening now.",
+      "strategies": [
+        {
+          "name": "Dual Momentum",
+          "action": "BUY",
+          "confidence": 0.8
+        },
+        {
+          "name": "Mean Reversion",
+          "action": "HOLD",
+          "confidence": 0.5
+        },
+        {
+          "name": "Multi Timeframe",
+          "action": "BUY",
+          "confidence": 0.9137636596576306
+        }
+      ],
+      "market_regime": "bull",
+      "current_holding": null,
+      "position_size_pct": 0.808393558844387
+    },
+    "2a3e16f2": {
+      "id": "2a3e16f2",
+      "created_at": "2026-01-23T16:01:52.709865",
+      "urgency": "non_routine",
+      "action": "buy",
+      "symbol": "GLD",
+      "reasoning": "[BULL] Strategy disagreement: ['buy', 'hold', 'buy']. Weighted vote: BUY (2/3 agree, position: 81%)",
+      "confidence": 0.9056386897917647,
+      "status": "executed",
+      "executed_at": "2026-01-23T17:02:09.379125",
+      "approval_url": "https://approval-endpoint.vercel.app/api/decision/2a3e16f2",
+      "original_price": null,
+      "deterministic_action": "buy",
+      "deterministic_asset": "GLD",
+      "ai_agrees": true,
+      "ai_action": "buy",
+      "ai_asset": "GLD",
+      "ai_reasoning": "No override needed. Gold's 77.82% momentum in a calm market with SPY near highs suggests legitimate rotation, not a momentum system failure pattern.",
+      "strategies": [
+        {
+          "name": "Dual Momentum",
+          "action": "BUY",
+          "confidence": 0.8
+        },
+        {
+          "name": "Mean Reversion",
+          "action": "HOLD",
+          "confidence": 0.5
+        },
+        {
+          "name": "Multi Timeframe",
+          "action": "BUY",
+          "confidence": 0.9137636596576306
+        }
+      ],
+      "market_regime": "bull",
+      "current_holding": null,
+      "position_size_pct": 0.808393558844387
+    },
+    "87d1a656": {
+      "id": "87d1a656",
+      "created_at": "2026-01-23T18:37:20.764424",
+      "urgency": "non_routine",
+      "action": "buy",
+      "symbol": "GLD",
+      "reasoning": "[BULL] Strategy disagreement: ['buy', 'hold', 'buy']. Weighted vote: BUY (2/3 agree, position: 81%)",
+      "confidence": 0.9041628979179246,
+      "status": "executed",
+      "executed_at": "2026-01-23T19:37:35.793125",
+      "approval_url": "https://approval-endpoint.vercel.app/api/decision/87d1a656",
+      "original_price": null,
+      "deterministic_action": "buy",
+      "deterministic_asset": "GLD",
+      "ai_agrees": true,
+      "ai_action": "buy",
+      "ai_asset": "GLD",
+      "ai_reasoning": "No pattern match to historical failures. Market is calm and healthy, system is making initial position entry with strong conviction - this is when momentum systems work best.",
+      "strategies": [
+        {
+          "name": "Dual Momentum",
+          "action": "BUY",
+          "confidence": 0.8
+        },
+        {
+          "name": "Mean Reversion",
+          "action": "HOLD",
+          "confidence": 0.5
+        },
+        {
+          "name": "Multi Timeframe",
+          "action": "BUY",
+          "confidence": 0.8787940569574739
+        }
+      ],
+      "market_regime": "bull",
+      "current_holding": null,
+      "position_size_pct": 0.8082120364439047
+    },
+    "68674e06": {
+      "id": "68674e06",
+      "created_at": "2026-02-03T00:15:36.005133",
+      "urgency": "non_routine",
+      "action": "buy",
+      "symbol": "EFA",
+      "reasoning": "AI Override: Multi-timeframe strategy shows 98% confidence BUY signal for EFA. SPY at ATH with 0% drawdown suggests bull market strength spreading to international markets. Gold momentum (64%) is strong but not exceptional, and EFA likely offers better upside in current risk-on environment. Capturing an opportunity the rules-based system missed.",
+      "confidence": 0.85,
+      "status": "executed",
+      "executed_at": "2026-02-03T02:10:30.130891",
+      "approval_url": "https://approval-endpoint.vercel.app/api/decision/68674e06",
+      "original_price": null,
+      "deterministic_action": "hold",
+      "deterministic_asset": null,
+      "ai_agrees": false,
+      "ai_action": "buy",
+      "ai_asset": "EFA",
+      "ai_reasoning": "Multi-timeframe strategy shows 98% confidence BUY signal for EFA. SPY at ATH with 0% drawdown suggests bull market strength spreading to international markets. Gold momentum (64%) is strong but not exceptional, and EFA likely offers better upside in current risk-on environment. Capturing an opportunity the rules-based system missed.",
+      "strategies": [
+        {
+          "name": "Dual Momentum",
+          "action": "HOLD",
+          "confidence": 0.8
+        },
+        {
+          "name": "Mean Reversion",
+          "action": "HOLD",
+          "confidence": 0.5
+        },
+        {
+          "name": "Multi Timeframe",
+          "action": "BUY",
+          "confidence": 0.9802700527552248
+        }
+      ],
+      "market_regime": "bull",
+      "current_holding": "GLD",
+      "position_size_pct": 0.7684159533909009
+    }
+  }
+}

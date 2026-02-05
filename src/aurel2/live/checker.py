@@ -448,6 +448,18 @@ class Checker:
             position_size_pct=decision.position_size_pct,
         )
 
+        # Get post-trade state for journal
+        account_after = None
+        holding_after = None
+        if result.success:
+            try:
+                summary = await self.connection.get_account_summary()
+                if summary:
+                    account_after = summary.total_value
+                holding_after = await self.executor.get_current_holding()
+            except Exception:
+                pass
+
         # Record execution result in journal
         self.journal.record_execution(
             decision_id=decision_id,
@@ -455,6 +467,8 @@ class Checker:
             shares=result.shares,
             fill_price=result.fill_price,
             error=result.message if not result.success else None,
+            account_value_after=account_after,
+            current_holding_after=holding_after,
         )
 
         # Send notification
@@ -598,6 +612,10 @@ class Checker:
             tags=tags,
             priority=priority,
             click_url=pending.approval_url,
+            actions=[
+                f"view, ✅ Approve, {pending.approval_url}?action=approve",
+                f"view, ❌ Reject, {pending.approval_url}?action=reject",
+            ],
         )
 
         return CheckResult(

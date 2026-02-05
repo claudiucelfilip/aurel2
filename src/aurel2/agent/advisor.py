@@ -6,13 +6,13 @@ and may override them based on historical failure patterns.
 
 import os
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any
 
 import pandas as pd
 import structlog
 
-from aurel2.agent.ai_evaluator import ClaudeCodeExpertEvaluator
+from aurel2.agent.ai_evaluator import ClaudeCodeExpertEvaluator, ExpertAIEvaluator
 from aurel2.agent.failure_analyzer import FailureAnalysis
 from aurel2.core.assets import ASSET_REGISTRY
 
@@ -20,6 +20,10 @@ logger = structlog.get_logger()
 
 # Default path for failure learnings
 DEFAULT_FAILURE_FILE = "data/failure_learnings.json"
+
+# AI evaluator guardrails
+MAX_CONSECUTIVE_AI_FAILURES = 3  # Skip AI after this many consecutive failures
+AI_RETRY_COOLDOWN_HOURS = 1  # Wait this long before retrying after max failures
 
 
 @dataclass
@@ -54,22 +58,33 @@ class AIAdvisor:
         self,
         failure_file: str = DEFAULT_FAILURE_FILE,
         model: str = "sonnet",
+        lookback_years: int = 5,
     ):
         """Initialize the AI advisor.
 
         Args:
             failure_file: Path to failure learnings JSON file.
             model: Claude model to use via CLI (sonnet, opus, haiku).
+            lookback_years: Only use failures from the last N years. Default 5.
+                           Set to None to use all historical failures.
         """
         self.failure_file = failure_file
         self.model = model
+        self.lookback_years = lookback_years
 
         # Load failure analysis
         self.failure_analysis: FailureAnalysis | None = None
         self._load_failure_analysis()
 
-        # Initialize AI evaluator (using Claude Code CLI, not API)
-        self.ai_evaluator: ClaudeCodeExpertEvaluator | None = None
+        # Initialize AI evaluator
+        # Uses Anthropic API if ANTHROPIC_API_KEY is set, otherwise Claude Code CLI
+        self.ai_evaluator: ClaudeCodeExpertEvaluator | ExpertAIEvaluator | None = None
+        self._use_api = bool(os.environ.get("ANTHROPIC_API_KEY"))
+
+        # AI failure tracking for guardrails
+        self._consecutive_ai_failures = 0
+        self._last_ai_failure_time: datetime | None = None
+        self._ai_disabled_until: datetime | None = None
 
     def _load_failure_analysis(self) -> None:
         """Load failure analysis from file if available."""
@@ -130,12 +145,81 @@ class AIAdvisor:
 
         return age > timedelta(hours=max_age_hours)
 
+    def _should_skip_ai(self) -> tuple[bool, str]:
+        """Check if AI evaluation should be skipped due to repeated failures.
+
+        Returns:
+            Tuple of (should_skip, reason)
+        """
+        now = datetime.now()
+
+        # Check if we're in cooldown period after max failures
+        if self._ai_disabled_until and now < self._ai_disabled_until:
+            remaining = (self._ai_disabled_until - now).total_seconds() / 60
+            return True, f"AI disabled for {remaining:.0f} more minutes after {MAX_CONSECUTIVE_AI_FAILURES} failures"
+
+        # If cooldown expired, reset the failure counter
+        if self._ai_disabled_until and now >= self._ai_disabled_until:
+            logger.info("ai_cooldown_expired_retrying")
+            self._ai_disabled_until = None
+            self._consecutive_ai_failures = 0
+
+        return False, ""
+
+    def _record_ai_success(self) -> None:
+        """Record successful AI evaluation, reset failure counter."""
+        if self._consecutive_ai_failures > 0:
+            logger.info(
+                "ai_recovered",
+                previous_failures=self._consecutive_ai_failures,
+            )
+        self._consecutive_ai_failures = 0
+        self._last_ai_failure_time = None
+        self._ai_disabled_until = None
+
+    def _record_ai_failure(self, error: str) -> None:
+        """Record AI evaluation failure and potentially disable AI temporarily."""
+        self._consecutive_ai_failures += 1
+        self._last_ai_failure_time = datetime.now()
+
+        logger.warning(
+            "ai_evaluation_failure_recorded",
+            consecutive_failures=self._consecutive_ai_failures,
+            max_before_disable=MAX_CONSECUTIVE_AI_FAILURES,
+            error=error[:100],
+        )
+
+        # Disable AI after too many consecutive failures
+        if self._consecutive_ai_failures >= MAX_CONSECUTIVE_AI_FAILURES:
+            self._ai_disabled_until = datetime.now() + timedelta(hours=AI_RETRY_COOLDOWN_HOURS)
+            logger.warning(
+                "ai_temporarily_disabled",
+                consecutive_failures=self._consecutive_ai_failures,
+                disabled_until=self._ai_disabled_until.isoformat(),
+                cooldown_hours=AI_RETRY_COOLDOWN_HOURS,
+            )
+
     def _init_evaluator(self) -> None:
         """Lazy initialization of AI evaluator."""
         if self.ai_evaluator is None:
             try:
-                # Use Claude Code CLI instead of Anthropic API
-                self.ai_evaluator = ClaudeCodeExpertEvaluator(model=self.model)
+                if self._use_api:
+                    # Use Anthropic API directly (more reliable in headless environments)
+                    model_map = {
+                        "sonnet": "claude-sonnet-4-5-20250929",
+                        "opus": "claude-opus-4-5-20251101",
+                        "haiku": "claude-3-5-haiku-20241022",
+                    }
+                    api_model = model_map.get(self.model, "claude-sonnet-4-5-20250929")
+                    self.ai_evaluator = ExpertAIEvaluator(
+                        model=api_model,
+                        use_extended_thinking=False,  # Faster for trading decisions
+                    )
+                    logger.info("using_anthropic_api_evaluator", model=api_model)
+                else:
+                    # Fall back to Claude Code CLI
+                    self.ai_evaluator = ClaudeCodeExpertEvaluator(model=self.model)
+                    logger.info("using_claude_code_cli_evaluator", model=self.model)
             except Exception as e:
                 logger.error("failed_to_init_ai_evaluator", error=str(e))
                 raise
@@ -158,9 +242,12 @@ class AIAdvisor:
         """
         lines = []
 
-        # Add failure history (point-in-time safe)
+        # Add failure history (point-in-time safe, with lookback window)
         if self.failure_analysis:
-            failure_context = self.failure_analysis.to_prompt_text(as_of_date=target_date)
+            failure_context = self.failure_analysis.to_prompt_text(
+                as_of_date=target_date,
+                lookback_years=self.lookback_years,
+            )
             lines.append(failure_context)
             lines.append("\n---\n")
 
@@ -341,6 +428,21 @@ class AIAdvisor:
             "asset": deterministic_asset,
         }
 
+        # Check if AI should be skipped due to repeated failures
+        should_skip, skip_reason = self._should_skip_ai()
+        if should_skip:
+            logger.warning("ai_evaluation_skipped", reason=skip_reason)
+            return AIAdvice(
+                agrees_with_deterministic=True,
+                recommended_action=deterministic_action,
+                recommended_asset=deterministic_asset,
+                confidence=0.5,
+                reasoning=f"AI skipped ({skip_reason}), using deterministic decision",
+                failure_patterns_detected=failure_patterns,
+                deterministic_action=deterministic_action,
+                deterministic_asset=deterministic_asset,
+            )
+
         # Get AI evaluation
         try:
             self._init_evaluator()
@@ -351,6 +453,28 @@ class AIAdvisor:
                 deterministic_decision=deterministic_decision,
             )
 
+            # Check for failure indicators in the response
+            failure_keywords = ["failed", "timed out", "error", "exception"]
+            is_failure = ai_decision.confidence == 0.0 and any(
+                kw in ai_decision.reasoning.lower() for kw in failure_keywords
+            )
+            if is_failure:
+                # AI returned but with an error
+                self._record_ai_failure(ai_decision.reasoning)
+                return AIAdvice(
+                    agrees_with_deterministic=True,
+                    recommended_action=deterministic_action,
+                    recommended_asset=deterministic_asset,
+                    confidence=0.5,
+                    reasoning=f"AI evaluation error ({ai_decision.reasoning}), using deterministic",
+                    failure_patterns_detected=failure_patterns,
+                    deterministic_action=deterministic_action,
+                    deterministic_asset=deterministic_asset,
+                )
+
+            # Success! Record it and reset failure counter
+            self._record_ai_success()
+
             ai_action = ai_decision.action.lower()
             ai_asset = ai_decision.asset
             ai_confidence = ai_decision.confidence
@@ -358,6 +482,7 @@ class AIAdvisor:
 
         except Exception as e:
             logger.error("ai_evaluation_failed", error=str(e))
+            self._record_ai_failure(str(e))
             # Fall back to agreeing with deterministic
             return AIAdvice(
                 agrees_with_deterministic=True,

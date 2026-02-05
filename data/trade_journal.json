@@ -668,8 +668,188 @@
     "shares": 0.0,
     "fill_price": 0.0,
     "slippage_pct": 0.0,
-    "execution_error": null,
+    "execution_error": "Switch partially failed: GLD sold (1870 @ ~$454.31) but EFA buy did not fill. Market was closed at execution time (02:10 UTC).",
     "account_value_before": null,
+    "account_value_after": null,
+    "current_holding_before": "GLD",
+    "current_holding_after": null
+  },
+  {
+    "id": "ce1b2c59",
+    "timestamp": "2026-02-03T16:05:15.847294",
+    "entry_type": "decision",
+    "action": "hold",
+    "symbol": null,
+    "confidence": 0.5806175072430967,
+    "decision_type": "non_routine",
+    "strategy_signals": {
+      "dual_momentum": {
+        "action": "hold",
+        "confidence": 0.8,
+        "asset_symbol": "GLD",
+        "reasoning": "Holding gold (64.32%). Winner gold (64.32%) diff 0.00% < threshold 10.00%"
+      },
+      "mean_reversion": {
+        "action": "hold",
+        "confidence": 0.5,
+        "asset_symbol": "GLD",
+        "reasoning": "RSI 57.8 in normal range [25-75]"
+      },
+      "multi_timeframe": {
+        "action": "buy",
+        "confidence": 0.9802700527552248,
+        "asset_symbol": "EFA",
+        "reasoning": "No data for current holding gold, switching to intl_developed"
+      }
+    },
+    "ai_agrees": true,
+    "ai_action": "hold",
+    "ai_asset": "GLD",
+    "ai_reasoning": "GLD has strong momentum (+64.32%), market is calm (0% drawdown, BULL regime), and no clear failure pattern match. The Multi-timeframe signal for EFA is noted but insufficient to override given GLD's strength.",
+    "ai_confidence": 0.75,
+    "failure_patterns": [],
+    "market_regime": "bull",
+    "executed": false,
+    "shares": 0.0,
+    "fill_price": 0.0,
+    "slippage_pct": 0.0,
+    "execution_error": null,
+    "account_value_before": 1002685.0,
+    "account_value_after": null,
+    "current_holding_before": "GLD",
+    "current_holding_after": null
+  },
+  {
+    "id": "08a75068",
+    "timestamp": "2026-02-03T23:46:51.120611",
+    "entry_type": "decision",
+    "action": "hold",
+    "symbol": null,
+    "confidence": 0.5831020030350511,
+    "decision_type": "non_routine",
+    "strategy_signals": {
+      "dual_momentum": {
+        "action": "hold",
+        "confidence": 0.8,
+        "asset_symbol": "GLD",
+        "reasoning": "Holding gold (74.77%). Winner gold (74.77%) diff 0.00% < threshold 10.00%"
+      },
+      "mean_reversion": {
+        "action": "hold",
+        "confidence": 0.5,
+        "asset_symbol": "GLD",
+        "reasoning": "RSI 50.4 in normal range [25-75]"
+      },
+      "multi_timeframe": {
+        "action": "buy",
+        "confidence": 0.9703107445922023,
+        "asset_symbol": "EFA",
+        "reasoning": "No data for current holding gold, switching to intl_developed"
+      }
+    },
+    "ai_agrees": true,
+    "ai_action": "hold",
+    "ai_asset": "GLD",
+    "ai_reasoning": "No pattern match to historical failures. GLD showing strong momentum (+74.77%), VIX calm, SPY near highs (0.9% drawdown). Multi-timeframe suggests EFA but with 97% confidence on insufficient data ('No data for current holding gold'), which is unreliable. Stick with proven GLD position.",
+    "ai_confidence": 0.85,
+    "failure_patterns": [],
+    "market_regime": "bull",
+    "executed": false,
+    "shares": 0.0,
+    "fill_price": 0.0,
+    "slippage_pct": 0.0,
+    "execution_error": null,
+    "account_value_before": 1004654.2,
+    "account_value_after": null,
+    "current_holding_before": "GLD",
+    "current_holding_after": null
+  },
+  {
+    "id": "355ee826",
+    "timestamp": "2026-02-03T23:50:58.008017",
+    "entry_type": "decision",
+    "action": "hold",
+    "symbol": null,
+    "confidence": 0.5831020030350511,
+    "decision_type": "non_routine",
+    "strategy_signals": {
+      "dual_momentum": {
+        "action": "hold",
+        "confidence": 0.8,
+        "asset_symbol": "GLD",
+        "reasoning": "Holding gold (74.77%). Winner gold (74.77%) diff 0.00% < threshold 10.00%"
+      },
+      "mean_reversion": {
+        "action": "hold",
+        "confidence": 0.5,
+        "asset_symbol": "GLD",
+        "reasoning": "RSI 50.4 in normal range [25-75]"
+      },
+      "multi_timeframe": {
+        "action": "buy",
+        "confidence": 0.9703107445922023,
+        "asset_symbol": "EFA",
+        "reasoning": "No data for current holding gold, switching to intl_developed"
+      }
+    },
+    "ai_agrees": true,
+    "ai_action": "hold",
+    "ai_asset": "GLD",
+    "ai_reasoning": "GLD is performing well with strong momentum. Multi-timeframe suggests EFA, but this appears to be noise (no data for GLD suggests data issue, not fundamental shift). Holding winner is correct.",
+    "ai_confidence": 0.8,
+    "failure_patterns": [],
+    "market_regime": "bull",
+    "executed": false,
+    "shares": 0.0,
+    "fill_price": 0.0,
+    "slippage_pct": 0.0,
+    "execution_error": null,
+    "account_value_before": 1004638.33,
+    "account_value_after": null,
+    "current_holding_before": "GLD",
+    "current_holding_after": null
+  },
+  {
+    "id": "201a16c2",
+    "timestamp": "2026-02-03T23:59:09.203043",
+    "entry_type": "decision",
+    "action": "hold",
+    "symbol": null,
+    "confidence": 0.5831020030350511,
+    "decision_type": "non_routine",
+    "strategy_signals": {
+      "dual_momentum": {
+        "action": "hold",
+        "confidence": 0.8,
+        "asset_symbol": "GLD",
+        "reasoning": "Holding gold (74.77%). Winner gold (74.77%) diff 0.00% < threshold 10.00%"
+      },
+      "mean_reversion": {
+        "action": "hold",
+        "confidence": 0.5,
+        "asset_symbol": "GLD",
+        "reasoning": "RSI 50.4 in normal range [25-75]"
+      },
+      "multi_timeframe": {
+        "action": "buy",
+        "confidence": 0.9703107445922023,
+        "asset_symbol": "EFA",
+        "reasoning": "No data for current holding gold, switching to intl_developed"
+      }
+    },
+    "ai_agrees": true,
+    "ai_action": "hold",
+    "ai_asset": "GLD",
+    "ai_reasoning": "No pattern match to past failures. GLD is strong, VIX is calm, SPY drawdown minimal (-0.9%). Dual momentum's HOLD decision is appropriate - switching on small differences has historically caused whipsaws.",
+    "ai_confidence": 0.85,
+    "failure_patterns": [],
+    "market_regime": "bull",
+    "executed": false,
+    "shares": 0.0,
+    "fill_price": 0.0,
+    "slippage_pct": 0.0,
+    "execution_error": null,
+    "account_value_before": 1005603.27,
     "account_value_after": null,
     "current_holding_before": "GLD",
     "current_holding_after": null

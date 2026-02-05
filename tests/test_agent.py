@@ -8,6 +8,7 @@ from aurel2.agent.orchestrator import (
     AgentDecision,
     AgentOrchestrator,
     DecisionType,
+    MarketRegime,
     Urgency,
 )
 from aurel2.core.models import SignalAction
@@ -301,7 +302,7 @@ class TestSelectBestAction:
             "mean_reversion": {"action": "hold", "confidence": 0.7},
             "multi_timeframe": {"action": "hold", "confidence": 0.9},
         }
-        action, asset, confidence = orchestrator._select_best_action(signals, {})
+        action, asset, confidence, _ = orchestrator._select_best_action(signals, {}, MarketRegime.BULL)
         assert action == SignalAction.HOLD
         assert confidence > 0.7
 
@@ -313,7 +314,7 @@ class TestSelectBestAction:
             "mean_reversion": {"action": "buy", "confidence": 0.7, "asset_symbol": "SPY"},
             "multi_timeframe": {"action": "hold", "confidence": 0.6},
         }
-        action, asset, confidence = orchestrator._select_best_action(signals, {})
+        action, asset, confidence, _ = orchestrator._select_best_action(signals, {}, MarketRegime.BULL)
         assert action == SignalAction.BUY
         assert asset == "SPY"
 
@@ -325,7 +326,7 @@ class TestSelectBestAction:
             "mean_reversion": {"action": "sell", "confidence": 0.3},
             "multi_timeframe": {"action": "hold", "confidence": 0.5},
         }
-        action, asset, confidence = orchestrator._select_best_action(signals, {})
+        action, asset, confidence, _ = orchestrator._select_best_action(signals, {}, MarketRegime.BULL)
         # BUY has highest confidence
         assert action == SignalAction.BUY
 

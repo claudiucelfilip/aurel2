@@ -25,10 +25,15 @@ class MeanReversionStrategy(BaseStrategy):
     - Signals SELL when RSI rises above the overbought threshold AND has a position
     - Signals HOLD otherwise
 
+    TUNED PARAMETERS (v2):
+    - Tighter RSI thresholds (25/75) for higher-quality signals
+    - Added extreme oversold threshold for high-confidence buys
+
     Attributes:
         name: Strategy identifier ("mean_reversion")
-        rsi_oversold: RSI threshold for oversold conditions (default 30)
-        rsi_overbought: RSI threshold for overbought conditions (default 70)
+        rsi_oversold: RSI threshold for oversold conditions (default 25, tightened from 30)
+        rsi_overbought: RSI threshold for overbought conditions (default 75, tightened from 70)
+        rsi_extreme_oversold: Extreme oversold for high-confidence buys (default 20)
         rsi_period: Number of periods for RSI calculation (default 14)
         drawdown_threshold: Maximum drawdown before reducing exposure (default 0.10)
         target_assets: Asset classes this strategy trades
@@ -38,8 +43,9 @@ class MeanReversionStrategy(BaseStrategy):
 
     def __init__(
         self,
-        rsi_oversold: float = 30,
-        rsi_overbought: float = 70,
+        rsi_oversold: float = 25,  # Tightened from 30
+        rsi_overbought: float = 75,  # Tightened from 70
+        rsi_extreme_oversold: float = 20,  # New: extreme oversold
         rsi_period: int = 14,
         drawdown_threshold: float = 0.10,
         target_assets: list[AssetClass] | None = None,
@@ -47,14 +53,16 @@ class MeanReversionStrategy(BaseStrategy):
         """Initialize the mean reversion strategy.
 
         Args:
-            rsi_oversold: RSI level below which to signal BUY (default 30)
-            rsi_overbought: RSI level above which to signal SELL (default 70)
+            rsi_oversold: RSI level below which to signal BUY (default 25, tightened)
+            rsi_overbought: RSI level above which to signal SELL (default 75, tightened)
+            rsi_extreme_oversold: Extreme oversold for high-confidence buys (default 20)
             rsi_period: Number of periods for RSI calculation (default 14)
             drawdown_threshold: Maximum acceptable drawdown (default 0.10)
             target_assets: List of asset classes to trade. Defaults to major equities.
         """
         self.rsi_oversold = rsi_oversold
         self.rsi_overbought = rsi_overbought
+        self.rsi_extreme_oversold = rsi_extreme_oversold
         self.rsi_period = rsi_period
         self.drawdown_threshold = drawdown_threshold
         self.target_assets = target_assets or [
@@ -117,16 +125,24 @@ class MeanReversionStrategy(BaseStrategy):
         # Determine signal based on RSI
         if rsi < self.rsi_oversold:
             # Oversold - BUY signal
-            # Confidence scales with how oversold (lower RSI = higher confidence)
-            confidence = min(1.0, (self.rsi_oversold - rsi) / self.rsi_oversold + 0.5)
+            # Higher confidence for extreme oversold (below rsi_extreme_oversold)
+            if rsi < self.rsi_extreme_oversold:
+                # Extreme oversold - high confidence
+                confidence = min(1.0, 0.85 + (self.rsi_extreme_oversold - rsi) / 100)
+                reasoning = f"RSI {rsi:.1f} EXTREMELY oversold (< {self.rsi_extreme_oversold})"
+            else:
+                # Regular oversold - moderate confidence
+                confidence = min(0.8, (self.rsi_oversold - rsi) / self.rsi_oversold + 0.5)
+                reasoning = f"RSI {rsi:.1f} below oversold threshold {self.rsi_oversold}"
+
             return StrategySignal(
                 strategy_name=self.name,
                 date=calc_date,
                 action=SignalAction.BUY,
                 asset_class=AssetClass.US_STOCKS,
                 confidence=confidence,
-                reasoning=f"RSI {rsi:.1f} below oversold threshold {self.rsi_oversold}",
-                metadata={"rsi": rsi, "threshold": self.rsi_oversold},
+                reasoning=reasoning,
+                metadata={"rsi": rsi, "threshold": self.rsi_oversold, "extreme_threshold": self.rsi_extreme_oversold},
             )
 
         elif rsi > self.rsi_overbought and current_holding is not None:

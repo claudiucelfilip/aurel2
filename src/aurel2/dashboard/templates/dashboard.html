@@ -178,6 +178,111 @@
             font-size: 0.9rem;
         }
 
+        .pending-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 3px solid var(--yellow);
+        }
+
+        .pending-item .action-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-buy { background: rgba(34, 197, 94, 0.2); color: var(--green); }
+        .badge-sell { background: rgba(239, 68, 68, 0.2); color: var(--red); }
+        .badge-hold { background: rgba(148, 163, 184, 0.2); color: var(--text-muted); }
+
+        .pending-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .pending-actions a {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .btn-approve {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--green);
+            border: 1px solid var(--green);
+        }
+
+        .btn-reject {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--red);
+            border: 1px solid var(--red);
+        }
+
+        .period-toggle {
+            display: flex;
+            gap: 4px;
+        }
+
+        .period-toggle a {
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-decoration: none;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .period-toggle a.active {
+            color: var(--text);
+            background: var(--border);
+            border-color: var(--accent);
+        }
+
+        .period-toggle a:hover {
+            color: var(--text);
+            border-color: var(--text-muted);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .status-executed { background: rgba(34, 197, 94, 0.15); color: var(--green); }
+        .status-finalized { background: rgba(59, 130, 246, 0.15); color: var(--accent); }
+        .status-pending { background: rgba(234, 179, 8, 0.15); color: var(--yellow); }
+        .status-rejected { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+        .status-hold { background: rgba(148, 163, 184, 0.1); color: var(--text-muted); }
+
+        .page-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+        }
+
+        .page-nav a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .page-nav a:hover { text-decoration: underline; }
+
+        .page-info { color: var(--text-muted); }
+
         footer {
             text-align: center;
             padding: 16px;
@@ -210,42 +315,50 @@
         {% endif %}
 
         <!-- Account Summary -->
-        <div class="grid">
+        <div class="grid" style="grid-template-columns: 1fr 1fr;">
             <div class="card">
                 <div class="stat-value">${{ "{:,.0f}".format(account.total_value) if account else "—" }}</div>
                 <div class="stat-label">Total Value</div>
-            </div>
-            <div class="card">
-                <div class="stat-value">${{ "{:,.0f}".format(account.cash_balance) if account else "—" }}</div>
-                <div class="stat-label">Cash Balance</div>
-            </div>
-            <div class="card">
-                {% if positions %}
-                {% set total_pnl = positions | sum(attribute='unrealized_pnl') %}
-                <div class="stat-value {% if total_pnl >= 0 %}positive{% else %}negative{% endif %}">
-                    ${{ "{:,.0f}".format(total_pnl) }}
+                {% if account and account.cash_balance != account.total_value %}
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">
+                    Cash: ${{ "{:,.0f}".format(account.cash_balance) }}
                 </div>
-                <div class="stat-label">Unrealized P&L</div>
-                {% else %}
-                <div class="stat-value">—</div>
-                <div class="stat-label">Unrealized P&L</div>
                 {% endif %}
             </div>
             <div class="card">
-                <div class="stat-value">{{ positions | length }}</div>
-                <div class="stat-label">Positions</div>
+                {% if overall_gain is not none %}
+                <div class="stat-value {% if overall_gain >= 0 %}positive{% else %}negative{% endif %}">
+                    {{ "{:+.1f}".format(overall_gain_pct) }}%
+                </div>
+                <div class="stat-change {% if overall_gain >= 0 %}positive{% else %}negative{% endif %}">
+                    {{ "{:+,.0f}".format(overall_gain) }}
+                </div>
+                <div class="stat-label">Overall P&L</div>
+                {% else %}
+                <div class="stat-value">—</div>
+                <div class="stat-label">Overall P&L</div>
+                {% endif %}
             </div>
         </div>
 
         <!-- Performance Chart -->
         <div class="card" style="margin-bottom: 20px;">
-            <div class="card-title">
-                Portfolio Performance
-                {% if first_trade_date %}
-                <span style="font-weight: normal; font-size: 0.75rem; color: var(--text-muted);">
-                    (since {{ first_trade_date.strftime('%b %d, %Y') }})
-                </span>
-                {% endif %}
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div class="card-title" style="margin-bottom: 0;">
+                    Portfolio Performance
+                    {% if first_trade_date %}
+                    <span style="font-weight: normal; font-size: 0.75rem; color: var(--text-muted);">
+                        (since {{ first_trade_date.strftime('%b %d, %Y') }})
+                    </span>
+                    {% endif %}
+                </div>
+                <div class="period-toggle">
+                    <a href="?period=1w" {% if period == '1w' %}class="active"{% endif %}>1W</a>
+                    <a href="?period=1m" {% if period == '1m' %}class="active"{% endif %}>1M</a>
+                    <a href="?period=6m" {% if period == '6m' %}class="active"{% endif %}>6M</a>
+                    <a href="?period=1y" {% if period == '1y' %}class="active"{% endif %}>1Y</a>
+                    <a href="?period=5y" {% if period == '5y' %}class="active"{% endif %}>5Y</a>
+                </div>
             </div>
             {% if chart_data and chart_data.dates %}
             <div class="chart-container">
@@ -268,7 +381,7 @@
         </div>
 
         <!-- Positions -->
-        <div class="card">
+        <div class="card" style="margin-bottom: 20px;">
             <div class="card-title">Positions</div>
             {% if positions %}
             <table class="positions-table">
@@ -301,6 +414,140 @@
             {% else %}
             <div style="text-align: center; padding: 30px; color: var(--text-muted);">
                 No positions
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Pending Decisions -->
+        {% if pending_decisions %}
+        <div class="card" style="margin-bottom: 20px;">
+            <div class="card-title">
+                Pending Decisions
+                <span style="background: var(--yellow); color: #000; padding: 1px 6px; border-radius: 10px; font-size: 0.7rem; margin-left: 6px;">
+                    {{ pending_decisions | length }}
+                </span>
+            </div>
+            {% for d in pending_decisions %}
+            <div class="pending-item">
+                <div>
+                    <span class="action-badge badge-{{ d.action }}">{{ d.action }}</span>
+                    <strong style="margin-left: 6px;">{{ d.symbol or 'HOLD' }}</strong>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                        {% if d.time_remaining_mins > 0 %}
+                        {{ d.time_remaining_mins }}m remaining
+                        {% else %}
+                        Timed out
+                        {% endif %}
+                        · {{ "{:.0f}".format(d.confidence * 100) }}% confidence
+                    </div>
+                </div>
+                <div class="pending-actions">
+                    <a href="{{ d.approval_url }}?action=approve" class="btn-approve" target="_blank">Approve</a>
+                    <a href="{{ d.approval_url }}?action=reject" class="btn-reject" target="_blank">Reject</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Activity Log -->
+        <div class="card" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div class="card-title" style="margin-bottom: 0;">
+                    Activity
+                    <span style="font-weight: normal; font-size: 0.75rem; color: var(--text-muted);">
+                        {{ trade_history.total_decisions }} decisions · {{ trade_history.executed_trades }} executed
+                    </span>
+                </div>
+                {% if trade_history.total_pages > 1 %}
+                <div class="page-nav">
+                    {% if trade_history.page > 1 %}
+                    <a href="?period={{ period }}&page={{ trade_history.page - 1 }}">&laquo; Newer</a>
+                    {% endif %}
+                    <span class="page-info">{{ trade_history.page }} / {{ trade_history.total_pages }}</span>
+                    {% if trade_history.page < trade_history.total_pages %}
+                    <a href="?period={{ period }}&page={{ trade_history.page + 1 }}">Older &raquo;</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% if trade_history and trade_history.all_decisions %}
+            <table class="positions-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Action</th>
+                        <th>Asset</th>
+                        <th>Status</th>
+                        <th>AI</th>
+                        <th style="text-align: right;">Account</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in trade_history.all_decisions %}
+                    <tr>
+                        <td style="white-space: nowrap;">{{ d.formatted_time }}</td>
+                        <td><span class="action-badge badge-{{ d.action }}">{{ d.action }}</span></td>
+                        <td class="symbol">{{ d.symbol or '—' }}</td>
+                        <td>
+                            {% if d.status == 'executed' %}
+                            <span class="status-badge status-executed">Executed</span>
+                            {% elif d.status == 'finalized' %}
+                            <span class="status-badge status-finalized">Finalized</span>
+                            {% elif d.status == 'failed' %}
+                            <span class="status-badge status-rejected">Failed</span>
+                            {% elif d.status == 'pending' %}
+                            <span class="status-badge status-pending">Pending</span>
+                            {% elif d.status == 'rejected' %}
+                            <span class="status-badge status-rejected">Rejected</span>
+                            {% elif d.status == 'hold' %}
+                            <span class="status-badge status-hold">Hold</span>
+                            {% else %}
+                            <span class="status-badge status-hold">—</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size: 0.8rem;">
+                            {% if d.ai_agrees %}
+                            <span style="color: var(--green);">Agreed</span>
+                            {% else %}
+                            <span style="color: var(--yellow);">Override</span>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">
+                                {{ d.deterministic_action | upper }} {{ d.deterministic_asset or '' }} → {{ d.ai_action | upper }} {{ d.ai_asset or '' }}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            {% if d.account_value_before %}
+                            ${{ "{:,.0f}".format(d.account_value_before) }}
+                            {% else %}
+                            —
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if d.status == 'executed' and d.shares %}
+                    <tr>
+                        <td></td>
+                        <td colspan="5" style="font-size: 0.75rem; color: var(--text-muted); padding-top: 0;">
+                            {{ "{:,.0f}".format(d.shares) }} shares @ ${{ "{:,.2f}".format(d.fill_price) }}
+                            {% if d.account_value_after %}
+                            · After: ${{ "{:,.0f}".format(d.account_value_after) }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% elif d.status == 'failed' and d.execution_error %}
+                    <tr>
+                        <td></td>
+                        <td colspan="5" style="font-size: 0.75rem; color: var(--red); padding-top: 0;">
+                            {{ d.execution_error }}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.85rem;">
+                No activity yet
             </div>
             {% endif %}
         </div>
