@@ -13,7 +13,7 @@ import structlog
 
 logger = structlog.get_logger()
 
-HEARTBEAT_FILE = Path("/tmp/aurel2-heartbeat.json")
+HEARTBEAT_FILE = Path.home() / ".aurel2" / "heartbeat.json"
 DAEMON_LOG_FILE = Path.home() / ".aurel2" / "daemon.log"
 STALE_THRESHOLD_MINUTES = 10
 
@@ -160,7 +160,7 @@ class HealthChecker:
         try:
             data = json.loads(self.heartbeat_file.read_text())
             return HeartbeatInfo(
-                timestamp=datetime.fromisoformat(data["timestamp"]),
+                timestamp=datetime.fromtimestamp(data["timestamp"]),
                 connected=data.get("connected", False),
                 circuit_breaker_state=data.get("circuit_breaker", {}).get("state", "unknown"),
                 pending_count=data.get("pending_count", 0),
