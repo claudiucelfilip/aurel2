@@ -30,6 +30,9 @@ data/cache/
 logs/
 *.log
 
+# Worktrees
+.worktrees/
+
 # OS
 .DS_Store
 Thumbs.db
