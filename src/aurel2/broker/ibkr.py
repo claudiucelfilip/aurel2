@@ -66,10 +66,18 @@ class IBKRBroker(BaseBroker):
         "VWRA": {"symbol": "VWRA", "exchange": "SBF", "currency": "EUR"},  # Vanguard All-World
         "CSPX": {"symbol": "CSPX", "exchange": "SBF", "currency": "EUR"},  # iShares S&P 500
         "AGGH": {"symbol": "AGGH", "exchange": "SBF", "currency": "EUR"},  # iShares Global Agg Bond
-        # US ETFs
+        # US ETFs — all 11 tradeable symbols
         "SPY": {"symbol": "SPY", "exchange": "ARCA", "currency": "USD"},
         "EFA": {"symbol": "EFA", "exchange": "ARCA", "currency": "USD"},
+        "EEM": {"symbol": "EEM", "exchange": "ARCA", "currency": "USD"},
+        "XLK": {"symbol": "XLK", "exchange": "ARCA", "currency": "USD"},
+        "XLF": {"symbol": "XLF", "exchange": "ARCA", "currency": "USD"},
+        "XLE": {"symbol": "XLE", "exchange": "ARCA", "currency": "USD"},
+        "XLV": {"symbol": "XLV", "exchange": "ARCA", "currency": "USD"},
         "AGG": {"symbol": "AGG", "exchange": "ARCA", "currency": "USD"},
+        "TLT": {"symbol": "TLT", "exchange": "ARCA", "currency": "USD"},
+        "GLD": {"symbol": "GLD", "exchange": "ARCA", "currency": "USD"},
+        "DBC": {"symbol": "DBC", "exchange": "ARCA", "currency": "USD"},
     }
 
     def __init__(

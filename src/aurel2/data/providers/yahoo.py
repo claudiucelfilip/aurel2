@@ -6,6 +6,8 @@ import pandas as pd
 import yfinance as yf
 import structlog
 
+from aurel2.data.validation import validate_prices
+
 logger = structlog.get_logger()
 
 
@@ -46,6 +48,9 @@ class YahooFinanceProvider:
             "close": hist["Close"].values,
             "symbol": symbol,
         })
+
+        # Validate and clean price data
+        df = validate_prices(df, symbol=symbol)
 
         logger.info("fetched_yahoo_data", symbol=symbol, rows=len(df))
         return df
