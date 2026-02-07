@@ -116,7 +116,7 @@ class MarketContext:
             vix_direction = "rising" if self.vix_1w_change > 2 else "falling" if self.vix_1w_change < -2 else "stable"
             lines.append(f"  VIX 1-week change: {self.vix_1w_change:+.1f}% ({vix_direction})")
 
-        # Sentiment section
+        # Sentiment section (VIX-estimated — these are NOT independent indicators)
         has_sentiment = any([
             self.fear_greed_index is not None,
             self.put_call_ratio is not None,
@@ -124,16 +124,16 @@ class MarketContext:
         ])
         if has_sentiment:
             lines.append("")
-            lines.append("SENTIMENT INDICATORS:")
+            lines.append("SENTIMENT ESTIMATES (VIX-derived, not independent data):")
             if self.fear_greed_index is not None:
                 label = self.fear_greed_label or self._get_fear_greed_label(self.fear_greed_index)
-                lines.append(f"  Fear & Greed Index: {self.fear_greed_index} ({label})")
+                lines.append(f"  Fear & Greed (VIX-estimated): {self.fear_greed_index} ({label})")
             if self.put_call_ratio is not None:
                 pc_sentiment = "bearish" if self.put_call_ratio > 1.0 else "bullish" if self.put_call_ratio < 0.7 else "neutral"
-                lines.append(f"  Put/Call Ratio: {self.put_call_ratio:.2f} ({pc_sentiment})")
+                lines.append(f"  Put/Call Ratio (VIX-estimated): {self.put_call_ratio:.2f} ({pc_sentiment})")
             if self.market_breadth is not None:
                 breadth_level = "strong" if self.market_breadth > 70 else "weak" if self.market_breadth < 30 else "moderate"
-                lines.append(f"  Market Breadth (% above 200d MA): {self.market_breadth:.0f}% ({breadth_level})")
+                lines.append(f"  Market Breadth (SPY-estimated): {self.market_breadth:.0f}% ({breadth_level})")
 
         # Cross-asset context
         if self.gld_1w_return is not None or self.credit_spread is not None:
@@ -143,7 +143,7 @@ class MarketContext:
                 lines.append(f"  GLD 1-week return: {self.gld_1w_return:+.1f}%")
             if self.credit_spread is not None:
                 spread_level = "tight" if self.credit_spread < 3 else "wide" if self.credit_spread > 5 else "normal"
-                lines.append(f"  Credit Spread (HY): {self.credit_spread:.2f}% ({spread_level})")
+                lines.append(f"  Credit Spread (placeholder, not real data): {self.credit_spread:.2f}% ({spread_level})")
 
         if self.fed_next_meeting:
             lines.append(f"\nFED: Next meeting {self.fed_next_meeting}")
@@ -351,66 +351,42 @@ class ContextFetcher:
             logger.warning("credit_spread_fetch_failed", error=str(e))
         return None
 
-    def _fetch_fear_greed_index(self, target_date: date) -> tuple[int | None, str | None]:
-        """Fetch CNN Fear & Greed Index.
+    def _estimate_sentiment_from_vix(self, vix: float | None) -> dict:
+        """Estimate sentiment indicators from VIX.
 
-        Note: This is a simplified version. The actual F&G index requires
-        scraping CNN or using a data provider. For historical dates,
-        we estimate based on VIX and market conditions.
+        These are VIX-derived estimates, NOT real data. They provide
+        directionally useful signals but should not be treated as
+        independent indicators (they all correlate with VIX).
         """
-        # For historical backtesting, we estimate F&G from VIX
-        # Real implementation would use CNN's API or a data provider
-        try:
-            vix, _ = self._fetch_vix(target_date)
-            if vix is not None:
-                # Rough estimation: VIX inversely correlates with F&G
-                # VIX 10 -> ~80 (Extreme Greed)
-                # VIX 20 -> ~50 (Neutral)
-                # VIX 30 -> ~20 (Extreme Fear)
-                estimated_fg = int(max(0, min(100, 100 - (vix - 10) * 4)))
-                label = MarketContext._get_fear_greed_label(estimated_fg)
-                return estimated_fg, label
-        except Exception as e:
-            logger.warning("fear_greed_fetch_failed", error=str(e))
-        return None, None
+        result = {
+            "fear_greed_index": None,
+            "fear_greed_label": None,
+            "put_call_ratio": None,
+            "market_breadth": None,
+        }
 
-    def _fetch_put_call_ratio(self, target_date: date) -> float | None:
-        """Fetch equity put/call ratio.
+        if vix is None:
+            return result
 
-        Note: This requires options data. For now, we use a placeholder.
-        Real implementation would use CBOE data or options APIs.
+        # Fear & Greed estimate (VIX-derived)
+        estimated_fg = int(max(0, min(100, 100 - (vix - 10) * 4)))
+        result["fear_greed_index"] = estimated_fg
+        result["fear_greed_label"] = MarketContext._get_fear_greed_label(estimated_fg)
+
+        # Put/Call estimate (VIX-derived)
+        result["put_call_ratio"] = max(0.5, min(1.5, 0.6 + (vix - 12) * 0.02))
+
+        return result
+
+    def _fetch_market_breadth(self, spy_data: dict) -> float | None:
+        """Estimate market breadth from SPY vs 200d MA.
+
+        This is a VIX-independent estimate based on SPY's trend position.
         """
-        # Placeholder - would need options data provider
-        # Typical range: 0.6 (bullish) to 1.2 (bearish)
-        # Could be estimated from VIX: higher VIX -> higher put/call
-        try:
-            vix, _ = self._fetch_vix(target_date)
-            if vix is not None:
-                # Rough estimation
-                estimated_pc = 0.6 + (vix - 12) * 0.02
-                return max(0.5, min(1.5, estimated_pc))
-        except Exception as e:
-            logger.warning("put_call_fetch_failed", error=str(e))
-        return None
-
-    def _fetch_market_breadth(self, target_date: date) -> float | None:
-        """Fetch market breadth (% of S&P 500 above 200-day MA).
-
-        Note: This requires component-level data. For now, we estimate
-        based on SPY's position relative to its own MA.
-        """
-        try:
-            spy_data = self._fetch_spy_data(target_date)
-            spy_vs_200d = spy_data.get("spy_vs_200d_ma")
-
-            if spy_vs_200d is not None:
-                # Rough estimation: when SPY is 5% above 200d MA,
-                # typically ~60-70% of stocks are above their own 200d MA
-                # This is a simplification - real data would be better
-                base_breadth = 50 + spy_vs_200d * 2
-                return max(10, min(90, base_breadth))
-        except Exception as e:
-            logger.warning("market_breadth_fetch_failed", error=str(e))
+        spy_vs_200d = spy_data.get("spy_vs_200d_ma")
+        if spy_vs_200d is not None:
+            base_breadth = 50 + spy_vs_200d * 2
+            return max(10, min(90, base_breadth))
         return None
 
     def _get_next_fed_meeting(self, target_date: date) -> str | None:
@@ -461,19 +437,20 @@ class ContextFetcher:
 
         logger.info("fetching_market_context", date=str(target_date))
 
-        # Fetch all data
+        # Fetch real data (each is a single Yahoo call)
         spy_data = self._fetch_spy_data(target_date)
-        vix, vix_1w_change = self._fetch_vix(target_date)
+        vix, vix_1w_change = self._fetch_vix(target_date)  # Single VIX fetch
         fed_meeting = self._get_next_fed_meeting(target_date)
         earnings = self._get_earnings_this_week(target_date)
         news = self._get_news_headlines(target_date)
 
-        # Fetch sentiment data
-        fear_greed, fear_greed_label = self._fetch_fear_greed_index(target_date)
-        put_call = self._fetch_put_call_ratio(target_date)
-        breadth = self._fetch_market_breadth(target_date)
+        # VIX-derived sentiment estimates (single pass, no extra API calls)
+        sentiment = self._estimate_sentiment_from_vix(vix)
 
-        # Fetch cross-asset data
+        # SPY-derived breadth estimate
+        breadth = self._fetch_market_breadth(spy_data)
+
+        # Cross-asset data
         gld_return = self._fetch_gld_return(target_date)
         credit_spread = self._fetch_credit_spread(target_date)
 
@@ -492,9 +469,9 @@ class ContextFetcher:
             fed_next_meeting=fed_meeting,
             earnings_this_week=earnings,
             news_headlines=news,
-            fear_greed_index=fear_greed,
-            fear_greed_label=fear_greed_label,
-            put_call_ratio=put_call,
+            fear_greed_index=sentiment["fear_greed_index"],
+            fear_greed_label=sentiment["fear_greed_label"],
+            put_call_ratio=sentiment["put_call_ratio"],
             market_breadth=breadth,
             credit_spread=credit_spread,
             gld_1w_return=gld_return,

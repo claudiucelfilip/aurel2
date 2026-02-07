@@ -14,14 +14,38 @@ from datetime import date, timedelta
 import pandas as pd
 import structlog
 
-from aurel2.agent.ai_evaluator import ExpertAIEvaluator
+from aurel2.agent.advisor import AIAdvisor
 from aurel2.agent.failure_analyzer import FailureAnalysis, run_failure_analysis
 from aurel2.core.assets import ASSET_REGISTRY
 from aurel2.core.models import AssetClass, SignalAction
 from aurel2.data.providers.yahoo import YahooFinanceProvider
 from aurel2.strategies.dual_momentum import DualMomentumStrategy
+from aurel2.strategies.mean_reversion import MeanReversionStrategy
+from aurel2.strategies.multi_timeframe import MultiTimeframeTrendStrategy
 
 logger = structlog.get_logger()
+
+
+def _normalize_signal(signal) -> dict:
+    """Normalize strategy signals to a common dict format."""
+    action = signal.action.value if hasattr(signal.action, 'value') else str(signal.action)
+    confidence = getattr(signal, 'confidence', 0.8)
+
+    asset_symbol = None
+    if hasattr(signal, 'asset') and signal.asset:
+        asset_symbol = signal.asset.symbol
+    elif hasattr(signal, 'asset_class') and signal.asset_class:
+        if signal.asset_class in ASSET_REGISTRY:
+            asset_symbol = ASSET_REGISTRY[signal.asset_class].symbol
+
+    reasoning = getattr(signal, 'reasoning', None) or getattr(signal, 'reason', '')
+
+    return {
+        "action": action,
+        "confidence": confidence,
+        "asset_symbol": asset_symbol,
+        "reasoning": reasoning,
+    }
 
 
 @dataclass
@@ -77,11 +101,33 @@ def run_ai_backtest(
 
     # Initialize components
     provider = YahooFinanceProvider()
-    strategy = DualMomentumStrategy(assets=ASSET_REGISTRY)
-    ai_evaluator = ExpertAIEvaluator(use_extended_thinking=False)
+    strategies = [
+        ("dual_momentum", DualMomentumStrategy(assets=ASSET_REGISTRY)),
+        ("mean_reversion", MeanReversionStrategy()),
+        ("multi_timeframe", MultiTimeframeTrendStrategy()),
+    ]
+
+    # Ensure failure file exists (compute if needed)
+    import os
+    if not failure_file or not os.path.exists(failure_file):
+        failure_start = (start - timedelta(days=365 * failure_lookback_years)).isoformat()
+        full_failure_analysis = run_failure_analysis(
+            start_date=failure_start,
+            end_date=end_date,
+        )
+        if failure_file:
+            full_failure_analysis.save(failure_file)
+            logger.info("computed_and_saved_failure_analysis", filepath=failure_file)
+
+    # Create advisor (handles failure learnings, context fetcher, evaluator)
+    advisor = AIAdvisor(
+        failure_file=failure_file or "data/failure_learnings.json",
+        model="sonnet",
+        lookback_years=failure_lookback_years,
+    )
 
     # Fetch all price data upfront
-    symbols = ["SPY", "EFA", "EEM", "XLK", "XLF", "XLE", "XLV", "AGG", "TLT", "GLD", "DBC"]
+    symbols = ["SPY", "EFA", "EEM", "XLK", "XLF", "XLE", "XLV", "AGG", "TLT", "GLD", "DBC", "^VIX"]
     extended_start = start - timedelta(days=400)
 
     all_prices = []
@@ -94,24 +140,6 @@ def run_ai_backtest(
 
     prices_df = pd.concat(all_prices, ignore_index=True)
     logger.info("fetched_prices", rows=len(prices_df))
-
-    # Load failure analysis (from cache or compute fresh)
-    import os
-    if failure_file and os.path.exists(failure_file):
-        full_failure_analysis = FailureAnalysis.load(failure_file)
-        logger.info("loaded_cached_failure_analysis", filepath=failure_file)
-    else:
-        failure_start = (start - timedelta(days=365 * failure_lookback_years)).isoformat()
-        full_failure_analysis = run_failure_analysis(
-            start_date=failure_start,
-            end_date=end_date,
-        )
-        if failure_file:
-            full_failure_analysis.save(failure_file)
-    logger.info(
-        "failure_analysis_ready",
-        num_failures=len(full_failure_analysis.failure_events),
-    )
 
     # Generate monthly decision dates
     decision_dates = pd.date_range(start=start, end=end, freq="ME")
@@ -126,47 +154,45 @@ def run_ai_backtest(
 
         logger.info("evaluating_date", date=str(decision_date), progress=f"{i+1}/{len(decision_dates)-1}")
 
-        # 1. Get deterministic signal
-        det_signal = strategy.generate_signal(
-            prices=prices_df,
-            calc_date=decision_date,
-            current_holding=current_holding,
-        )
+        # 1. Get signals from all 3 strategies
+        signals = {}
+        det_signal = None
+        for name, strat in strategies:
+            try:
+                sig = strat.generate_signal(
+                    prices=prices_df,
+                    calc_date=decision_date,
+                    current_holding=current_holding,
+                )
+                signals[name] = _normalize_signal(sig)
+                if name == "dual_momentum":
+                    det_signal = sig
+            except Exception as e:
+                logger.warning("strategy_signal_failed", strategy=name,
+                               date=str(decision_date), error=str(e))
+                signals[name] = {"action": "hold", "confidence": 0.0, "error": str(e)}
+
+        if det_signal is None:
+            logger.error("dual_momentum_failed", date=str(decision_date))
+            continue
 
         det_action = det_signal.action.value
         det_asset = det_signal.asset.symbol if det_signal.asset else None
 
-        # 2. Build context for AI (point-in-time safe failures)
-        failure_context = full_failure_analysis.to_prompt_text(as_of_date=decision_date)
-
-        # Build market context
-        context_text = _build_market_context(prices_df, decision_date)
-        full_context = f"{failure_context}\n\n---\n\nMARKET CONTEXT:\n{context_text}"
-
-        # Build signals dict for AI
-        signals = {
-            "dual_momentum": {
-                "action": det_signal.action.value,
-                "asset_symbol": det_signal.asset.symbol if det_signal.asset else None,
-                "asset_class": det_signal.asset.asset_class.value if det_signal.asset else None,
-                "confidence": 0.7,
-                "reasoning": det_signal.reason,
-            }
-        }
-
-        deterministic_decision = {"action": det_action, "asset": det_asset}
-
-        # 3. Get AI decision
+        # 2. Get AI decision via advisor.review()
+        ai_holding_symbol = ai_holding.value if ai_holding else None
         try:
-            ai_decision = ai_evaluator.evaluate(
-                signals=signals,
-                context_text=full_context,
-                current_holding=ai_holding.value if ai_holding else None,
-                deterministic_decision=deterministic_decision,
+            ai_advice = advisor.review(
+                deterministic_action=det_action,
+                deterministic_asset=det_asset,
+                strategy_signals=signals,
+                prices=prices_df,
+                current_holding=ai_holding_symbol,
+                target_date=decision_date,
             )
-            ai_action = ai_decision.action
-            ai_asset = ai_decision.asset
-            ai_reasoning = ai_decision.reasoning[:200] if ai_decision.reasoning else ""
+            ai_action = ai_advice.recommended_action
+            ai_asset = ai_advice.recommended_asset
+            ai_reasoning = ai_advice.reasoning[:200] if ai_advice.reasoning else ""
         except Exception as e:
             logger.error("ai_evaluation_failed", date=str(decision_date), error=str(e))
             # Fallback to deterministic
@@ -209,9 +235,10 @@ def run_ai_backtest(
         elif ai_action == "sell":
             ai_holding = None
 
-    # Calculate summary stats
-    det_total = sum(d.deterministic_return or 0 for d in decisions)
-    ai_total = sum(d.ai_return or 0 for d in decisions)
+    # Calculate summary stats using compound returns (not additive)
+    import math
+    det_total = (math.prod(1 + (d.deterministic_return or 0) / 100 for d in decisions) - 1) * 100
+    ai_total = (math.prod(1 + (d.ai_return or 0) / 100 for d in decisions) - 1) * 100
     agreements = sum(1 for d in decisions if d.agreed)
     disagreements = [d for d in decisions if not d.agreed]
 
@@ -229,38 +256,6 @@ def run_ai_backtest(
         agreement_rate=agreements / len(decisions) if decisions else 0,
         ai_win_rate=ai_wins / len(disagreements) if disagreements else 0,
     )
-
-
-def _build_market_context(prices: pd.DataFrame, target_date: date) -> str:
-    """Build market context string for the AI."""
-    lines = []
-
-    # SPY info
-    spy_prices = prices[prices["symbol"] == "SPY"].copy()
-    spy_prices["date"] = pd.to_datetime(spy_prices["date"])
-    spy_prices = spy_prices[spy_prices["date"] <= pd.Timestamp(target_date)]
-
-    if not spy_prices.empty:
-        current_price = spy_prices.iloc[-1]["close"]
-        year_ago = target_date - timedelta(days=365)
-        year_prices = spy_prices[spy_prices["date"] >= pd.Timestamp(year_ago)]
-        if not year_prices.empty:
-            year_high = year_prices["close"].max()
-            drawdown = (current_price / year_high - 1) * 100
-            lines.append(f"SPY: ${current_price:.2f} (drawdown from 52w high: {drawdown:.1f}%)")
-
-    # VIX info
-    vix_prices = prices[prices["symbol"] == "^VIX"].copy() if "^VIX" in prices["symbol"].values else pd.DataFrame()
-    if not vix_prices.empty:
-        vix_prices["date"] = pd.to_datetime(vix_prices["date"])
-        vix_prices = vix_prices[vix_prices["date"] <= pd.Timestamp(target_date)]
-        if not vix_prices.empty:
-            vix = vix_prices.iloc[-1]["close"]
-            lines.append(f"VIX: {vix:.1f}")
-
-    lines.append(f"Decision Date: {target_date}")
-
-    return "\n".join(lines)
 
 
 def _calculate_return(

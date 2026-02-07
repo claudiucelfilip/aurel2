@@ -2,6 +2,7 @@
 
 import asyncio
 import subprocess
+import sys
 import platform
 import time
 from pathlib import Path
@@ -304,6 +305,8 @@ class IBKRConnection:
         """Send periodic heartbeat to keep IBKR connection alive and reconnect if needed."""
         reconnect_attempts = 0
         max_reconnect_attempts = 3
+        total_consecutive_failures = 0
+        max_total_failures = 30  # ~30 min at 60s intervals → fatal exit
 
         while True:
             try:
@@ -313,30 +316,58 @@ class IBKRConnection:
                     # Request account summary as a heartbeat
                     await self.broker.get_account_summary()
                     logger.debug("ibkr_heartbeat_sent")
-                    reconnect_attempts = 0  # Reset on success
+                    reconnect_attempts = 0
+                    total_consecutive_failures = 0
+                elif (
+                    self.broker
+                    and self.broker.ib.isConnected()
+                    and not self.broker._server_connected
+                ):
+                    # Gateway TCP is up but IBKR upstream is down (error 1100).
+                    # Don't attempt reconnection — wait for error 1102 to restore.
+                    total_consecutive_failures += 1
+                    logger.warning(
+                        "ibkr_heartbeat_upstream_down",
+                        total_failures=total_consecutive_failures,
+                    )
                 else:
-                    logger.warning("ibkr_heartbeat_connection_lost", reconnect_attempts=reconnect_attempts)
+                    total_consecutive_failures += 1
+                    logger.warning(
+                        "ibkr_heartbeat_connection_lost",
+                        reconnect_attempts=reconnect_attempts,
+                        total_failures=total_consecutive_failures,
+                    )
 
                     # Attempt to reconnect
                     if reconnect_attempts < max_reconnect_attempts:
                         reconnect_attempts += 1
                         logger.info("ibkr_heartbeat_reconnecting", attempt=reconnect_attempts)
 
-                        # Try to reconnect
                         connected = await self.connect(launch_tws_if_needed=False, max_retries=1)
                         if connected:
                             logger.info("ibkr_heartbeat_reconnected")
                             reconnect_attempts = 0
+                            total_consecutive_failures = 0
                         else:
-                            # Wait longer between reconnect attempts
                             await asyncio.sleep(30)
                     else:
                         logger.error("ibkr_heartbeat_max_reconnects_exceeded")
-                        # Continue loop but don't attempt more reconnects until success
-                        await asyncio.sleep(300)  # Wait 5 min before trying again
+                        await asyncio.sleep(300)
                         reconnect_attempts = 0  # Reset to allow retry cycle
+
+                # Fatal exit after sustained failure so Docker restarts the container
+                if total_consecutive_failures >= max_total_failures:
+                    logger.critical(
+                        "ibkr_heartbeat_fatal_exit",
+                        total_failures=total_consecutive_failures,
+                        message="Exiting after sustained connection failure for Docker restart",
+                    )
+                    sys.exit(78)
 
             except asyncio.CancelledError:
                 break
+            except SystemExit:
+                raise
             except Exception as e:
-                logger.warning("ibkr_heartbeat_error", error=str(e))
+                total_consecutive_failures += 1
+                logger.warning("ibkr_heartbeat_error", error=str(e), total_failures=total_consecutive_failures)

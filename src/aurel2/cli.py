@@ -67,9 +67,10 @@ def backtest(
     from aurel2.core.assets import ASSET_REGISTRY, get_all_yahoo_symbols
     assets = ASSET_REGISTRY
 
-    # Fetch price data
+    # Fetch price data (with disk cache for repeated backtests)
     typer.echo("\nFetching historical data...")
-    provider = YahooFinanceProvider()
+    from aurel2.data.providers.cache import CachedPriceProvider
+    provider = CachedPriceProvider()
     symbols = [a.yahoo_symbol for a in assets.values() if a.yahoo_symbol]
 
     prices = provider.get_multi_prices(symbols, start_date, end_date)
@@ -1644,8 +1645,7 @@ def advise(
 
     from rich.panel import Panel
 
-    from aurel2.agent.ai_evaluator import ExpertAIEvaluator
-    from aurel2.agent.failure_analyzer import FailureAnalysis
+    from aurel2.agent.advisor import AIAdvisor
     from aurel2.core.assets import ASSET_REGISTRY
     from aurel2.notifications.ntfy import NtfyNotifier
 
@@ -1709,22 +1709,15 @@ def advise(
         console.print(f"  Asset:  [yellow]{det_asset}[/yellow]")
     console.print(f"  Reason: {det_signal.reason}")
 
-    # Load failure learnings and get AI opinion
+    # Get AI opinion via advisor.review()
     console.print()
     with console.status("[bold green]Consulting AI advisor..."):
-        # Load failure analysis
-        if os.path.exists(failure_file):
-            failure_analysis = FailureAnalysis.load(failure_file)
-            failure_context = failure_analysis.to_prompt_text(as_of_date=check_date)
-            num_past_failures = len([f for f in failure_analysis.failure_events if f.date < check_date])
+        advisor = AIAdvisor(failure_file=failure_file)
+        if advisor.failure_analysis:
+            num_past_failures = len([f for f in advisor.failure_analysis.failure_events if f.date < check_date])
             console.print(f"[dim]Loaded {num_past_failures} historical failures for AI context[/dim]")
         else:
-            failure_context = "(No failure history available - run failure analysis first)"
             console.print("[yellow]Warning: No failure learnings found. Run failure analysis first.[/yellow]")
-
-        # Build context
-        market_context = _build_advise_context(prices_df, check_date)
-        full_context = f"{failure_context}\n\n---\n\nMARKET CONTEXT:\n{market_context}"
 
         # Build signals dict
         signals = {
@@ -1736,21 +1729,20 @@ def advise(
             }
         }
 
-        deterministic_decision = {"action": det_action.lower(), "asset": det_asset}
-
         # Get AI decision
         try:
-            ai_evaluator = ExpertAIEvaluator(use_extended_thinking=False)
-            ai_decision = ai_evaluator.evaluate(
-                signals=signals,
-                context_text=full_context,
+            ai_advice = advisor.review(
+                deterministic_action=det_action.lower(),
+                deterministic_asset=det_asset,
+                strategy_signals=signals,
+                prices=prices_df,
                 current_holding=current_symbol,
-                deterministic_decision=deterministic_decision,
+                target_date=check_date,
             )
-            ai_action = ai_decision.action.upper()
-            ai_asset = ai_decision.asset
-            ai_reasoning = ai_decision.reasoning
-            ai_confidence = ai_decision.confidence
+            ai_action = ai_advice.recommended_action.upper()
+            ai_asset = ai_advice.recommended_asset
+            ai_reasoning = ai_advice.reasoning
+            ai_confidence = ai_advice.confidence
         except Exception as e:
             console.print(f"[red]AI evaluation failed: {e}[/red]")
             ai_action = det_action
@@ -1806,29 +1798,6 @@ def advise(
             console.print("[dim]Notification sent to ntfy topic.[/dim]")
 
     console.print()
-
-
-def _build_advise_context(prices: pd.DataFrame, target_date: date) -> str:
-    """Build market context string for the advise command."""
-    from datetime import timedelta
-    lines = []
-
-    # SPY info
-    spy_prices = prices[prices["symbol"] == "SPY"].copy()
-    spy_prices["date"] = pd.to_datetime(spy_prices["date"])
-    spy_prices = spy_prices[spy_prices["date"] <= pd.Timestamp(target_date)]
-
-    if not spy_prices.empty:
-        current_price = spy_prices.iloc[-1]["close"]
-        year_ago = target_date - timedelta(days=365)
-        year_prices = spy_prices[spy_prices["date"] >= pd.Timestamp(year_ago)]
-        if not year_prices.empty:
-            year_high = year_prices["close"].max()
-            drawdown = (current_price / year_high - 1) * 100
-            lines.append(f"SPY: ${current_price:.2f} (drawdown from 52w high: {drawdown:.1f}%)")
-
-    lines.append(f"Decision Date: {target_date}")
-    return "\n".join(lines)
 
 
 @app.command()
@@ -2050,10 +2019,11 @@ def compare(
     from rich.console import Console
     import os
 
-    from aurel2.agent.ai_evaluator import ClaudeCodeExpertEvaluator
-    from aurel2.agent.failure_analyzer import FailureAnalysis
+    from aurel2.agent.advisor import AIAdvisor
     from aurel2.core.assets import ASSET_REGISTRY
     from aurel2.core.models import AssetClass
+    from aurel2.strategies.mean_reversion import MeanReversionStrategy
+    from aurel2.strategies.multi_timeframe import MultiTimeframeTrendStrategy
 
     console = Console()
 
@@ -2150,16 +2120,20 @@ def compare(
     # 3. AI Expert with Failure Learnings
     console.print("[bold]Running AI Expert backtest (this may take a while)...[/bold]")
 
-    # Load failure analysis
-    full_failure_analysis = None
-    if os.path.exists(failure_file):
-        full_failure_analysis = FailureAnalysis.load(failure_file)
-        console.print(f"Loaded {len(full_failure_analysis.failure_events)} failure learnings")
+    # Initialize AI advisor (handles failure learnings, context, evaluator)
+    advisor = AIAdvisor(
+        failure_file=failure_file,
+        model=model,
+        lookback_years=lookback_years if lookback_years > 0 else None,
+    )
+    if advisor.failure_analysis:
+        console.print(f"Loaded {len(advisor.failure_analysis.failure_events)} failure learnings")
     else:
         console.print("[yellow]No failure learnings found. AI will operate without historical patterns.[/yellow]")
 
-    # Initialize AI evaluator
-    ai_evaluator = ClaudeCodeExpertEvaluator(model=model)
+    # Initialize additional strategies for richer signals
+    mean_reversion = MeanReversionStrategy()
+    multi_timeframe = MultiTimeframeTrendStrategy()
 
     ai_portfolio_value = capital
     ai_holding: str | None = None
@@ -2188,17 +2162,7 @@ def compare(
         det_action = det_signal.action.value
         det_asset = det_signal.asset.symbol if det_signal.asset else None
 
-        # Build context for AI (with rolling lookback window)
-        failure_context = ""
-        if full_failure_analysis:
-            failure_context = full_failure_analysis.to_prompt_text(
-                as_of_date=decision_date,
-                lookback_years=lookback_years if lookback_years > 0 else None,
-            )
-
-        market_context = _build_simple_market_context(prices_df, decision_date)
-        full_context = f"{failure_context}\n\n---\n\nMARKET CONTEXT:\n{market_context}"
-
+        # Build all 3 strategy signals for AI context
         signals = {
             "dual_momentum": {
                 "action": det_action,
@@ -2207,20 +2171,35 @@ def compare(
                 "reasoning": det_signal.reason,
             }
         }
+        for name, strat in [("mean_reversion", mean_reversion), ("multi_timeframe", multi_timeframe)]:
+            try:
+                sig = strat.generate_signal(prices=prices_df, calc_date=decision_date, current_holding=current_asset_class)
+                action = sig.action.value if hasattr(sig.action, 'value') else str(sig.action)
+                asset_sym = None
+                if hasattr(sig, 'asset_class') and sig.asset_class and sig.asset_class in ASSET_REGISTRY:
+                    asset_sym = ASSET_REGISTRY[sig.asset_class].symbol
+                signals[name] = {
+                    "action": action,
+                    "asset_symbol": asset_sym,
+                    "confidence": getattr(sig, 'confidence', 0.8),
+                    "reasoning": getattr(sig, 'reasoning', ''),
+                }
+            except Exception:
+                signals[name] = {"action": "hold", "confidence": 0.0, "error": "failed"}
 
-        deterministic_decision = {"action": det_action, "asset": det_asset}
-
-        # Get AI decision
+        # Get AI decision via advisor.review()
         try:
-            ai_decision = ai_evaluator.evaluate(
-                signals=signals,
-                context_text=full_context,
+            ai_advice = advisor.review(
+                deterministic_action=det_action,
+                deterministic_asset=det_asset,
+                strategy_signals=signals,
+                prices=prices_df,
                 current_holding=ai_holding,
-                deterministic_decision=deterministic_decision,
+                target_date=decision_date,
             )
-            ai_action = ai_decision.action
-            ai_asset = ai_decision.asset
-            ai_reasoning = ai_decision.reasoning[:100] if ai_decision.reasoning else ""
+            ai_action = ai_advice.recommended_action
+            ai_asset = ai_advice.recommended_asset
+            ai_reasoning = ai_advice.reasoning[:100] if ai_advice.reasoning else ""
         except Exception as e:
             # Fallback to deterministic on failure
             ai_action = det_action
@@ -2405,30 +2384,6 @@ def _get_period_return(prices: pd.DataFrame, symbol: str, start_date: date, end_
     return (end_price / start_price - 1) * 100
 
 
-def _build_simple_market_context(prices: pd.DataFrame, target_date: date) -> str:
-    """Build simple market context string for the AI."""
-    from datetime import timedelta
-
-    lines = []
-
-    spy_prices = prices[prices["symbol"] == "SPY"].copy()
-    spy_prices["date"] = pd.to_datetime(spy_prices["date"])
-    spy_prices = spy_prices[spy_prices["date"] <= pd.Timestamp(target_date)]
-
-    if not spy_prices.empty:
-        current_price = spy_prices.iloc[-1]["close"]
-        year_ago = target_date - timedelta(days=365)
-        year_prices = spy_prices[spy_prices["date"] >= pd.Timestamp(year_ago)]
-        if not year_prices.empty:
-            year_high = year_prices["close"].max()
-            drawdown = (current_price / year_high - 1) * 100
-            lines.append(f"SPY: ${current_price:.2f} (drawdown from 52w high: {drawdown:.1f}%)")
-
-    lines.append(f"Decision Date: {target_date}")
-
-    return "\n".join(lines)
-
-
 @app.command()
 def monitor(
     paper: bool = typer.Option(True, "--paper/--real", help="Daemon uses paper trading (default) or real trading"),
@@ -2573,6 +2528,44 @@ def progress():
 
     console.print("\n" + "=" * 60)
     console.print()
+
+
+@app.command("model-eval")
+def model_eval(
+    runs: int = typer.Option(1, "--runs", "-r", help="Number of runs per model (for consistency measurement)"),
+    models_str: str = typer.Option("haiku,sonnet,opus", "--models", "-m", help="Comma-separated model list"),
+    min_cost: float = typer.Option(0.10, "--min-cost", help="Minimum failure cost to include (decimal, e.g. 0.10 = 10%)"),
+    start: str = typer.Option(None, "--start", "-s", help="Only include failures after this date"),
+    end: str = typer.Option(None, "--end", "-e", help="Only include failures before this date"),
+    save: bool = typer.Option(True, "--save/--no-save", help="Save results to data/model_eval_results.json"),
+):
+    """Compare Haiku, Sonnet, and Opus on known failure scenarios.
+
+    Extracts scenarios where the deterministic system made mistakes (from
+    failure_learnings.json), replays each through all 3 models, and compares
+    which model catches more failures with better override decisions.
+    """
+    from aurel2.engine.model_eval import run_model_comparison, print_comparison_results, save_results
+
+    models = [m.strip() for m in models_str.split(",")]
+
+    typer.echo(f"Model evaluation on failure scenarios")
+    typer.echo(f"Models: {', '.join(models)}")
+    typer.echo(f"Min failure cost: {min_cost:.0%}")
+    typer.echo(f"Runs per model: {runs}")
+
+    result = run_model_comparison(
+        models=models,
+        runs_per_model=runs,
+        min_cost=min_cost,
+        start_date=start,
+        end_date=end,
+    )
+
+    print_comparison_results(result)
+
+    if save:
+        save_results(result)
 
 
 @app.command()

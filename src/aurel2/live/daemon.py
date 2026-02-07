@@ -3,6 +3,7 @@
 import asyncio
 import json
 import signal
+import time as time_mod
 from datetime import datetime, time as dt_time, timedelta
 from pathlib import Path
 from typing import Optional
@@ -18,7 +19,7 @@ from aurel2.notifications.ntfy import NtfyNotifier
 
 logger = structlog.get_logger()
 
-HEARTBEAT_FILE = Path("/tmp/aurel2-heartbeat.json")
+HEARTBEAT_FILE = Path.home() / ".aurel2" / "heartbeat.json"
 
 
 class LiveDaemon:
@@ -74,13 +75,16 @@ class LiveDaemon:
         self._running = False
         self._last_check: Optional[datetime] = None
         self._error_count = 0
+        self._last_decision_signals: Optional[dict] = None
+        self._heartbeat_task: Optional[asyncio.Task] = None
 
     def _write_heartbeat(self) -> None:
         """Write heartbeat file with current daemon status."""
         try:
+            HEARTBEAT_FILE.parent.mkdir(parents=True, exist_ok=True)
             pending = self.pending_manager.get_pending()
             heartbeat = {
-                "timestamp": datetime.now().isoformat(),
+                "timestamp": time_mod.time(),
                 "connected": self.connection.is_connected,
                 "circuit_breaker": self.connection.circuit_breaker.get_status(),
                 "pending_count": len(pending),
@@ -142,6 +146,9 @@ class LiveDaemon:
 
         self._running = True
 
+        # Start heartbeat writer as independent task
+        self._heartbeat_task = asyncio.create_task(self._heartbeat_writer())
+
         # Main loop
         try:
             await self._run_loop()
@@ -150,18 +157,19 @@ class LiveDaemon:
         finally:
             await self._shutdown()
 
+    async def _heartbeat_writer(self) -> None:
+        """Write heartbeat file every 60s, independent of the poll loop."""
+        while self._running:
+            self._write_heartbeat()
+            try:
+                await asyncio.sleep(60)
+            except asyncio.CancelledError:
+                break
+
     async def _run_loop(self) -> None:
         """Main daemon loop."""
-        heartbeat_interval = 60  # Write heartbeat every 60 seconds
-        last_heartbeat = datetime.min
-
         while self._running:
             now = datetime.now(self.timezone)
-
-            # Write heartbeat every minute
-            if (datetime.now() - last_heartbeat).total_seconds() >= heartbeat_interval:
-                self._write_heartbeat()
-                last_heartbeat = datetime.now()
 
             # Check if it's time for daily check
             if self._should_run_check(now):
@@ -169,8 +177,26 @@ class LiveDaemon:
                 print(f"\n[{now.strftime('%Y-%m-%d %H:%M')}] Running daily check...")
 
                 try:
+                    # Update strategy accuracy from previous decision before running new check
+                    if self._last_decision_signals:
+                        try:
+                            positions = await self.connection.get_positions()
+                            if positions:
+                                largest = max(positions, key=lambda p: p.market_value)
+                                if largest.avg_cost > 0:
+                                    pct_change = (largest.market_price / largest.avg_cost - 1) * 100
+                                    self.checker.update_strategy_accuracy(
+                                        self._last_decision_signals, pct_change
+                                    )
+                        except Exception as e:
+                            logger.debug("accuracy_update_skipped", error=str(e))
+
                     result = await self.checker.run()
                     self._last_check = now
+
+                    # Store signals for accuracy tracking next cycle
+                    if result.decision:
+                        self._last_decision_signals = result.decision.strategy_signals
 
                     if result.success:
                         print(f"Check complete: {result.message}")
@@ -425,6 +451,10 @@ class LiveDaemon:
         """Graceful shutdown."""
         logger.info("daemon_shutting_down")
         print("Shutting down...")
+
+        # Stop heartbeat writer
+        if self._heartbeat_task and not self._heartbeat_task.done():
+            self._heartbeat_task.cancel()
 
         # Disconnect from IBKR
         await self.connection.disconnect()
