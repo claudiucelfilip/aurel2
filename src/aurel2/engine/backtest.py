@@ -115,8 +115,9 @@ class BacktestEngine:
         self,
         initial_capital: float = 10000.0,
         transaction_cost_pct: float = 0.001,
-        use_ai: bool = True,
+        use_ai: bool = False,
         calm_market_hold: bool = True,
+        ai_model: str = "haiku",
     ):
         self.dual_momentum = DualMomentumStrategy(assets=ASSET_REGISTRY)
         self.mean_reversion = MeanReversionStrategy()
@@ -127,7 +128,7 @@ class BacktestEngine:
         if use_ai:
             # Deferred import to avoid circular: backtest -> advisor -> failure_analyzer -> backtest
             from aurel2.agent.advisor import AIAdvisor
-            self.ai_advisor = AIAdvisor()
+            self.ai_advisor = AIAdvisor(model=ai_model)
         self.initial_capital = initial_capital
         self.transaction_cost_pct = transaction_cost_pct
 

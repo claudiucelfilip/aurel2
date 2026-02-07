@@ -57,7 +57,7 @@ class AIAdvisor:
     def __init__(
         self,
         failure_file: str = DEFAULT_FAILURE_FILE,
-        model: str = "sonnet",
+        model: str = "haiku",
         lookback_years: int = 5,
     ):
         """Initialize the AI advisor.

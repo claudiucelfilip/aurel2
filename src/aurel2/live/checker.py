@@ -58,9 +58,9 @@ class Checker:
         pending_manager: PendingManager,
         ntfy_topic: str = "aurel2",
         dry_run: bool = False,
-        use_ai_advisor: bool = True,
+        use_ai_advisor: bool = False,
         failure_learnings_file: str = "data/failure_learnings.json",
-        ai_model: str = "sonnet",
+        ai_model: str = "haiku",
         ai_lookback_years: int = 3,
     ):
         self.connection = connection
@@ -210,7 +210,7 @@ class Checker:
                 )
 
                 # If AI disagrees and has high confidence, use AI's recommendation
-                if not ai_advice.agrees_with_deterministic and ai_advice.confidence > 0.7:
+                if not ai_advice.agrees_with_deterministic and ai_advice.confidence > 0.70:
                     logger.info(
                         "checker_ai_override",
                         old_action=decision.action.value,

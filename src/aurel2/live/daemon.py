@@ -45,7 +45,8 @@ class LiveDaemon:
         poll_interval_minutes: int = 5,
         ntfy_topic: str = "aurel2",
         dry_run: bool = False,
-        ai_model: str = "sonnet",
+        use_ai: bool = False,
+        ai_model: str = "haiku",
         ai_lookback_years: int = 3,
         ibkr_host: str = "127.0.0.1",
         ibkr_port: int | None = None,
@@ -56,6 +57,7 @@ class LiveDaemon:
         self.poll_interval = timedelta(minutes=poll_interval_minutes)
         self.ntfy_topic = ntfy_topic
         self.dry_run = dry_run
+        self.use_ai = use_ai
         self.ai_model = ai_model
         self.ai_lookback_years = ai_lookback_years
 
@@ -66,6 +68,7 @@ class LiveDaemon:
             pending_manager=self.pending_manager,
             ntfy_topic=ntfy_topic,
             dry_run=dry_run,
+            use_ai_advisor=use_ai,
             ai_model=ai_model,
             ai_lookback_years=ai_lookback_years,
         )
@@ -111,7 +114,7 @@ class LiveDaemon:
         print(f"Aurel2 Live Trading Daemon")
         print(f"Mode: {'PAPER' if self.paper else 'LIVE'}")
         print(f"Check time: {self.check_time.isoformat()} {self.timezone}")
-        print(f"AI Model: {self.ai_model} (lookback: {self.ai_lookback_years}yr)")
+        print(f"AI advisor: {'enabled' if self.use_ai else 'disabled'} (model: {self.ai_model})")
         print(f"Dry run: {self.dry_run}")
         print("=" * 60 + "\n")
 

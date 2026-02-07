@@ -836,7 +836,7 @@ class ClaudeCodeExpertEvaluator:
     - Devil's advocate questioning
     """
 
-    def __init__(self, model: str = "opus"):
+    def __init__(self, model: str = "haiku"):
         """Initialize the Claude Code expert evaluator.
 
         Args:

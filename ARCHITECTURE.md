@@ -103,8 +103,8 @@ CHECK_TIME=16:00            # Daily check time (Romania timezone)
 POLL_INTERVAL=5             # Minutes between approval polls
 NTFY_TOPIC=aurel2           # Notification channel
 
-# AI Settings
-AI_MODEL=sonnet             # sonnet, opus, or haiku
+# AI Settings (disabled by default, enable with --ai flag)
+AI_MODEL=haiku              # haiku, sonnet, or opus
 AI_LOOKBACK_YEARS=3
 ```
 
@@ -463,9 +463,10 @@ Conservative "risk manager" that reviews decisions against historical failures.
 
 **AI Integration**:
 - Uses Claude Code CLI (not API) for cost efficiency
-- Configurable model: "sonnet" (default), "opus", "haiku"
+- Configurable model: "haiku" (default), "sonnet", "opus"
 - Lookback: Last 3-5 years of failures (configurable)
-- Agrees with momentum system 95%+ of the time
+- **Disabled by default** — see AI Advisor Evaluation below for findings
+- Enable with `--ai` flag for backtesting or `--ai` for live trading
 
 ### Failure Analyzer
 
@@ -766,8 +767,8 @@ pipeline as production on each rebalance date.
          ▼
 ┌─────────────────┐
 │   AI Advisor    │
-│ (optional,      │
-│  --no-ai skips) │
+│ (off by default,│
+│  --ai enables)  │
 └────────┬────────┘
          │
          ▼
@@ -894,7 +895,7 @@ logging:
 |-----------|----------|---------|
 | check_time | --check-time | 16:00 |
 | poll_interval | --poll-interval | 300 |
-| ai_model | --ai-model | sonnet |
+| ai_model | --ai-model | haiku |
 
 ---
 
@@ -1132,8 +1133,8 @@ pythonpath = ["src"]
 ## CLI Commands
 
 ```bash
-# Backtesting (mirrors full live path: 3 strategies + orchestrator + AI)
-aurel2 backtest [--start DATE] [--end DATE] [--capital AMOUNT] [--no-ai]
+# Backtesting (mirrors full live path: 3 strategies + orchestrator)
+aurel2 backtest [--start DATE] [--end DATE] [--capital AMOUNT] [--ai]
 
 # Show momentum scores
 aurel2 momentum [--date DATE]
@@ -1300,18 +1301,223 @@ reducing position size. Cash left uninvested during recoveries never compounds.
 AI advisor also performed worse with indicator noise (3 extra unnecessary
 override trades).
 
+### Experiment 3: Quarterly Rebalancing (Reverted)
+
+**Change:** Switch from monthly to quarterly rebalance frequency (config-only).
+
+**Results:**
+
+| Period | Return | Alpha | CAGR | Max DD | Sharpe | Trades |
+|--------|--------|-------|------|--------|--------|--------|
+| 10yr | 139.20% | -165.64% | 8.17% | 22.83% | 0.97 | 16 |
+| 5yr | 180.49% | +48.50% | 18.41% | 9.54% | 1.94 | 7 |
+
+**Verdict:** Reverted. Much better risk-adjusted metrics (5yr Sharpe 1.94 vs
+1.07, max DD 9.5% vs 14.6%) but dramatically lower returns (-116% on 10yr).
+Quarterly checks miss momentum shifts by up to 3 months. A pure return-vs-risk
+tradeoff — not worthwhile for a growth-oriented system.
+
+### Experiment 4: Skip-Month Momentum, 12-1 (Reverted)
+
+**Change:** Exclude most recent month from 12-month momentum calculation to
+filter short-term reversal noise (Novy-Marx 2012). Momentum uses months 2-12
+instead of 1-12.
+
+**Results:**
+
+| Period | Return | Alpha | CAGR | Max DD | Sharpe | Trades |
+|--------|--------|-------|------|--------|--------|--------|
+| 10yr | 222.24% | -82.61% | 11.12% | 28.82% | 0.71 | 17 |
+| 5yr | 225.18% | +93.20% | 21.32% | 14.81% | 1.10 | 10 |
+
+**Verdict:** Reverted. Mixed results — slightly better 5yr (+8% return, +0.03
+Sharpe) but worse 10yr (-33% return, +3.6% drawdown). The skip-month effect
+that works in academic cross-sectional momentum doesn't help in time-series
+momentum with a concentrated portfolio. The recent month's signal contains
+useful information about continuation.
+
+### Experiment 5: Asymmetric Switch Thresholds (Reverted)
+
+**Change:** Lower the switch threshold from 10% to 5% when the currently held
+asset has negative 12-month momentum. Keep 10% for switching between winners.
+Rationale: easier to leave a sinking ship than to abandon a working one.
+
+**Results:**
+
+| Period | Return | Alpha | CAGR | Max DD | Sharpe | Trades |
+|--------|--------|-------|------|--------|--------|--------|
+| 10yr | 197.00% | -107.85% | 10.30% | 25.51% | 0.67 | 19 |
+| 5yr | 216.73% | +84.74% | 20.79% | 14.64% | 1.07 | 10 |
+
+**Verdict:** Reverted. Worse on 10yr (-58% return, +3 trades) and identical on
+5yr (the lower threshold never triggered). The existing absolute momentum check
+(go to cash when all assets < cash rate) already handles losers. The 5%
+threshold caused premature exits during temporary dips that reversed.
+
+### Experiment 6: Reduced Asset Universe — No Sectors (Reverted)
+
+**Change:** Remove 4 sector ETFs (XLK, XLF, XLE, XLV) from the tradeable
+universe. Keep core 7: SPY, EFA, EEM, AGG, TLT, GLD, DBC.
+
+**Results:**
+
+| Period | Return | Alpha | CAGR | Max DD | Sharpe | Trades |
+|--------|--------|-------|------|--------|--------|--------|
+| 10yr | 80.26% | -224.59% | 5.45% | 32.42% | 0.51 | 14 |
+| 5yr | 169.31% | +37.32% | 17.63% | 18.62% | 1.36 | 6 |
+
+**Verdict:** Reverted. Catastrophic on 10yr (-175% return, +7% drawdown).
+Sectors — especially XLE (energy) and GLD (gold, which stayed in universe) —
+are major alpha contributors. The system's ability to rotate into high-momentum
+sectors during commodity and rate cycles is a core strength, not noise.
+
+### Experiment 7: Volatility-Adjusted Momentum Scoring (Reverted)
+
+**Change:** Divide 12-month return by annualized realized volatility to rank
+assets by risk-adjusted momentum (lookback Sharpe ratio). Based on Barroso &
+Santa-Clara (2015).
+
+**Results:**
+
+| Period | Return | Alpha | CAGR | Max DD | Sharpe | Trades |
+|--------|--------|-------|------|--------|--------|--------|
+| 10yr | 93.15% | -211.69% | 6.11% | 25.13% | 0.52 | 31 |
+| 5yr | 79.98% | -52.00% | 10.11% | 25.13% | 0.72 | 17 |
+
+**Verdict:** Reverted. Nearly doubled trades (31 vs 16) and halved returns.
+Vol-adjusting the scores constantly re-ranks assets as their volatility changes,
+causing excessive churn. Low-vol assets (bonds, gold) get artificially boosted
+in rankings, pulling capital away from high-momentum equities/sectors during
+strong trends. The academic result applies to cross-sectional factor portfolios,
+not concentrated single-asset momentum.
+
+### Experiment 8: 200-Day MA Trend Gate (Reverted)
+
+**Change:** Block equity BUY signals when SPY is below its 200-day moving
+average. Redirect to AGG (bonds) instead. Binary gate — not a weight adjustment.
+
+**Results:**
+
+| Period | Return | Alpha | CAGR | Max DD | Sharpe | Trades |
+|--------|--------|-------|------|--------|--------|--------|
+| 10yr | 255.43% | -49.41% | 12.10% | 25.22% | 0.76 | 16 |
+| 5yr | 216.73% | +84.74% | 20.79% | 14.64% | 1.07 | 10 |
+
+**Verdict:** Reverted (no effect). The gate never triggered across the full
+10-year backtest. The momentum system already rotates out of equities when they
+have negative momentum, which closely coincides with SPY < 200MA. This confirms
+the core strategy already acts as its own trend filter — an explicit gate is
+redundant.
+
+### Experiment 9: Drawdown Emergency Exit (Reverted)
+
+**Change:** Force sell to AGG (bonds) when the held asset's trailing drawdown
+from its 252-day peak exceeds a threshold. Tested at 15% and 20% thresholds.
+
+**Results (15% threshold):**
+
+| Period | Return | Alpha | CAGR | Max DD | Sharpe | Trades |
+|--------|--------|-------|------|--------|--------|--------|
+| 10yr | 61.40% | -243.45% | 4.41% | 34.26% | 0.36 | 26 |
+| 5yr | 93.44% | -38.54% | 11.42% | 34.26% | 0.72 | 16 |
+
+**Results (20% threshold):**
+
+| Period | Return | Alpha | CAGR | Max DD | Sharpe | Trades |
+|--------|--------|-------|------|--------|--------|--------|
+| 10yr | 129.44% | -175.40% | 7.77% | 30.80% | 0.57 | 21 |
+| 5yr | 104.46% | -27.52% | 12.43% | 30.80% | 0.77 | 15 |
+
+**Verdict:** Reverted. Catastrophic at both thresholds. Paradoxically *increased*
+max drawdown (34% vs 25%) because it sells after the drop, locks in losses, then
+misses the recovery. Classic stop-loss trap for momentum strategies — the very
+drawdowns that trigger the exit are often V-shaped recoveries. The momentum
+system handles drawdowns better by rotating at the next rebalance based on
+forward-looking momentum, not backward-looking price damage.
+
+### AI Advisor Evaluation (Disabled by Default)
+
+**Goal:** Test whether the Claude-based AI advisor adds alpha over the
+deterministic momentum system.
+
+**Methodology:** 3 consistency runs per configuration (AI is non-deterministic).
+Override threshold: AI must disagree with >0.70 confidence to override.
+
+**Results (10yr, 2015-2026):**
+
+| Config | Avg Return | Spread | Avg Overrides | Alpha vs Baseline |
+|--------|-----------|--------|---------------|-------------------|
+| No-AI baseline | 291.48% | 0pp | 0 | — |
+| Haiku @ 0.70 | 329.52% | 16pp | 1.3 | +38pp |
+| Sonnet @ 0.70 | 324.25% | 57pp | 2.3 | +33pp |
+| Opus @ 0.70 | 291.48% | 0pp | 0 | 0pp (no-op) |
+
+**Results (5yr, 2020-2026):**
+
+| Config | Avg Return | Spread | Alpha vs Baseline |
+|--------|-----------|--------|-------------------|
+| No-AI baseline | 240.44% | 0pp | — |
+| Haiku @ 0.70 | ~217% | 57pp | **-23pp** |
+
+**Key Findings:**
+
+1. **Opus is useless** — never disagrees with the deterministic strategy (0
+   overrides across 3 runs). Too conservative to add value.
+
+2. **Sonnet @ 0.75 is a no-op** — disagreements always at ~0.72 confidence,
+   below the 0.75 threshold. Binary gap: no sweet spot between 0.70 and 0.75.
+
+3. **Haiku is the most opinionated** — disagrees 7/10 times, but most at low
+   confidence (0.62-0.68). Only 1-2 pass the 0.70 threshold per run.
+
+4. **10yr alpha is likely data leakage** — The AI's consistently good call
+   (CASH→bonds Feb 2016) is well within training data. It's remembering
+   outcomes, not predicting. The 5yr window (more recent data) shows the AI
+   actively hurts performance (-23pp avg).
+
+5. **2020 COVID recovery is the failure mode** — Haiku frequently overrides
+   the correct TLT→XLK transition during the V-shaped recovery, holding bonds
+   or switching to AGG instead. These calls destroy 20-60pp of returns.
+
+**Decision:** AI advisor disabled by default. Available via `--ai` flag for
+experimentation. Default model changed to haiku (best 10yr results if used).
+
 ### Lessons Learned
 
 1. **Position-sizing overlays hurt momentum strategies.** The core strategy
    already handles risk by rotating to bonds/cash. Reducing position size on
-   top of that is double-counting.
+   top of that is double-counting. (Experiments 2, 9)
 
 2. **More signals ≠ better AI decisions.** The AI advisor made better calls
-   with fewer, cleaner inputs (regime + price data only).
+   with fewer, cleaner inputs (regime + price data only). (Experiment 2)
 
 3. **Test strategy changes in isolation.** The first experiment bundled 3
    changes together, making it impossible to identify which helped or hurt.
 
 4. **Sharpe improvements don't justify return drag.** A Sharpe of 0.82 vs 0.76
    sounds better, but giving up 18% return for smoother equity curve is a bad
-   trade for a long-term system.
+   trade for a long-term system. (Experiments 1, 3)
+
+5. **The momentum system IS the risk manager.** Trend gates (exp 8) and
+   stop-losses (exp 9) are redundant or harmful because momentum rotation
+   already moves capital to safety. Don't layer protective mechanisms on
+   top of a strategy that already protects itself.
+
+6. **Sector ETFs are alpha, not noise.** Removing sectors (exp 6) destroyed
+   returns. The ability to rotate into XLE/GLD during commodity cycles is a
+   core feature.
+
+7. **Academic factors don't always transfer.** Skip-month momentum (exp 4)
+   and vol-adjusted scoring (exp 7) are proven in cross-sectional academic
+   research but hurt a concentrated time-series momentum portfolio.
+
+8. **Stop-losses cause the losses they aim to prevent.** Drawdown exits
+   (exp 9) sold after drops and missed recoveries, paradoxically increasing
+   max drawdown from 25% to 34%. Momentum's forward-looking rotation
+   handles drawdowns better than backward-looking price triggers.
+
+9. **LLM backtesting alpha is likely data leakage.** AI models trained on
+   historical data "remember" outcomes rather than predict them. The AI
+   advisor showed +38pp alpha on 10yr backtests but -23pp on recent 5yr
+   data closer to training cutoff. Don't trust AI backtest alpha unless
+   validated on truly out-of-sample data.

@@ -43,8 +43,9 @@ def backtest(
     end: str = typer.Option(None, help="End date (YYYY-MM-DD), defaults to today"),
     capital: float = typer.Option(10000.0, help="Initial capital"),
     frequency: str = typer.Option("monthly", help="Rebalance frequency: monthly or quarterly"),
-    no_ai: bool = typer.Option(False, "--no-ai", help="Skip AI advisor for faster iteration"),
+    ai: bool = typer.Option(False, "--ai", help="Enable AI advisor (disabled by default — see ARCHITECTURE.md for findings)"),
     no_calm_hold: bool = typer.Option(False, "--no-calm-hold", help="Disable calm-market hold rule (stay in current asset when drawdown < 5%%)"),
+    ai_model: str = typer.Option("haiku", "--ai-model", help="AI model: sonnet, opus, haiku"),
     config: Path = typer.Option(None, help="Config file path"),
     verbose: bool = typer.Option(False, "-v", "--verbose", help="Verbose output"),
 ):
@@ -59,7 +60,7 @@ def backtest(
     typer.echo(f"Running backtest from {start_date} to {end_date}")
     typer.echo(f"Initial capital: ${capital:,.2f}")
     typer.echo(f"Rebalance frequency: {frequency}")
-    typer.echo(f"AI advisor: {'disabled' if no_ai else 'enabled'}")
+    typer.echo(f"AI advisor: {'enabled' if ai else 'disabled'} (model: {ai_model})")
     typer.echo(f"Calm-market hold: {'disabled' if no_calm_hold else 'enabled'}")
 
     # Load settings
@@ -83,8 +84,9 @@ def backtest(
     engine = BacktestEngine(
         initial_capital=capital,
         transaction_cost_pct=settings.risk.transaction_cost_pct,
-        use_ai=not no_ai,
+        use_ai=ai,
         calm_market_hold=not no_calm_hold,
+        ai_model=ai_model,
     )
 
     # Use SPY as benchmark
@@ -547,7 +549,7 @@ def dashboard(
 def agent(
     once: bool = typer.Option(False, "--once", help="Run once and exit"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Don't execute trades"),
-    no_ai: bool = typer.Option(False, "--no-ai", help="Skip AI advisor review"),
+    ai: bool = typer.Option(False, "--ai", help="Enable AI advisor (disabled by default)"),
     notify: bool = typer.Option(True, "--notify/--no-notify", help="Send notifications"),
     ntfy_topic: str = typer.Option("aurel2", "--ntfy-topic", help="Ntfy topic"),
     approval_url: str = typer.Option(
@@ -632,7 +634,7 @@ def agent(
     # AI Advisor review (unless disabled)
     ai_advice = None
     ai_override = False
-    if not no_ai:
+    if ai:
         with console.status("[bold green]AI advisor reviewing decision..."):
             try:
                 advisor = AIAdvisor(failure_file=failure_file)
@@ -1252,7 +1254,7 @@ def eval_agent(
     end_date: str = typer.Option(None, "--end", "-e", help="End date (YYYY-MM-DD), defaults to today"),
     mock: bool = typer.Option(False, "--mock", "-m", help="Use mock AI (no API calls)"),
     claude_code: bool = typer.Option(False, "--claude-code", help="Use Claude Code CLI instead of Anthropic API (uses your Claude plan)"),
-    claude_model: str = typer.Option("sonnet", "--claude-model", help="Model for Claude Code: sonnet, opus, haiku"),
+    claude_model: str = typer.Option("haiku", "--claude-model", help="Model for Claude Code: sonnet, opus, haiku"),
     expert: bool = typer.Option(False, "--expert", "-x", help="Use Expert AI with extended thinking (Opus 4.5)"),
     no_cache: bool = typer.Option(False, "--no-cache", help="Don't use cached data"),
     compare: bool = typer.Option(False, "--compare", "-c", help="Show comparison summary from all cached data"),
@@ -1876,7 +1878,8 @@ def live(
     poll_interval: int = typer.Option(5, "--poll-interval", "-p", help="Approval poll interval in minutes", envvar="POLL_INTERVAL"),
     ntfy_topic: str = typer.Option("aurel2", "--ntfy-topic", help="Ntfy notification topic", envvar="NTFY_TOPIC"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Don't execute trades, just simulate", envvar="DRY_RUN"),
-    ai_model: str = typer.Option("sonnet", "--ai-model", "-m", help="AI model: sonnet, opus, haiku", envvar="AI_MODEL"),
+    ai: bool = typer.Option(False, "--ai", help="Enable AI advisor (disabled by default)", envvar="USE_AI"),
+    ai_model: str = typer.Option("haiku", "--ai-model", "-m", help="AI model: sonnet, opus, haiku", envvar="AI_MODEL"),
     ai_lookback: int = typer.Option(3, "--ai-lookback", "-l", help="AI failure pattern lookback years (default: 3)", envvar="AI_LOOKBACK_YEARS"),
     ibkr_host: str = typer.Option("127.0.0.1", "--ibkr-host", help="IBKR Gateway host", envvar="IBKR_HOST"),
     ibkr_port: int = typer.Option(None, "--ibkr-port", help="IBKR Gateway port (default: 4002 paper, 4001 live)", envvar="IBKR_PORT"),
@@ -1940,6 +1943,7 @@ def live(
         poll_interval_minutes=poll_interval,
         ntfy_topic=ntfy_topic,
         dry_run=dry_run,
+        use_ai=ai,
         ai_model=ai_model,
         ai_lookback_years=ai_lookback,
         ibkr_host=ibkr_host,
@@ -2008,7 +2012,7 @@ def compare(
     capital: float = typer.Option(10000.0, help="Initial capital"),
     failure_file: str = typer.Option("data/failure_learnings.json", help="Path to failure learnings"),
     lookback_years: int = typer.Option(5, "--lookback", "-l", help="Years of failure history to use (3, 5, 7, or 0 for all)"),
-    model: str = typer.Option("sonnet", "--model", "-m", help="AI model: sonnet, opus, haiku"),
+    model: str = typer.Option("haiku", "--model", "-m", help="AI model: sonnet, opus, haiku"),
     verbose: bool = typer.Option(False, "-v", "--verbose", help="Show detailed decision history"),
 ):
     """Compare SPY vs Deterministic vs AI Expert over a time period.
@@ -2394,7 +2398,7 @@ def monitor(
     dry_run: bool = typer.Option(False, "--dry-run", help="Daemon uses dry run mode"),
     ntfy_topic: str = typer.Option("aurel2", "--ntfy-topic", help="Ntfy notification topic"),
     ai: bool = typer.Option(False, "--ai", help="Enable AI-powered analysis using Claude Code CLI"),
-    ai_model: str = typer.Option("sonnet", "--ai-model", help="Claude model for AI analysis (sonnet, opus, haiku)"),
+    ai_model: str = typer.Option("haiku", "--ai-model", help="Claude model for AI analysis (sonnet, opus, haiku)"),
 ):
     """Run the daemon monitor agent.
 
