@@ -165,10 +165,13 @@ aurel2/
 │   ├── dashboard/           # Web dashboard (FastAPI + HTMX)
 │   ├── data/                # Data providers
 │   │   ├── providers/
-│   │   │   └── yahoo.py     # Yahoo Finance integration
+│   │   │   ├── yahoo.py     # Yahoo Finance integration
+│   │   │   ├── cache.py     # Disk-cached price provider (Parquet)
+│   │   │   └── ibkr.py      # IBKR historical data provider
+│   │   ├── validation.py    # Price data validation/cleaning
 │   │   └── indicators.py    # Technical indicators
 │   ├── engine/              # Analysis engines
-│   │   ├── backtest.py      # Backtesting engine
+│   │   ├── backtest.py      # Full-path backtesting engine
 │   │   └── backtest_agent.py # Agent backtesting
 │   ├── live/                # Live trading
 │   │   ├── daemon.py        # Main trading loop
@@ -499,6 +502,12 @@ Manages IBKR Gateway connection via `ib_insync`.
 - **Client ID conflict auto-recovery**: If the IBKR client ID is already in use
   (error 326, e.g. stale connection after container restart), automatically picks
   a new random client ID and retries immediately without counting as a failure
+- **Fatal exit after sustained failure**: After 30 consecutive heartbeat failures
+  (~30 min), exits with code 78 so Docker restarts the container. Prevents the
+  daemon from running indefinitely in a broken state.
+- **Upstream disconnect handling**: Detects when TCP connection to IB Gateway is
+  alive but IBKR upstream is down (error 1100). Waits for automatic restoration
+  (error 1102) instead of attempting reconnection.
 
 ### Circuit Breaker
 
@@ -561,7 +570,7 @@ Main continuous trading loop.
 **Schedule**:
 - Daily check at configured time (default 4 PM Romania)
 - Polling every 5 minutes for pending approvals
-- Heartbeat every 10 minutes to `/tmp/aurel2-heartbeat.json`
+- Independent heartbeat writer every 60s to `~/.aurel2/heartbeat.json`
 
 **Main Loop**:
 1. Check if scheduled check time
@@ -569,9 +578,14 @@ Main continuous trading loop.
 3. If ROUTINE → execute immediately
 4. If NON_ROUTINE → create pending, notify user
 5. Poll for pending decision responses
-6. Update heartbeat file
+6. Update strategy accuracy from previous decision's P&L
 
-**Signal Handling**: Graceful shutdown on SIGINT/SIGTERM
+**Heartbeat Writer**: Runs as an independent async task, decoupled from the
+poll loop. Writes epoch timestamps (not ISO strings) for reliable staleness
+detection. File location moved from `/tmp/` to `~/.aurel2/` so it survives
+container restarts.
+
+**Signal Handling**: Graceful shutdown on SIGINT/SIGTERM (cancels heartbeat task)
 
 ### Checker
 
@@ -720,10 +734,14 @@ These are passed to `journal.record_execution()` and persisted for audit/dashboa
 
 ### Backtest Flow
 
+The backtest engine (`src/aurel2/engine/backtest.py`) mirrors the full live
+trading path. It creates all components internally and runs the same decision
+pipeline as production on each rebalance date.
+
 ```
 ┌─────────────────┐
 │  Yahoo Finance  │
-│  (Historical)   │
+│  (Cached)       │
 └────────┬────────┘
          │
          ▼
@@ -734,20 +752,34 @@ These are passed to `journal.record_execution()` and persisted for audit/dashboa
          │
          ▼
 ┌─────────────────┐
+│  Market Context │
+│ (Regime detect) │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
 │   Orchestrator  │
-│ (Voting/Weight) │
+│ (Voting/Weight/ │
+│  Position Size) │
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│ Backtest Engine │
-│ (Performance)   │
+│   AI Advisor    │
+│ (optional,      │
+│  --no-ai skips) │
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│ Failure Analyzer│
-│ (Learnings)     │
+│ Trade Execution │
+│ (Position Size) │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Performance   │
+│   Metrics       │
 └─────────────────┘
 ```
 
@@ -876,6 +908,16 @@ logging:
 - Supports multi-symbol requests
 - 400-day buffer for lookback calculations
 - Returns DataFrame with columns: date, close, symbol
+- Price validation via `data/validation.py` (catches gaps, outliers)
+
+### Cached Price Provider
+
+**File**: `src/aurel2/data/providers/cache.py`
+
+- Wraps Yahoo Finance provider with disk caching (Parquet format)
+- Cache directory: `data/price_cache/`
+- Used by backtest CLI for fast repeated runs
+- Falls back to Yahoo Finance on cache miss
 
 ### Interactive Brokers (IBKR)
 
@@ -884,7 +926,8 @@ logging:
 - Uses `ib_insync` library
 - Executes market and limit orders
 - Retrieves positions, account summary, P&L
-- Symbol mapping between US and UCITS ETFs
+- Symbol mapping for all 11 tradeable US ETFs (SPY, EFA, EEM, XLK, XLF, XLE,
+  XLV, AGG, TLT, GLD, DBC) plus 3 UCITS equivalents (VWRA, CSPX, AGGH)
 
 ### ntfy.sh Notifications
 
@@ -1089,8 +1132,8 @@ pythonpath = ["src"]
 ## CLI Commands
 
 ```bash
-# Backtesting
-aurel2 backtest [--start DATE] [--end DATE] [--capital AMOUNT]
+# Backtesting (mirrors full live path: 3 strategies + orchestrator + AI)
+aurel2 backtest [--start DATE] [--end DATE] [--capital AMOUNT] [--no-ai]
 
 # Show momentum scores
 aurel2 momentum [--date DATE]
@@ -1179,3 +1222,96 @@ psutil>=5.9.0
 | Change configuration | `config/settings.py`, `config/default.yaml` |
 | Add CLI commands | `cli.py` |
 | Fix tests | `tests/test_*.py` |
+
+---
+
+## Strategy Experiment Log
+
+Record of strategy changes tested and their backtest results. All comparisons
+use `--no-ai` backtests to isolate strategy impact from AI variability.
+
+**Baseline (main branch, Feb 2026):**
+
+| Period | Return | Alpha vs SPY | CAGR | Max DD | Sharpe | Trades |
+|--------|--------|-------------|------|--------|--------|--------|
+| 10yr (2015-2026) | 255.43% | -49.41% | 12.10% | 25.22% | 0.76 | 16 |
+| 5yr (2020-2026) | 216.73% | +84.74% | 20.79% | 14.64% | 1.07 | 10 |
+
+### Experiment 1: Strategy-Level Changes (Reverted)
+
+**Branch:** `improve/strategy-correctness`
+
+**Changes tested (all at once):**
+1. Wider mean reversion RSI thresholds (25/75 → 35/65) with gradient confidence
+2. Dynamic T-bill cash rate (fetched from ^IRX instead of static 4%)
+3. Rewritten AI expert prompt (more skeptical, fewer overrides)
+
+**Results:**
+
+| Period | Return | Alpha | CAGR | Max DD | Sharpe | Trades |
+|--------|--------|-------|------|--------|--------|--------|
+| 10yr | 236.94% | -67.91% | 11.56% | 25.24% | 0.82 | 24 |
+| 5yr | 200.26% | +68.27% | 19.74% | 12.96% | 1.22 | 18 |
+
+**Verdict:** Reverted. Traded more (24 vs 16) but returned less (237% vs 255%).
+Better risk-adjusted metrics (Sharpe 0.82 vs 0.76, lower drawdown) but not
+enough to justify -18% return and -18% alpha. The wider RSI thresholds caused
+over-trading.
+
+### Experiment 2: Leading Indicator Overlay (Reverted)
+
+**Branch:** `improve/strategy-correctness`
+
+**Approach:** Non-tradeable indicators (UUP, HYG, SMH) as position-sizing
+overlay. Indicators never change trade direction — only reduce position size
+(0.5x-1.0x) when multiple indicators signal stress.
+
+**Lead-lag relationships:**
+- UUP (US Dollar) → EEM: Rising dollar = EM headwind
+- HYG/AGG ratio (credit stress) → SPY: Falling ratio = credit deterioration
+- SMH (semiconductors) → SPY/XLK: Semis lead broad market
+
+**Signals:**
+- Credit stress: HYG/AGG ratio MA20 vs MA63
+- Dollar signal: 20-day UUP momentum, normalized to [-1, +1]
+- Semis divergence: 20-day SMH return minus 20-day SPY return
+
+**Combined overlay:** Weighted average (credit 0.4, dollar 0.2, semis 0.4).
+If combined < -0.5 → 0.6x position. If < -0.3 → 0.8x. Otherwise → 1.0x.
+
+**Results (v2, tighter thresholds):**
+
+| Period | Return | Alpha | CAGR | Max DD | Sharpe | Trades |
+|--------|--------|-------|------|--------|--------|--------|
+| 10yr | 228.42% | -76.42% | 11.31% | 22.43% | 0.83 | 24 |
+| 5yr | 179.98% | +47.99% | 18.38% | 12.86% | 1.19 | 18 |
+
+**AI A/B test (5yr with AI enabled):**
+
+| Config | Return | Alpha | Sharpe | Trades |
+|--------|--------|-------|--------|--------|
+| AI + Indicators | 199.22% | +67.24% | 1.26 | 21 |
+| AI, No Indicators | 222.22% | +90.24% | 1.33 | 18 |
+
+**Verdict:** Reverted. The overlay reduced returns by ~17-20% with marginal
+drawdown improvement. Root cause: momentum strategy already rotates to safe
+assets during stress, so the indicator overlay double-counts risk by also
+reducing position size. Cash left uninvested during recoveries never compounds.
+AI advisor also performed worse with indicator noise (3 extra unnecessary
+override trades).
+
+### Lessons Learned
+
+1. **Position-sizing overlays hurt momentum strategies.** The core strategy
+   already handles risk by rotating to bonds/cash. Reducing position size on
+   top of that is double-counting.
+
+2. **More signals ≠ better AI decisions.** The AI advisor made better calls
+   with fewer, cleaner inputs (regime + price data only).
+
+3. **Test strategy changes in isolation.** The first experiment bundled 3
+   changes together, making it impossible to identify which helped or hurt.
+
+4. **Sharpe improvements don't justify return drag.** A Sharpe of 0.82 vs 0.76
+   sounds better, but giving up 18% return for smoother equity curve is a bad
+   trade for a long-term system.
