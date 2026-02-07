@@ -116,15 +116,16 @@ class BacktestEngine:
         initial_capital: float = 10000.0,
         transaction_cost_pct: float = 0.001,
         use_ai: bool = True,
+        calm_market_hold: bool = True,
     ):
         self.dual_momentum = DualMomentumStrategy(assets=ASSET_REGISTRY)
         self.mean_reversion = MeanReversionStrategy()
         self.multi_timeframe = MultiTimeframeTrendStrategy()
-        self.orchestrator = AgentOrchestrator()
+        self.orchestrator = AgentOrchestrator(calm_market_hold=calm_market_hold)
 
-        # Deferred import to avoid circular: backtest -> advisor -> failure_analyzer -> backtest
         self.ai_advisor = None
         if use_ai:
+            # Deferred import to avoid circular: backtest -> advisor -> failure_analyzer -> backtest
             from aurel2.agent.advisor import AIAdvisor
             self.ai_advisor = AIAdvisor()
         self.initial_capital = initial_capital
@@ -261,7 +262,10 @@ class BacktestEngine:
         all_signals: list[Signal] = []
         snapshots: list[PortfolioSnapshot] = []
 
-        for rebal_date in rebalance_dates:
+        total_dates = len(rebalance_dates)
+        for i, rebal_date in enumerate(rebalance_dates, 1):
+            print(f"\r  [{i}/{total_dates}] {rebal_date}", end="", flush=True)
+
             # ================================================================
             # Step 1: Run all 3 strategies (mirrors checker._run_strategies)
             # ================================================================
@@ -311,6 +315,7 @@ class BacktestEngine:
             decision = self.orchestrator.analyze(
                 signals=signals,
                 market_context=market_context,
+                current_holding=current_holding_symbol,
             )
 
             logger.info(
@@ -326,8 +331,9 @@ class BacktestEngine:
 
             # ================================================================
             # Step 4: AI Advisor review (mirrors checker step 7)
+            # Skip AI on HOLD — it churns the portfolio by overriding holds
             # ================================================================
-            if self.ai_advisor:
+            if self.ai_advisor and decision.action != SignalAction.HOLD:
                 try:
                     ai_advice = self.ai_advisor.review(
                         deterministic_action=decision.action.value,
@@ -345,7 +351,7 @@ class BacktestEngine:
                         or ai_advice.recommended_asset in self._tradeable_symbols
                     )
                     if (not ai_advice.agrees_with_deterministic
-                            and ai_advice.confidence > 0.85
+                            and ai_advice.confidence > 0.70
                             and ai_asset_tradeable):
                         logger.info(
                             "backtest_ai_override",
@@ -517,6 +523,8 @@ class BacktestEngine:
                 positions=[],
                 total_value=Decimal(str(total_value)),
             ))
+
+        print()  # newline after progress
 
         # Calculate final value at end date
         final_value = float(snapshots[-1].total_value) if snapshots else self.initial_capital

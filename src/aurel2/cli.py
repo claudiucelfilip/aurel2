@@ -44,6 +44,7 @@ def backtest(
     capital: float = typer.Option(10000.0, help="Initial capital"),
     frequency: str = typer.Option("monthly", help="Rebalance frequency: monthly or quarterly"),
     no_ai: bool = typer.Option(False, "--no-ai", help="Skip AI advisor for faster iteration"),
+    no_calm_hold: bool = typer.Option(False, "--no-calm-hold", help="Disable calm-market hold rule (stay in current asset when drawdown < 5%%)"),
     config: Path = typer.Option(None, help="Config file path"),
     verbose: bool = typer.Option(False, "-v", "--verbose", help="Verbose output"),
 ):
@@ -59,6 +60,7 @@ def backtest(
     typer.echo(f"Initial capital: ${capital:,.2f}")
     typer.echo(f"Rebalance frequency: {frequency}")
     typer.echo(f"AI advisor: {'disabled' if no_ai else 'enabled'}")
+    typer.echo(f"Calm-market hold: {'disabled' if no_calm_hold else 'enabled'}")
 
     # Load settings
     settings = load_settings(config)
@@ -82,6 +84,7 @@ def backtest(
         initial_capital=capital,
         transaction_cost_pct=settings.risk.transaction_cost_pct,
         use_ai=not no_ai,
+        calm_market_hold=not no_calm_hold,
     )
 
     # Use SPY as benchmark
@@ -620,6 +623,7 @@ def agent(
             "volatility": "normal",
             "regime": market_context.get("regime", "neutral"),
         },
+        current_holding=current_holding,
     )
 
     deterministic_action = decision.action.value

@@ -189,6 +189,8 @@ class AgentOrchestrator:
         use_dynamic_weights: bool = True,
         use_position_sizing: bool = True,
         use_regime_selection: bool = True,
+        calm_market_hold: bool = True,
+        calm_market_hold_threshold: float = 0.05,
     ) -> None:
         """Initialize the orchestrator.
 
@@ -211,6 +213,8 @@ class AgentOrchestrator:
         self.use_dynamic_weights = use_dynamic_weights
         self.use_position_sizing = use_position_sizing
         self.use_regime_selection = use_regime_selection
+        self.calm_market_hold = calm_market_hold
+        self.calm_market_hold_threshold = calm_market_hold_threshold
 
         # Rolling accuracy tracking per strategy
         self._accuracy_history: dict[str, deque[bool]] = {
@@ -570,6 +574,7 @@ class AgentOrchestrator:
         self,
         signals: dict[str, dict[str, Any]],
         market_context: dict[str, Any] | None = None,
+        current_holding: str | None = None,
     ) -> AgentDecision:
         """Analyze strategy signals and produce a decision.
 
@@ -611,6 +616,21 @@ class AgentOrchestrator:
             signals, market_context, regime
         )
 
+        # Calm-market hold: don't switch assets when drawdown is low
+        calm_hold_applied = False
+        if (
+            self.calm_market_hold
+            and current_holding
+            and current_holding not in ("CASH", None)
+            and action == SignalAction.BUY
+            and asset_symbol != current_holding
+            and market_context.get("drawdown", 0.0) < self.calm_market_hold_threshold
+            and decision_type != DecisionType.URGENT
+        ):
+            action = SignalAction.HOLD
+            asset_symbol = None
+            calm_hold_applied = True
+
         # Calculate position size based on confidence and agreement
         position_size = self._calculate_position_size(
             confidence, agreement_count, total_strategies=len(signals)
@@ -626,7 +646,10 @@ class AgentOrchestrator:
         weights = self._get_dynamic_weights(regime)
         weights_str = ", ".join(f"{k}:{v:.0%}" for k, v in weights.items())
 
-        if decision_type == DecisionType.ROUTINE:
+        if calm_hold_applied:
+            drawdown = market_context.get("drawdown", 0.0)
+            reasoning = f"{regime_info}Calm-market hold: keeping {current_holding} (drawdown {drawdown:.1%} < {self.calm_market_hold_threshold:.0%} threshold)"
+        elif decision_type == DecisionType.ROUTINE:
             reasoning = f"{regime_info}All strategies agree on {action.value.upper()} action (weights: {weights_str})"
         elif decision_type == DecisionType.URGENT:
             reasoning = f"{regime_info}Urgent condition detected. Recommended action: {action.value.upper()} (position: {position_size:.0%})"

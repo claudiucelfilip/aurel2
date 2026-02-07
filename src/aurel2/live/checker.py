@@ -163,6 +163,7 @@ class Checker:
         decision = self.orchestrator.analyze(
             signals=signals,
             market_context=market_context,
+            current_holding=current_holding,
         )
 
         logger.info(
@@ -175,8 +176,9 @@ class Checker:
         )
 
         # 7. AI Advisor review (uses failure learnings from past mistakes)
+        # Skip AI on HOLD decisions — AI overriding holds causes excessive churn
         ai_advice: Optional[AIAdvice] = None
-        if self.ai_advisor and self.use_ai_advisor:
+        if self.ai_advisor and self.use_ai_advisor and decision.action.value != "hold":
             # Reload failure learnings if stale
             if self.ai_advisor.is_failure_data_stale(max_age_hours=24):
                 logger.warning(

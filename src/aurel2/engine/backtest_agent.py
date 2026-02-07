@@ -559,7 +559,14 @@ class AgentBacktestEngine:
             }
 
             # Use orchestrator to analyze and decide
-            decision = self.orchestrator.analyze(signals, market_context)
+            # Note: backtest_agent tracks current_holding as AssetClass, convert to symbol
+            current_holding_symbol = None
+            if current_holding and current_holding != AssetClass.CASH:
+                from aurel2.core.assets import ASSET_REGISTRY as _AR
+                held = _AR.get(current_holding)
+                if held:
+                    current_holding_symbol = held.symbol
+            decision = self.orchestrator.analyze(signals, market_context, current_holding=current_holding_symbol)
 
             # Determine target asset for this decision
             target_asset_class = self._get_target_asset_class(decision, signals)

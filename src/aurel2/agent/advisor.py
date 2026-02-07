@@ -12,7 +12,7 @@ from typing import Any
 import pandas as pd
 import structlog
 
-from aurel2.agent.ai_evaluator import ClaudeCodeExpertEvaluator, ExpertAIEvaluator
+from aurel2.agent.ai_evaluator import ClaudeCodeExpertEvaluator
 from aurel2.agent.failure_analyzer import FailureAnalysis
 from aurel2.core.assets import ASSET_REGISTRY
 
@@ -76,10 +76,8 @@ class AIAdvisor:
         self.failure_analysis: FailureAnalysis | None = None
         self._load_failure_analysis()
 
-        # Initialize AI evaluator
-        # Uses Anthropic API if ANTHROPIC_API_KEY is set, otherwise Claude Code CLI
-        self.ai_evaluator: ClaudeCodeExpertEvaluator | ExpertAIEvaluator | None = None
-        self._use_api = bool(os.environ.get("ANTHROPIC_API_KEY"))
+        # Initialize AI evaluator (always uses Claude Code CLI)
+        self.ai_evaluator: ClaudeCodeExpertEvaluator | None = None
 
         # AI failure tracking for guardrails
         self._consecutive_ai_failures = 0
@@ -200,26 +198,11 @@ class AIAdvisor:
             )
 
     def _init_evaluator(self) -> None:
-        """Lazy initialization of AI evaluator."""
+        """Lazy initialization of AI evaluator. Always uses Claude Code CLI."""
         if self.ai_evaluator is None:
             try:
-                if self._use_api:
-                    # Use Anthropic API directly (more reliable in headless environments)
-                    model_map = {
-                        "sonnet": "claude-sonnet-4-5-20250929",
-                        "opus": "claude-opus-4-5-20251101",
-                        "haiku": "claude-3-5-haiku-20241022",
-                    }
-                    api_model = model_map.get(self.model, "claude-sonnet-4-5-20250929")
-                    self.ai_evaluator = ExpertAIEvaluator(
-                        model=api_model,
-                        use_extended_thinking=False,  # Faster for trading decisions
-                    )
-                    logger.info("using_anthropic_api_evaluator", model=api_model)
-                else:
-                    # Fall back to Claude Code CLI
-                    self.ai_evaluator = ClaudeCodeExpertEvaluator(model=self.model)
-                    logger.info("using_claude_code_cli_evaluator", model=self.model)
+                self.ai_evaluator = ClaudeCodeExpertEvaluator(model=self.model)
+                logger.info("using_claude_code_cli_evaluator", model=self.model)
             except Exception as e:
                 logger.error("failed_to_init_ai_evaluator", error=str(e))
                 raise
