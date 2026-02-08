@@ -610,6 +610,14 @@ Single market check cycle:
 
 **File**: `src/aurel2/monitor/daemon_monitor.py`
 
+> **TODO: Docker-compatible monitor.** The current monitor uses `psutil` to
+> find/kill processes and hardcodes macOS IB Gateway paths — it only works
+> locally. To run in Docker, it needs refactoring to use the Docker API
+> (or socket mount) to inspect/restart the `aurel2` container. Currently
+> Docker's `restart: unless-stopped` policy handles crash recovery, but
+> there's no ntfy notification on failures or proactive restart on prolonged
+> disconnection (only crash restarts).
+
 Watches daemon health continuously.
 
 **Check Interval**: 60 seconds
