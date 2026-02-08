@@ -1451,6 +1451,13 @@ deterministic momentum system.
 **Methodology:** 3 consistency runs per configuration (AI is non-deterministic).
 Override threshold: AI must disagree with >0.70 confidence to override.
 
+**Important:** The calm-market hold rule (`--no-calm-hold` to disable) suppresses
+most non-HOLD decisions in bull markets (drawdown <5%). With calm-hold enabled,
+the AI is almost never called because it's only consulted on non-HOLD decisions.
+The initial evaluation ran with calm-hold on (fewer AI calls). The amnesia
+evaluation used `--no-calm-hold` to generate more non-HOLD decisions and actually
+exercise the AI advisor.
+
 **Results (10yr, 2015-2026):**
 
 | Config | Avg Return | Spread | Avg Overrides | Alpha vs Baseline |
