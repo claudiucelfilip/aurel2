@@ -63,11 +63,12 @@ ASSET_SYMBOL_MAP = {
 class EnhancedMomentumStrategy(BaseStrategy):
     """Enhanced Dual Momentum — closes the 10-year alpha gap vs SPY.
 
-    Winning configuration (backtested 2016-2026):
+    Production configuration (backtested 2016-2026):
       - Classic SPY/EFA offensive universe (no dilution)
       - 8% switch threshold (only rotate on strong signals)
-      - No absolute momentum gate (staying offensive wins in this regime)
-      - Result: 16.1% CAGR vs 15.8% SPY (+0.3% alpha), 1.08 Sharpe
+      - Deep crash gate at -15% (protect against 2008-style events,
+        but don't trigger on normal corrections like 2022)
+      - Result: 15.0% CAGR (10y), 1.03 Sharpe, with tail-risk protection
 
     All features are individually toggleable for backtest experimentation.
     """
@@ -76,13 +77,13 @@ class EnhancedMomentumStrategy(BaseStrategy):
 
     def __init__(
         self,
-        # Feature toggles — defaults are the winning "ENHANCED" config
+        # Feature toggles — defaults are the production config
         use_multi_lookback: bool = False,
         use_canary: bool = False,
         use_sma_filter: bool = False,
         use_vol_weighting: bool = False,
         use_partial_rotation: bool = False,
-        use_absolute_momentum: bool = False,
+        use_absolute_momentum: bool = True,
         # Parameters
         lookback_months: list[int] | None = None,
         lookback_weights: list[float] | None = None,
@@ -94,7 +95,7 @@ class EnhancedMomentumStrategy(BaseStrategy):
         offensive_assets: list[AssetClass] | None = None,
         defensive_assets: list[AssetClass] | None = None,
         canary_symbols: list[str] | None = None,
-        abs_momentum_threshold: float = 0.0,
+        abs_momentum_threshold: float = -0.15,
     ):
         # Feature toggles
         self.use_multi_lookback = use_multi_lookback

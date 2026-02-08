@@ -103,6 +103,8 @@ The threshold also has economic intuition. Momentum signals are noisy at the mon
 
 This is config 2 in our backtest: 15.0% CAGR (10y), 13.4% CAGR (5y). It gives up ~1% vs pure aggressive but provides a safety net for tail events. The -15% threshold only triggers in genuine crashes (2008, COVID March 2020), not in normal corrections.
 
+**This is the production default** — `EnhancedMomentumStrategy()` with no arguments uses 8% switch threshold + absolute momentum gate at -15%.
+
 **For further research**: The sector rotation variant (SPY/XLK/XLV/XLF at 5% threshold) showed 14.4% CAGR with -22.8% MaxDD. It underperformed on 5y but the lower MaxDD is interesting. Worth testing on longer periods and different sector combinations.
 
 ---
