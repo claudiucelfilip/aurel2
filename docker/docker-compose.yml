@@ -24,7 +24,9 @@ services:
     networks:
       - trading-net
     healthcheck:
-      test: ["CMD-SHELL", "timeout 2 bash -c '</dev/tcp/localhost/4003' 2>/dev/null || timeout 2 bash -c '</dev/tcp/localhost/4004' 2>/dev/null"]
+      # Check both: TCP port responds AND Java gateway process is alive
+      # When gateway crashes, socat keeps port open but Java dies
+      test: ["CMD-SHELL", "pgrep -f ibcalpha.ibc.IbcGateway > /dev/null && timeout 2 bash -c '</dev/tcp/localhost/4004'"]
       interval: 30s
       timeout: 10s
       retries: 3
