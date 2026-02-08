@@ -1451,12 +1451,16 @@ deterministic momentum system.
 **Methodology:** 3 consistency runs per configuration (AI is non-deterministic).
 Override threshold: AI must disagree with >0.70 confidence to override.
 
-**Important:** The calm-market hold rule suppresses most non-HOLD decisions in
-bull markets (drawdown <5%). With calm-hold enabled, the AI is almost never
-called because it's only consulted on non-HOLD decisions. The initial evaluation
-ran with calm-hold on (fewer AI calls). The amnesia evaluation temporarily
-disabled calm-hold at code level to generate more non-HOLD decisions and
-exercise the AI. Calm-hold is now permanently enabled with no opt-out (see
+**Forced-decision backtesting:** The calm-market hold rule suppresses most
+non-HOLD decisions in bull markets (drawdown <5%), so the AI is almost never
+called under normal conditions. To properly evaluate the AI, we use
+"forced-decision backtesting" — temporarily disabling calm-hold at code level
+to force the orchestrator to produce active BUY/SELL decisions that the AI
+can review. This generates 2-3x more AI calls per backtest, making results
+statistically meaningful in a ~15 minute run instead of getting 0-1 AI calls.
+The initial evaluation ran without forced decisions (fewer AI calls). The
+amnesia evaluation used forced-decision backtesting for conclusive results.
+Calm-hold is now permanently enabled in production with no opt-out (see
 Lessons Learned #9).
 
 **Results (10yr, 2015-2026):**
@@ -1499,7 +1503,7 @@ Lessons Learned #9).
    that instructs the AI to ignore training knowledge and redacts all dates
    from the prompt (so it can't key on remembered events). Results:
 
-   | Config (10yr, calm-hold disabled) | Avg Return | Spread | Alpha vs Baseline |
+   | Config (10yr, forced-decision) | Avg Return | Spread | Alpha vs Baseline |
    |------------------------------------|-----------|--------|-------------------|
    | No-AI baseline | 255.43% | 0pp | — |
    | Amnesia haiku x3 | 239.96% | 132pp | **-15pp** |
