@@ -118,6 +118,7 @@ class BacktestEngine:
         use_ai: bool = False,
         calm_market_hold: bool = True,
         ai_model: str = "haiku",
+        amnesia: bool = False,
     ):
         self.dual_momentum = DualMomentumStrategy(assets=ASSET_REGISTRY)
         self.mean_reversion = MeanReversionStrategy()
@@ -128,7 +129,7 @@ class BacktestEngine:
         if use_ai:
             # Deferred import to avoid circular: backtest -> advisor -> failure_analyzer -> backtest
             from aurel2.agent.advisor import AIAdvisor
-            self.ai_advisor = AIAdvisor(model=ai_model)
+            self.ai_advisor = AIAdvisor(model=ai_model, amnesia=amnesia)
         self.initial_capital = initial_capital
         self.transaction_cost_pct = transaction_cost_pct
 
@@ -344,6 +345,17 @@ class BacktestEngine:
                         prices=prices,
                         current_holding=current_holding_symbol,
                         target_date=rebal_date,
+                    )
+
+                    logger.info(
+                        "backtest_ai_response",
+                        date=str(rebal_date),
+                        agrees=ai_advice.agrees_with_deterministic,
+                        ai_action=ai_advice.recommended_action,
+                        ai_asset=ai_advice.recommended_asset,
+                        confidence=f"{ai_advice.confidence:.2f}",
+                        det_action=decision.action.value,
+                        det_asset=decision.asset_symbol,
                     )
 
                     # Override logic (mirrors checker lines 225-249)

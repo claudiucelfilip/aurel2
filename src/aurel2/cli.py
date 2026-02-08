@@ -46,6 +46,7 @@ def backtest(
     ai: bool = typer.Option(False, "--ai", help="Enable AI advisor (disabled by default — see ARCHITECTURE.md for findings)"),
     no_calm_hold: bool = typer.Option(False, "--no-calm-hold", help="Disable calm-market hold rule (stay in current asset when drawdown < 5%%)"),
     ai_model: str = typer.Option("haiku", "--ai-model", help="AI model: sonnet, opus, haiku"),
+    amnesia: bool = typer.Option(False, "--amnesia", help="Tell AI to ignore training data financial knowledge and redact dates"),
     config: Path = typer.Option(None, help="Config file path"),
     verbose: bool = typer.Option(False, "-v", "--verbose", help="Verbose output"),
 ):
@@ -61,6 +62,8 @@ def backtest(
     typer.echo(f"Initial capital: ${capital:,.2f}")
     typer.echo(f"Rebalance frequency: {frequency}")
     typer.echo(f"AI advisor: {'enabled' if ai else 'disabled'} (model: {ai_model})")
+    if amnesia:
+        typer.echo(f"AI amnesia mode: enabled (dates redacted, no financial knowledge)")
     typer.echo(f"Calm-market hold: {'disabled' if no_calm_hold else 'enabled'}")
 
     # Load settings
@@ -87,6 +90,7 @@ def backtest(
         use_ai=ai,
         calm_market_hold=not no_calm_hold,
         ai_model=ai_model,
+        amnesia=amnesia,
     )
 
     # Use SPY as benchmark

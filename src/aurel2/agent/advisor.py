@@ -5,6 +5,7 @@ and may override them based on historical failure patterns.
 """
 
 import os
+import re
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from typing import Any
@@ -59,6 +60,7 @@ class AIAdvisor:
         failure_file: str = DEFAULT_FAILURE_FILE,
         model: str = "haiku",
         lookback_years: int = 5,
+        amnesia: bool = False,
     ):
         """Initialize the AI advisor.
 
@@ -67,10 +69,13 @@ class AIAdvisor:
             model: Claude model to use via CLI (sonnet, opus, haiku).
             lookback_years: Only use failures from the last N years. Default 5.
                            Set to None to use all historical failures.
+            amnesia: If True, instruct AI to ignore training data financial
+                    knowledge and redact dates to prevent data leakage.
         """
         self.failure_file = failure_file
         self.model = model
         self.lookback_years = lookback_years
+        self.amnesia = amnesia
 
         # Load failure analysis
         self.failure_analysis: FailureAnalysis | None = None
@@ -225,18 +230,40 @@ class AIAdvisor:
         """
         lines = []
 
+        # Amnesia mode: instruct AI to ignore training knowledge and redact dates
+        if self.amnesia:
+            lines.append(
+                "IMPORTANT INSTRUCTION: You are acting as a pure reasoning engine. "
+                "You must COMPLETELY IGNORE any financial knowledge from your training data. "
+                "Do NOT recall or reference any historical market events, crashes, rallies, "
+                "or outcomes you may have learned during training. "
+                "Base your decision ONLY on the numerical data provided below "
+                "(momentum scores, RSI, drawdown, regime classification). "
+                "Reason purely from the patterns in the data — not from memory of what happened."
+            )
+            lines.append("\n---\n")
+
         # Add failure history (point-in-time safe, with lookback window)
         if self.failure_analysis:
             failure_context = self.failure_analysis.to_prompt_text(
                 as_of_date=target_date,
                 lookback_years=self.lookback_years,
             )
+            # In amnesia mode, redact all dates so AI can't key on them
+            if self.amnesia:
+                failure_context = re.sub(
+                    r'\d{4}-\d{2}-\d{2}', '[DATE]', failure_context
+                )
             lines.append(failure_context)
             lines.append("\n---\n")
 
         # Add market context
         lines.append("CURRENT MARKET CONTEXT:")
-        lines.append(f"Date: {target_date}")
+        # Redact date in amnesia mode so AI can't key on specific dates
+        if self.amnesia:
+            lines.append("Date: [REDACTED]")
+        else:
+            lines.append(f"Date: {target_date}")
         lines.append(f"Regime: {market_context.get('regime', 'unknown').upper()}")
 
         spy_price = market_context.get("spy_price")
