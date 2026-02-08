@@ -1454,9 +1454,9 @@ Override threshold: AI must disagree with >0.70 confidence to override.
 **Important:** The calm-market hold rule suppresses most non-HOLD decisions in
 bull markets (drawdown <5%). With calm-hold enabled, the AI is almost never
 called because it's only consulted on non-HOLD decisions. The initial evaluation
-ran with calm-hold on (fewer AI calls). The amnesia evaluation temporarily used
-a `--no-calm-hold` flag to generate more non-HOLD decisions and exercise the AI.
-That flag has since been removed — calm-hold is now permanently enabled (see
+ran with calm-hold on (fewer AI calls). The amnesia evaluation temporarily
+disabled calm-hold at code level to generate more non-HOLD decisions and
+exercise the AI. Calm-hold is now permanently enabled with no opt-out (see
 Lessons Learned #9).
 
 **Results (10yr, 2015-2026):**
@@ -1499,18 +1499,18 @@ Lessons Learned #9).
    that instructs the AI to ignore training knowledge and redacts all dates
    from the prompt (so it can't key on remembered events). Results:
 
-   | Config (10yr, no-calm-hold) | Avg Return | Spread | Alpha vs Baseline |
-   |----------------------------|-----------|--------|-------------------|
+   | Config (10yr, calm-hold disabled) | Avg Return | Spread | Alpha vs Baseline |
+   |------------------------------------|-----------|--------|-------------------|
    | No-AI baseline | 255.43% | 0pp | — |
    | Amnesia haiku x3 | 239.96% | 132pp | **-15pp** |
-   | Non-amnesia haiku (prior) | ~329% | 16pp | +38pp (calm-hold) |
+   | Non-amnesia haiku (prior) | ~329% | 16pp | +38pp (with calm-hold) |
 
    Without remembered knowledge the AI averages -15pp (hurts). With memory
    it averages +38pp (helps). The ~53pp gap is the data leakage premium.
    The amnesia AI also shows 132pp run-to-run spread — pure noise.
 
 **Decision:** AI advisor disabled by default. Available via `--ai` flag for
-experimentation. `--amnesia` flag available for leakage-free testing.
+experimentation, with `--amnesia` for leakage-free testing.
 Default model changed to haiku (best 10yr results if used).
 
 ### Lessons Learned
@@ -1550,8 +1550,8 @@ Default model changed to haiku (best 10yr results if used).
 9. **Calm-market hold is the single best enhancement.** Keeping the current
    asset when drawdown <5% (bull market) avoids unnecessary switching and
    adds +36pp on 10yr (291% vs 255%) and +24pp on 5yr (240% vs 217%).
-   Now permanently enabled — the `--no-calm-hold` flag was removed after
-   the amnesia evaluation confirmed it's always beneficial.
+   Now permanently enabled with no opt-out after the amnesia evaluation
+   confirmed it's always beneficial.
 
 10. **LLM backtesting alpha is likely data leakage.** AI models trained on
    historical data "remember" outcomes rather than predict them. The AI
