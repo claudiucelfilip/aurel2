@@ -175,10 +175,9 @@ class Checker:
             requires_approval=decision.requires_approval,
         )
 
-        # 7. AI Advisor review (uses failure learnings from past mistakes)
-        # Skip AI on HOLD decisions — AI overriding holds causes excessive churn
+        # 7. AI Advisor review (provides risk commentary for all decisions)
         ai_advice: Optional[AIAdvice] = None
-        if self.ai_advisor and self.use_ai_advisor and decision.action.value != "hold":
+        if self.ai_advisor and self.use_ai_advisor:
             # Reload failure learnings if stale
             if self.ai_advisor.is_failure_data_stale(max_age_hours=24):
                 logger.warning(
@@ -291,7 +290,23 @@ class Checker:
             )
 
         if decision.action.value == "hold":
-            # No action needed
+            # No action needed, but notify
+            hold_msg = f"HOLD {current_holding or 'cash'}"
+            ai_note = ""
+            if ai_advice and ai_advice.risk_commentary:
+                ai_note = f"\n\nAI Note: {ai_advice.risk_commentary[:150]}"
+
+            self.notifier.send(
+                message=(
+                    f"{hold_msg}\n"
+                    f"Confidence: {decision.confidence:.0%}"
+                    f"{ai_note}"
+                ),
+                title=f"Aurel2: HOLD {current_holding or 'cash'}",
+                tags=["white_check_mark"],
+                priority="low",
+            )
+
             return CheckResult(
                 success=True,
                 decision=decision,
