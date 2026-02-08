@@ -189,7 +189,6 @@ class AgentOrchestrator:
         use_dynamic_weights: bool = True,
         use_position_sizing: bool = True,
         use_regime_selection: bool = True,
-        calm_market_hold: bool = True,
         calm_market_hold_threshold: float = 0.05,
     ) -> None:
         """Initialize the orchestrator.
@@ -213,7 +212,6 @@ class AgentOrchestrator:
         self.use_dynamic_weights = use_dynamic_weights
         self.use_position_sizing = use_position_sizing
         self.use_regime_selection = use_regime_selection
-        self.calm_market_hold = calm_market_hold
         self.calm_market_hold_threshold = calm_market_hold_threshold
 
         # Rolling accuracy tracking per strategy
@@ -619,8 +617,7 @@ class AgentOrchestrator:
         # Calm-market hold: don't switch assets when drawdown is low
         calm_hold_applied = False
         if (
-            self.calm_market_hold
-            and current_holding
+            current_holding
             and current_holding not in ("CASH", None)
             and action == SignalAction.BUY
             and asset_symbol != current_holding

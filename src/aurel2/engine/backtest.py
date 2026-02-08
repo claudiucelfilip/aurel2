@@ -116,14 +116,13 @@ class BacktestEngine:
         initial_capital: float = 10000.0,
         transaction_cost_pct: float = 0.001,
         use_ai: bool = False,
-        calm_market_hold: bool = True,
         ai_model: str = "haiku",
         amnesia: bool = False,
     ):
         self.dual_momentum = DualMomentumStrategy(assets=ASSET_REGISTRY)
         self.mean_reversion = MeanReversionStrategy()
         self.multi_timeframe = MultiTimeframeTrendStrategy()
-        self.orchestrator = AgentOrchestrator(calm_market_hold=calm_market_hold)
+        self.orchestrator = AgentOrchestrator()
 
         self.ai_advisor = None
         if use_ai:

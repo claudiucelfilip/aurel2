@@ -1451,12 +1451,13 @@ deterministic momentum system.
 **Methodology:** 3 consistency runs per configuration (AI is non-deterministic).
 Override threshold: AI must disagree with >0.70 confidence to override.
 
-**Important:** The calm-market hold rule (`--no-calm-hold` to disable) suppresses
-most non-HOLD decisions in bull markets (drawdown <5%). With calm-hold enabled,
-the AI is almost never called because it's only consulted on non-HOLD decisions.
-The initial evaluation ran with calm-hold on (fewer AI calls). The amnesia
-evaluation used `--no-calm-hold` to generate more non-HOLD decisions and actually
-exercise the AI advisor.
+**Important:** The calm-market hold rule suppresses most non-HOLD decisions in
+bull markets (drawdown <5%). With calm-hold enabled, the AI is almost never
+called because it's only consulted on non-HOLD decisions. The initial evaluation
+ran with calm-hold on (fewer AI calls). The amnesia evaluation temporarily used
+a `--no-calm-hold` flag to generate more non-HOLD decisions and exercise the AI.
+That flag has since been removed — calm-hold is now permanently enabled (see
+Lessons Learned #9).
 
 **Results (10yr, 2015-2026):**
 
@@ -1546,7 +1547,13 @@ Default model changed to haiku (best 10yr results if used).
    max drawdown from 25% to 34%. Momentum's forward-looking rotation
    handles drawdowns better than backward-looking price triggers.
 
-9. **LLM backtesting alpha is likely data leakage.** AI models trained on
+9. **Calm-market hold is the single best enhancement.** Keeping the current
+   asset when drawdown <5% (bull market) avoids unnecessary switching and
+   adds +36pp on 10yr (291% vs 255%) and +24pp on 5yr (240% vs 217%).
+   Now permanently enabled — the `--no-calm-hold` flag was removed after
+   the amnesia evaluation confirmed it's always beneficial.
+
+10. **LLM backtesting alpha is likely data leakage.** AI models trained on
    historical data "remember" outcomes rather than predict them. The AI
    advisor showed +38pp alpha on 10yr backtests but -23pp on recent 5yr
    data closer to training cutoff. Don't trust AI backtest alpha unless

@@ -44,7 +44,6 @@ def backtest(
     capital: float = typer.Option(10000.0, help="Initial capital"),
     frequency: str = typer.Option("monthly", help="Rebalance frequency: monthly or quarterly"),
     ai: bool = typer.Option(False, "--ai", help="Enable AI advisor (disabled by default — see ARCHITECTURE.md for findings)"),
-    no_calm_hold: bool = typer.Option(False, "--no-calm-hold", help="Disable calm-market hold rule (stay in current asset when drawdown < 5%%)"),
     ai_model: str = typer.Option("haiku", "--ai-model", help="AI model: sonnet, opus, haiku"),
     amnesia: bool = typer.Option(False, "--amnesia", help="Tell AI to ignore training data financial knowledge and redact dates"),
     config: Path = typer.Option(None, help="Config file path"),
@@ -64,7 +63,7 @@ def backtest(
     typer.echo(f"AI advisor: {'enabled' if ai else 'disabled'} (model: {ai_model})")
     if amnesia:
         typer.echo(f"AI amnesia mode: enabled (dates redacted, no financial knowledge)")
-    typer.echo(f"Calm-market hold: {'disabled' if no_calm_hold else 'enabled'}")
+    typer.echo(f"Calm-market hold: enabled")
 
     # Load settings
     settings = load_settings(config)
@@ -88,7 +87,6 @@ def backtest(
         initial_capital=capital,
         transaction_cost_pct=settings.risk.transaction_cost_pct,
         use_ai=ai,
-        calm_market_hold=not no_calm_hold,
         ai_model=ai_model,
         amnesia=amnesia,
     )
