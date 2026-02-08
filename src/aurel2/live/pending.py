@@ -59,6 +59,9 @@ class PendingDecision:
     market_regime: Optional[str] = None
     current_holding: Optional[str] = None
 
+    # AI risk commentary (always-on advisory)
+    ai_commentary: Optional[str] = None
+
     # Position sizing from regime detection (0.0 to 1.0)
     position_size_pct: float = 1.0
 
@@ -138,6 +141,7 @@ class PendingManager:
         original_price: Optional[float] = None,
         position_size_pct: float = 1.0,
         journal_decision_id: Optional[str] = None,
+        ai_commentary: Optional[str] = None,
     ) -> PendingDecision:
         """Create a new pending decision."""
         decision_id = str(uuid.uuid4())[:8]
@@ -162,6 +166,7 @@ class PendingManager:
             strategies=strategies or [],
             market_regime=market_regime,
             current_holding=current_holding,
+            ai_commentary=ai_commentary,
             position_size_pct=position_size_pct,
             journal_decision_id=journal_decision_id,
         )
@@ -204,6 +209,7 @@ class PendingManager:
                         "strategies": decision.strategies,
                         "market_regime": decision.market_regime,
                         "current_holding": decision.current_holding,
+                        "ai_commentary": decision.ai_commentary[:300] if decision.ai_commentary else None,
                     },
                     timeout=10.0,
                 )

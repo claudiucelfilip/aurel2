@@ -210,7 +210,13 @@ class Checker:
                 )
 
                 # If AI disagrees and has high confidence, use AI's recommendation
-                if not ai_advice.agrees_with_deterministic and ai_advice.confidence > 0.70:
+                # Asymmetric thresholds: lower bar for safety, higher for opportunity
+                SAFETY_ASSETS = {"AGG", "TLT", "GLD", "CASH"}
+                ai_asset = ai_advice.recommended_asset
+                override_type = "to_safety" if ai_asset in SAFETY_ASSETS else "to_opportunity"
+                OVERRIDE_THRESHOLDS = {"to_safety": 0.65, "to_opportunity": 0.85}
+                threshold = OVERRIDE_THRESHOLDS[override_type]
+                if not ai_advice.agrees_with_deterministic and ai_advice.confidence > threshold:
                     logger.info(
                         "checker_ai_override",
                         old_action=decision.action.value,
@@ -265,6 +271,7 @@ class Checker:
             ai_asset=ai_advice.recommended_asset if ai_advice else None,
             ai_reasoning=ai_advice.reasoning[:500] if ai_advice and ai_advice.reasoning else None,
             ai_confidence=ai_advice.confidence if ai_advice else 0.0,
+            ai_commentary=ai_advice.risk_commentary[:300] if ai_advice and ai_advice.risk_commentary else None,
             failure_patterns=ai_advice.failure_patterns_detected if ai_advice else [],
             market_regime=market_context.get("regime") if market_context else None,
             account_value=account_value,
@@ -580,6 +587,7 @@ class Checker:
             original_price=original_price,
             position_size_pct=decision.position_size_pct,
             journal_decision_id=journal_decision_id,
+            ai_commentary=ai_advice.risk_commentary if ai_advice else None,
         )
 
         # Post to Vercel endpoint
@@ -599,6 +607,8 @@ class Checker:
         ai_context = ""
         if ai_advice and not ai_agrees:
             ai_context = f"\n\nAI Override: {ai_advice.recommended_action.upper()} {ai_advice.recommended_asset or ''}\nAI Reasoning: {ai_advice.reasoning[:100]}..."
+        elif ai_advice and ai_advice.risk_commentary:
+            ai_context = f"\n\nAI Note: {ai_advice.risk_commentary[:100]}"
 
         self.notifier.send(
             message=(

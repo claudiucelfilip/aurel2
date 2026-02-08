@@ -40,6 +40,7 @@ class AIAdvice:
     # Original deterministic decision for comparison
     deterministic_action: str
     deterministic_asset: str | None
+    risk_commentary: str = ""
 
 
 class AIAdvisor:
@@ -489,6 +490,7 @@ class AIAdvisor:
             ai_asset = ai_decision.asset
             ai_confidence = ai_decision.confidence
             ai_reasoning = ai_decision.reasoning
+            ai_risk_commentary = ai_decision.risk_commentary
 
         except Exception as e:
             logger.error("ai_evaluation_failed", error=str(e))
@@ -530,6 +532,7 @@ class AIAdvisor:
             failure_patterns_detected=failure_patterns,
             deterministic_action=deterministic_action,
             deterministic_asset=deterministic_asset,
+            risk_commentary=ai_risk_commentary,
         )
 
 

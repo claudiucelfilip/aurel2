@@ -37,6 +37,7 @@ interface Decision {
   spy_price?: number;
   drawdown?: number;
   current_holding?: string;
+  ai_commentary?: string;
 }
 
 // Generate the approval HTML page
@@ -615,6 +616,15 @@ function generateApprovalHTML(decision: Decision): string {
         <div class="reasoning-text">${escapeHtml(decision.ai_reasoning || decision.reasoning)}</div>
       </div>
 
+      ${decision.ai_commentary ? `
+      <div class="section">
+        <div class="label">AI Risk Assessment</div>
+        <div class="reasoning-text" style="border-left: 3px solid #3b82f6; background: rgba(59, 130, 246, 0.08);">
+          ${escapeHtml(decision.ai_commentary)}
+        </div>
+      </div>
+      ` : ''}
+
       ${decision.current_holding && decision.current_holding !== decision.symbol ? `
       <div class="section">
         <div class="label">Portfolio Change</div>
@@ -757,7 +767,8 @@ export default async function handler(
           deterministic_action, deterministic_asset,
           ai_agrees, ai_action, ai_asset, ai_reasoning,
           strategies_agree, strategies,
-          market_regime, spy_price, drawdown, current_holding
+          market_regime, spy_price, drawdown, current_holding,
+          ai_commentary
         } = req.body;
 
         // Validate required fields
@@ -811,6 +822,7 @@ export default async function handler(
           spy_price,
           drawdown,
           current_holding,
+          ai_commentary,
         };
 
         // Store in KV with 7-day expiration

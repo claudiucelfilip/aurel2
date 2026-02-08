@@ -37,6 +37,7 @@ class JournalEntry:
     ai_asset: Optional[str] = None
     ai_reasoning: Optional[str] = None
     ai_confidence: float = 0.0
+    ai_commentary: Optional[str] = None
     failure_patterns: list = field(default_factory=list)
 
     # Market context
@@ -97,6 +98,7 @@ class TradeJournal:
         ai_asset: Optional[str] = None,
         ai_reasoning: Optional[str] = None,
         ai_confidence: float = 0.0,
+        ai_commentary: Optional[str] = None,
         failure_patterns: list = None,
         market_regime: Optional[str] = None,
         account_value: Optional[float] = None,
@@ -117,6 +119,7 @@ class TradeJournal:
             ai_asset=ai_asset,
             ai_reasoning=ai_reasoning,
             ai_confidence=ai_confidence,
+            ai_commentary=ai_commentary,
             failure_patterns=failure_patterns or [],
             market_regime=market_regime,
             account_value_before=account_value,

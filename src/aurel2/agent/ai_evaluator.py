@@ -44,6 +44,7 @@ class AIDecision:
     reasoning: str
     key_factors: list[str]
     risks: list[str]
+    risk_commentary: str = ""
 
     def to_dict(self) -> dict:
         """Convert to dictionary."""
@@ -54,6 +55,7 @@ class AIDecision:
             "reasoning": self.reasoning,
             "key_factors": self.key_factors,
             "risks": self.risks,
+            "risk_commentary": self.risk_commentary,
         }
 
 
@@ -481,54 +483,45 @@ class MockAIEvaluator:
         )
 
 
-EXPERT_SYSTEM_PROMPT = """You are an AI advisor that has studied the historical failures of a momentum trading system. Your job is to anticipate when the deterministic system is about to make a mistake, based on patterns from past failures.
+EXPERT_SYSTEM_PROMPT = """You are an AI advisor reviewing the output of a deterministic momentum trading system.
 
-THE MOMENTUM SYSTEM'S KNOWN WEAKNESSES (from 6 years of data):
+YOUR DEFAULT POSITION: The deterministic system is correct. Agreeing with it is the right answer in the vast majority of cases. You must PROVE the system wrong before overriding.
 
-1. **TOO SLOW TO EXIT (bad_hold failures - 13 occurrences)**
-   - Uses 12-month lookback, so it stays in losers too long
-   - WORST EXAMPLE: Feb 2020 - held SPY which lost -12.5% while TLT gained +6.4%
-   - VIX was 40.1, clearly signaling danger, but momentum said "hold"
-   - PATTERN: When VIX spikes >30 AND current holding is down, the system holds too long
+ABOUT THE SYSTEM:
+- 3 momentum strategies (dual momentum, mean reversion, multi-timeframe) vote on trades
+- An orchestrator weighs their votes and produces a decision
+- The system has a 10-year track record of ~255% total return (vs SPY ~206%)
+- It works. Your job is to confirm it, not to second-guess it.
 
-2. **TOO SLOW TO ENTER (late_entry failures - 24 occurrences)**
-   - Misses early parts of recoveries because lookback is backward-looking
-   - WORST EXAMPLE: April 2020 - was in cash while XLE returned +25%
-   - VIX was 31.6, fear was high but recovery had started
-   - PATTERN: After VIX peaks and starts falling, opportunities emerge before momentum signals
+BACKGROUND AWARENESS (known system limitations):
+The system uses a 12-month lookback, which can be slow to react in extreme conditions:
+- It may hold too long during sharp drawdowns (VIX >30, held asset falling)
+- It may enter recoveries late after major crashes
+- It tracks a limited asset universe (SPY/EFA/AGG/GLD)
+- Small momentum gaps (<5%) can lead to whipsaw trades
 
-3. **MISSES SECTOR ROTATIONS (missed_opportunity - 16 occurrences)**
-   - Only tracks SPY/EFA/AGG, misses when sectors like XLE outperform
-   - EXAMPLE: Dec 2021 - held SPY (-5.3%) when XLE was +18.8%
-   - PATTERN: When energy/commodities are spiking, momentum system doesn't capture it
+These are RARE edge cases, not reasons to routinely override.
 
-4. **WHIPSAWS IN CHOPPY MARKETS (suboptimal_asset - 11 occurrences)**
-   - Switches based on small momentum differences that reverse
-   - PATTERN: Small momentum gaps (<5%) often reverse, causing unnecessary trades
+OVERRIDE CRITERIA (all must be met):
+1. There must be OVERWHELMING evidence the system is wrong — not just "could be better"
+2. The evidence must be concrete and measurable (VIX levels, drawdown %, momentum gaps)
+3. You must articulate a specific, falsifiable reason — not vague concern
+4. When in doubt, AGREE with the system
 
-YOUR JOB: ANTICIPATE THESE FAILURES
-
-When you see conditions matching past failures, you should override:
-
-**OVERRIDE TO SAFETY WHEN:**
-- VIX >30 AND current holding already down this week → EXIT (like Feb 2020)
-- High VIX + held asset weak + bonds/gold strong → SWITCH to safety
-
-**OVERRIDE TO OPPORTUNITY WHEN:**
-- VIX falling from peak (was >35, now <25) AND system is in cash/bonds → LOOK for entry
-- Clear sector rotation signal (energy/gold surging >10% while SPY flat)
-
-**DON'T OVERRIDE WHEN:**
-- VIX is calm (<20) and stable
-- Momentum gaps are small (<5%)
-- No clear pattern match to past failures
+STRUCTURED REASONING PROCESS:
+Step 1: State the null hypothesis — "The deterministic system's decision is correct"
+Step 2: Look for evidence AGAINST the null hypothesis
+Step 3: Is the evidence overwhelming? (Not just suggestive — overwhelming)
+Step 4: If not overwhelming → AGREE with the system
+Step 5: If overwhelming → Override, stating exactly what evidence falsified the null
 
 OUTPUT FORMAT (JSON only):
 {
-    "historical_pattern_match": {
-        "similar_to_past_failure": true | false,
-        "matched_failure_type": "bad_hold | late_entry | missed_opportunity | none",
-        "similarity_reasoning": "Why this looks like a past failure (or doesn't)"
+    "null_hypothesis_test": {
+        "system_decision": "What the deterministic system decided",
+        "evidence_against": ["List of concrete evidence points against the system decision"],
+        "evidence_strength": "none | weak | moderate | overwhelming",
+        "null_rejected": true | false
     },
     "current_analysis": {
         "vix_level": "calm (<20) | elevated (20-30) | spiking (>30)",
@@ -546,8 +539,11 @@ OUTPUT FORMAT (JSON only):
         "action": "buy" | "sell" | "hold",
         "asset": "SPY" | "GLD" | "EFA" | "AGG" | "XLE" | null,
         "confidence": 0.0 to 1.0
-    }
-}"""
+    },
+    "risk_commentary": "1-2 sentence risk assessment for the human approver, regardless of agreement. What could go wrong, what to watch for, or why this is solid."
+}
+
+IMPORTANT: Always provide a brief risk commentary for the human reviewing this trade — what could go wrong, what to watch for, or why this is solid. This commentary is shown to the approver regardless of whether you agree or disagree with the system."""
 
 
 class ExpertAIEvaluator:
@@ -720,7 +716,7 @@ Respond with ONLY valid JSON matching the specified format."""
             # Extract from the actual JSON structure matching our prompt
             final_rec = result.get("final_recommendation", {})
             override_decision = result.get("override_decision", {})
-            pattern_match = result.get("historical_pattern_match", {})
+            null_test = result.get("null_hypothesis_test", {})
             current_analysis = result.get("current_analysis", {})
 
             action = final_rec.get("action", "hold").lower()
@@ -729,25 +725,18 @@ Respond with ONLY valid JSON matching the specified format."""
 
             # Build comprehensive, layman-friendly reasoning
             reasoning_parts = []
-            
+
             # Main reasoning from override decision
             if override_decision.get("reasoning"):
                 reasoning_parts.append(override_decision["reasoning"])
-            
-            # Add pattern match context if relevant
-            if pattern_match.get("similar_to_past_failure"):
-                failure_type = pattern_match.get("matched_failure_type", "unknown")
-                similarity = pattern_match.get("similarity_reasoning", "")
-                if failure_type != "none":
-                    readable_types = {
-                        "bad_hold": "holding too long during a downturn",
-                        "late_entry": "entering a recovery too late",
-                        "missed_opportunity": "missing a sector rotation opportunity",
-                        "suboptimal_asset": "switching assets unnecessarily"
-                    }
-                    readable = readable_types.get(failure_type, failure_type)
-                    reasoning_parts.append(f"This looks like a past mistake: {readable}. {similarity}")
-            
+
+            # Add null hypothesis context if rejected
+            if null_test.get("null_rejected"):
+                evidence = null_test.get("evidence_against", [])
+                strength = null_test.get("evidence_strength", "unknown")
+                if evidence:
+                    reasoning_parts.append(f"Evidence ({strength}): {'; '.join(evidence[:2])}")
+
             # Add override context
             if override_decision.get("should_override"):
                 override_type = override_decision.get("override_type", "")
@@ -758,14 +747,14 @@ Respond with ONLY valid JSON matching the specified format."""
 
             reasoning = " ".join(reasoning_parts) if reasoning_parts else "No specific concerns - following the rules-based strategy."
 
-            # Key factors from analysis  
+            # Key factors from analysis
             key_factors = []
             if current_analysis.get("vix_level"):
                 key_factors.append(f"Market volatility: {current_analysis['vix_level']}")
             if current_analysis.get("position_performance"):
                 key_factors.append(f"Position: {current_analysis['position_performance']}")
-            if pattern_match.get("matched_failure_type") and pattern_match.get("matched_failure_type") != "none":
-                key_factors.append(f"Past pattern: {pattern_match['matched_failure_type']}")
+            if null_test.get("evidence_strength") and null_test["evidence_strength"] != "none":
+                key_factors.append(f"Evidence strength: {null_test['evidence_strength']}")
             if override_decision.get("should_override"):
                 key_factors.append(f"Override: {override_decision.get('override_type', 'yes')}")
 
@@ -777,8 +766,8 @@ Respond with ONLY valid JSON matching the specified format."""
                 risks.append("Current position underperforming")
             if current_analysis.get("sector_rotation_signal"):
                 risks.append("Sector rotation in progress")
-            if not override_decision.get("should_override") and pattern_match.get("similar_to_past_failure"):
-                risks.append("Situation resembles past mistake but confidence too low to override")
+            if not null_test.get("null_rejected") and null_test.get("evidence_strength") == "moderate":
+                risks.append("Some evidence against system decision but not enough to override")
 
             decision = AIDecision(
                 action=action,
@@ -787,6 +776,7 @@ Respond with ONLY valid JSON matching the specified format."""
                 reasoning=reasoning,
                 key_factors=key_factors,
                 risks=risks,
+                risk_commentary=result.get("risk_commentary", ""),
             )
 
             logger.info(
@@ -795,7 +785,7 @@ Respond with ONLY valid JSON matching the specified format."""
                 asset=decision.asset,
                 confidence=decision.confidence,
                 override=override_decision.get("should_override", False),
-                failure_type=pattern_match.get("matched_failure_type"),
+                null_rejected=null_test.get("null_rejected", False),
             )
 
             return decision
@@ -895,13 +885,7 @@ class ClaudeCodeExpertEvaluator:
 {holding_text}
 {det_text}
 
-CRITICAL: The context above includes HISTORICAL FAILURE ANALYSIS showing past mistakes by the momentum system.
-- Study the failure patterns carefully - they show when the system went wrong before
-- If today's situation matches a past failure pattern, consider overriding
-- Remember: you only see failures from BEFORE today (no future data leakage)
-- Use these lessons to anticipate - not just react to - system failures
-
-Analyze this situation using your expert framework. Does this match any historical failure patterns? Think deeply about whether the deterministic decision is about to make a mistake similar to past failures.
+Apply the null hypothesis framework: assume the deterministic system is correct unless you find overwhelming evidence otherwise. Be specific about what evidence you found (or didn't find).
 
 Respond with ONLY valid JSON matching the specified format (no markdown code blocks, just raw JSON)."""
 
@@ -965,7 +949,7 @@ Respond with ONLY valid JSON matching the specified format (no markdown code blo
             # Extract from the actual JSON structure matching our prompt
             final_rec = parsed.get("final_recommendation", {})
             override_decision = parsed.get("override_decision", {})
-            pattern_match = parsed.get("historical_pattern_match", {})
+            null_test = parsed.get("null_hypothesis_test", {})
             current_analysis = parsed.get("current_analysis", {})
 
             action = final_rec.get("action", "hold").lower()
@@ -974,25 +958,18 @@ Respond with ONLY valid JSON matching the specified format (no markdown code blo
 
             # Build comprehensive, layman-friendly reasoning
             reasoning_parts = []
-            
+
             # Main reasoning from override decision
             if override_decision.get("reasoning"):
                 reasoning_parts.append(override_decision["reasoning"])
-            
-            # Add pattern match context if relevant
-            if pattern_match.get("similar_to_past_failure"):
-                failure_type = pattern_match.get("matched_failure_type", "unknown")
-                similarity = pattern_match.get("similarity_reasoning", "")
-                if failure_type != "none":
-                    readable_types = {
-                        "bad_hold": "holding too long during a downturn",
-                        "late_entry": "entering a recovery too late",
-                        "missed_opportunity": "missing a sector rotation opportunity",
-                        "suboptimal_asset": "switching assets unnecessarily"
-                    }
-                    readable = readable_types.get(failure_type, failure_type)
-                    reasoning_parts.append(f"This looks like a past mistake: {readable}. {similarity}")
-            
+
+            # Add null hypothesis context if rejected
+            if null_test.get("null_rejected"):
+                evidence = null_test.get("evidence_against", [])
+                strength = null_test.get("evidence_strength", "unknown")
+                if evidence:
+                    reasoning_parts.append(f"Evidence ({strength}): {'; '.join(evidence[:2])}")
+
             # Add override context
             if override_decision.get("should_override"):
                 override_type = override_decision.get("override_type", "")
@@ -1003,14 +980,14 @@ Respond with ONLY valid JSON matching the specified format (no markdown code blo
 
             reasoning = " ".join(reasoning_parts) if reasoning_parts else "No specific concerns - following the rules-based strategy."
 
-            # Key factors from analysis  
+            # Key factors from analysis
             key_factors = []
             if current_analysis.get("vix_level"):
                 key_factors.append(f"Market volatility: {current_analysis['vix_level']}")
             if current_analysis.get("position_performance"):
                 key_factors.append(f"Position: {current_analysis['position_performance']}")
-            if pattern_match.get("matched_failure_type") and pattern_match.get("matched_failure_type") != "none":
-                key_factors.append(f"Past pattern: {pattern_match['matched_failure_type']}")
+            if null_test.get("evidence_strength") and null_test["evidence_strength"] != "none":
+                key_factors.append(f"Evidence strength: {null_test['evidence_strength']}")
             if override_decision.get("should_override"):
                 key_factors.append(f"Override: {override_decision.get('override_type', 'yes')}")
 
@@ -1022,8 +999,8 @@ Respond with ONLY valid JSON matching the specified format (no markdown code blo
                 risks.append("Current position underperforming")
             if current_analysis.get("sector_rotation_signal"):
                 risks.append("Sector rotation in progress")
-            if not override_decision.get("should_override") and pattern_match.get("similar_to_past_failure"):
-                risks.append("Situation resembles past mistake but confidence too low to override")
+            if not null_test.get("null_rejected") and null_test.get("evidence_strength") == "moderate":
+                risks.append("Some evidence against system decision but not enough to override")
 
             decision = AIDecision(
                 action=action,
@@ -1032,6 +1009,7 @@ Respond with ONLY valid JSON matching the specified format (no markdown code blo
                 reasoning=reasoning,
                 key_factors=key_factors,
                 risks=risks,
+                risk_commentary=parsed.get("risk_commentary", ""),
             )
 
             logger.info(
@@ -1040,7 +1018,7 @@ Respond with ONLY valid JSON matching the specified format (no markdown code blo
                 asset=decision.asset,
                 confidence=decision.confidence,
                 override=override_decision.get("should_override", False),
-                failure_type=pattern_match.get("matched_failure_type"),
+                null_rejected=null_test.get("null_rejected", False),
             )
 
             return decision
