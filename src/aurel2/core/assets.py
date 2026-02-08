@@ -108,6 +108,51 @@ ASSET_REGISTRY: dict[AssetClass, Asset] = {
         category=AssetCategory.FIXED_INCOME,
         ucits_symbol=None,  # IDTL.L is partial equivalent
     ),
+    AssetClass.BONDS_SHORT_TERM: Asset(
+        symbol="SHY",
+        name="iShares 1-3 Year Treasury Bond ETF",
+        asset_class=AssetClass.BONDS_SHORT_TERM,
+        isin="US4642874329",
+        yahoo_symbol="SHY",
+        category=AssetCategory.FIXED_INCOME,
+        ucits_symbol=None,
+    ),
+    AssetClass.BONDS_INTERMEDIATE: Asset(
+        symbol="IEF",
+        name="iShares 7-10 Year Treasury Bond ETF",
+        asset_class=AssetClass.BONDS_INTERMEDIATE,
+        isin="US4642874402",
+        yahoo_symbol="IEF",
+        category=AssetCategory.FIXED_INCOME,
+        ucits_symbol=None,
+    ),
+    AssetClass.TIPS: Asset(
+        symbol="TIP",
+        name="iShares TIPS Bond ETF",
+        asset_class=AssetClass.TIPS,
+        isin="US4642871846",
+        yahoo_symbol="TIP",
+        category=AssetCategory.FIXED_INCOME,
+        ucits_symbol=None,
+    ),
+    AssetClass.REITS: Asset(
+        symbol="VNQ",
+        name="Vanguard Real Estate ETF",
+        asset_class=AssetClass.REITS,
+        isin="US9229085538",
+        yahoo_symbol="VNQ",
+        category=AssetCategory.ALTERNATIVE,
+        ucits_symbol=None,
+    ),
+    AssetClass.SMALL_CAP_VALUE: Asset(
+        symbol="IJS",
+        name="iShares S&P Small-Cap 600 Value ETF",
+        asset_class=AssetClass.SMALL_CAP_VALUE,
+        isin="US4642887149",
+        yahoo_symbol="IJS",
+        category=AssetCategory.EQUITY,
+        ucits_symbol=None,
+    ),
     # =========================================================================
     # ALTERNATIVES
     # =========================================================================

@@ -106,9 +106,16 @@ class TestAssetClass:
             # Fixed income
             "BONDS_AGGREGATE",
             "BONDS_TREASURY",
+            "BONDS_SHORT_TERM",
+            "BONDS_INTERMEDIATE",
+            "TIPS",
+            # Real assets
+            "REITS",
             # Alternatives
             "GOLD",
             "COMMODITIES",
+            # Size/style
+            "SMALL_CAP_VALUE",
             # Cash
             "CASH",
         }

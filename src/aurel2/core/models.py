@@ -28,9 +28,16 @@ class AssetClass(str, Enum):
     # Fixed Income
     BONDS_AGGREGATE = "bonds_aggregate"
     BONDS_TREASURY = "bonds_treasury"
+    BONDS_SHORT_TERM = "bonds_short_term"
+    BONDS_INTERMEDIATE = "bonds_intermediate"
+    TIPS = "tips"
+    # Real Assets
+    REITS = "reits"
     # Alternatives
     GOLD = "gold"
     COMMODITIES = "commodities"
+    # Size/Style
+    SMALL_CAP_VALUE = "small_cap_value"
     # Cash
     CASH = "cash"
     # Backward compatibility aliases

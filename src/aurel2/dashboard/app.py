@@ -565,6 +565,244 @@ async def api_chart(period: str = "1m"):
     return get_comparison_chart_data(positions, account, period=period) if account else {}
 
 
+@app.get("/api/backtest")
+async def api_backtest(
+    start: str = "2016-01-01",
+    end: str | None = None,
+    capital: float = 10000,
+    variant: str = "full",
+):
+    """Run enhanced momentum backtest.
+
+    Query params:
+        start: Start date (YYYY-MM-DD)
+        end: End date (YYYY-MM-DD, defaults to today)
+        capital: Initial capital
+        variant: Strategy variant — 'classic', 'expanded', 'multi_lookback',
+                 'canary', 'sma', 'vol_weight', 'full'
+    """
+    from aurel2.strategies.enhanced_momentum import EnhancedMomentumStrategy
+    from aurel2.core.models import AssetClass
+
+    import numpy as np
+
+    start_date = date.fromisoformat(start)
+    end_date = date.fromisoformat(end) if end else date.today()
+
+    # Map variant to feature toggles
+    variant_configs = {
+        "classic": dict(
+            use_multi_lookback=False, use_canary=False, use_sma_filter=False,
+            use_vol_weighting=False, use_partial_rotation=False,
+            offensive_assets=[AssetClass.US_STOCKS, AssetClass.INTL_DEVELOPED],
+            defensive_assets=[AssetClass.BONDS_AGGREGATE],
+            top_n_offensive=1, top_n_defensive=1,
+        ),
+        "expanded": dict(
+            use_multi_lookback=False, use_canary=False, use_sma_filter=False,
+            use_vol_weighting=False, use_partial_rotation=False,
+            top_n_offensive=1, top_n_defensive=1,
+        ),
+        "multi_lookback": dict(
+            use_multi_lookback=True, use_canary=False, use_sma_filter=False,
+            use_vol_weighting=False, use_partial_rotation=False,
+            top_n_offensive=1, top_n_defensive=1,
+        ),
+        "canary": dict(
+            use_multi_lookback=True, use_canary=True, use_sma_filter=False,
+            use_vol_weighting=False, use_partial_rotation=False,
+            top_n_offensive=1, top_n_defensive=1,
+        ),
+        "sma": dict(
+            use_multi_lookback=True, use_canary=True, use_sma_filter=True,
+            use_vol_weighting=False, use_partial_rotation=False,
+            top_n_offensive=1, top_n_defensive=1,
+        ),
+        "vol_weight": dict(
+            use_multi_lookback=True, use_canary=True, use_sma_filter=True,
+            use_vol_weighting=True, use_partial_rotation=False,
+            top_n_offensive=2, top_n_defensive=2,
+        ),
+        "full": dict(
+            use_multi_lookback=True, use_canary=True, use_sma_filter=True,
+            use_vol_weighting=True, use_partial_rotation=True,
+            top_n_offensive=2, top_n_defensive=2,
+        ),
+    }
+
+    config = variant_configs.get(variant, variant_configs["full"])
+    strategy = EnhancedMomentumStrategy(**config)
+
+    # Fetch prices in executor to avoid blocking
+    def _run_backtest():
+        from datetime import timedelta as td
+        from aurel2.data.providers.yahoo import YahooFinanceProvider
+        from aurel2.strategies.enhanced_momentum import ASSET_SYMBOL_MAP, CANARY_SYMBOLS
+
+        provider = YahooFinanceProvider()
+        symbols = set(ASSET_SYMBOL_MAP.values()) | set(CANARY_SYMBOLS) | {"SPY", "BND"}
+        extended_start = start_date - td(days=600)
+
+        all_dfs = []
+        for symbol in sorted(symbols):
+            try:
+                df = provider.get_prices(symbol, extended_start, end_date + td(days=5))
+                if not df.empty:
+                    all_dfs.append(df)
+            except Exception:
+                pass
+
+        if not all_dfs:
+            return {"error": "No price data available"}
+
+        import pandas as _pd
+        prices = _pd.concat(all_dfs, ignore_index=True)
+
+        # Run backtest
+        rebalance_dates = strategy.get_rebalance_dates(start_date, end_date)
+        cash = capital
+        holding = None
+        holding_symbol = None
+        shares = 0.0
+        trades_list = []
+        portfolio_data = []
+        signals_list = []
+
+        for rebal_date in rebalance_dates:
+            signal = strategy.generate_signal(prices, rebal_date, holding)
+            target_ac = signal.asset_class
+            target_symbol = ASSET_SYMBOL_MAP.get(target_ac) if target_ac else None
+
+            if signal.action.value == "buy" and target_ac and target_symbol:
+                if holding and holding_symbol:
+                    sp = _get_bt_price(prices, holding_symbol, rebal_date)
+                    if sp and shares > 0:
+                        cash += shares * sp * 0.999
+                        shares = 0.0
+
+                bp = _get_bt_price(prices, target_symbol, rebal_date)
+                if bp and bp > 0:
+                    invest = cash * 0.999
+                    shares = invest / bp
+                    cash = cash - invest
+                    holding = target_ac
+                    holding_symbol = target_symbol
+                    trades_list.append({
+                        "date": rebal_date.isoformat(),
+                        "action": "BUY",
+                        "symbol": target_symbol,
+                        "price": round(bp, 2),
+                        "value": round(invest, 0),
+                    })
+
+            elif signal.action.value == "sell":
+                if holding and holding_symbol:
+                    sp = _get_bt_price(prices, holding_symbol, rebal_date)
+                    if sp and shares > 0:
+                        val = shares * sp * 0.999
+                        trades_list.append({
+                            "date": rebal_date.isoformat(),
+                            "action": "SELL",
+                            "symbol": holding_symbol,
+                            "price": round(sp, 2),
+                            "value": round(val, 0),
+                        })
+                        cash += val
+                        shares = 0.0
+                holding = None
+                holding_symbol = None
+
+            # Portfolio value
+            if holding_symbol and shares > 0:
+                p = _get_bt_price(prices, holding_symbol, rebal_date)
+                total = cash + (shares * p if p else 0)
+            else:
+                total = cash
+
+            portfolio_data.append({"date": rebal_date.isoformat(), "value": round(total, 0)})
+            signals_list.append({
+                "date": rebal_date.isoformat(),
+                "reason": signal.reasoning[:200],
+            })
+
+        # Benchmark
+        benchmark_data = []
+        spy_prices_df = prices[prices["symbol"] == "SPY"].copy()
+        if not spy_prices_df.empty:
+            spy_prices_df["date"] = _pd.to_datetime(spy_prices_df["date"])
+            spy_prices_df = spy_prices_df.sort_values("date")
+            start_row = spy_prices_df[spy_prices_df["date"] >= _pd.Timestamp(start_date)]
+            if not start_row.empty:
+                spy_start_p = float(start_row.iloc[0]["close"])
+                for rebal_date in rebalance_dates:
+                    row = spy_prices_df[spy_prices_df["date"] <= _pd.Timestamp(rebal_date)]
+                    if not row.empty:
+                        spy_p = float(row.iloc[-1]["close"])
+                        benchmark_data.append({
+                            "date": rebal_date.isoformat(),
+                            "value": round(capital * (spy_p / spy_start_p), 0),
+                        })
+
+        final = portfolio_data[-1]["value"] if portfolio_data else capital
+        years = (end_date - start_date).days / 365.25
+        total_return = (final / capital - 1) * 100
+        cagr = ((final / capital) ** (1 / years) - 1) * 100 if years > 0 else 0
+
+        # Max drawdown
+        vals = [p["value"] for p in portfolio_data]
+        peak = vals[0] if vals else capital
+        max_dd = 0.0
+        for v in vals:
+            if v > peak:
+                peak = v
+            dd = (peak - v) / peak if peak > 0 else 0
+            max_dd = max(max_dd, dd)
+
+        # Sharpe
+        if len(vals) > 1:
+            rets = _pd.Series(vals).pct_change().dropna()
+            sharpe = float((rets.mean() * 12) / (rets.std() * np.sqrt(12))) if rets.std() > 0 else 0
+        else:
+            sharpe = 0
+
+        # Benchmark return
+        bench_final = benchmark_data[-1]["value"] if benchmark_data else capital
+        bench_return = (bench_final / capital - 1) * 100
+        alpha = total_return - bench_return
+
+        return {
+            "metrics": {
+                "total_return": round(total_return, 1),
+                "cagr": round(cagr, 1),
+                "max_drawdown": round(max_dd * 100, 1),
+                "sharpe_ratio": round(sharpe, 2),
+                "num_trades": len(trades_list),
+                "benchmark_return": round(bench_return, 1),
+                "alpha": round(alpha, 1),
+            },
+            "portfolio": portfolio_data,
+            "benchmark": benchmark_data,
+            "trades": trades_list,
+            "signals": signals_list,
+            "final_value": round(final, 0),
+            "variant": variant,
+        }
+
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(executor, _run_backtest)
+
+
+def _get_bt_price(prices, symbol: str, as_of) -> float | None:
+    """Get price for backtest — simple helper."""
+    import pandas as _pd
+    df = prices[prices["symbol"] == symbol].copy()
+    if df.empty:
+        return None
+    df["date"] = _pd.to_datetime(df["date"])
+    rows = df[df["date"] <= _pd.Timestamp(as_of)].sort_values("date")
+    return float(rows.iloc[-1]["close"]) if not rows.empty else None
+
+
 @app.get("/api/status")
 async def api_status():
     """API endpoint for daemon status."""

@@ -28,8 +28,13 @@ ASSET_SYMBOL_MAP = {
     AssetClass.HEALTHCARE_SECTOR: "XLV",
     AssetClass.BONDS_AGGREGATE: "AGG",
     AssetClass.BONDS_TREASURY: "TLT",
+    AssetClass.BONDS_SHORT_TERM: "SHY",
+    AssetClass.BONDS_INTERMEDIATE: "IEF",
+    AssetClass.TIPS: "TIP",
+    AssetClass.REITS: "VNQ",
     AssetClass.GOLD: "GLD",
     AssetClass.COMMODITIES: "DBC",
+    AssetClass.SMALL_CAP_VALUE: "IJS",
 }
 
 

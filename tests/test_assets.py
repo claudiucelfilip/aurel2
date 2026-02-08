@@ -37,9 +37,9 @@ class TestAssetRegistry:
         assert AssetClass.CASH in ASSET_REGISTRY
 
     def test_registry_asset_count(self):
-        """Registry should have ~12 unique assets (excluding aliases)."""
-        # 3 core equity + 4 sectors + 2 fixed income + 2 alternatives + 1 cash = 12
-        assert len(ASSET_REGISTRY) == 12
+        """Registry should have all assets (excluding aliases)."""
+        # 3 core equity + 1 small-cap value + 4 sectors + 5 fixed income + 1 REIT + 2 alternatives + 1 cash = 17
+        assert len(ASSET_REGISTRY) == 17
 
     def test_assets_have_correct_asset_class(self):
         """Each asset should have matching asset_class."""
@@ -102,7 +102,7 @@ class TestGetAssetsByCategory:
     def test_get_assets_by_category_fixed_income(self):
         """get_assets_by_category filters correctly for FIXED_INCOME."""
         fixed_income = get_assets_by_category(AssetCategory.FIXED_INCOME)
-        assert len(fixed_income) == 2  # AGG, TLT
+        assert len(fixed_income) == 5  # AGG, TLT, SHY, IEF, TIP
 
         for asset in fixed_income:
             assert asset.category == AssetCategory.FIXED_INCOME
@@ -110,7 +110,7 @@ class TestGetAssetsByCategory:
     def test_get_assets_by_category_alternative(self):
         """get_assets_by_category filters correctly for ALTERNATIVE."""
         alternatives = get_assets_by_category(AssetCategory.ALTERNATIVE)
-        assert len(alternatives) == 2  # GLD, DBC
+        assert len(alternatives) == 3  # GLD, DBC, VNQ
 
         for asset in alternatives:
             assert asset.category == AssetCategory.ALTERNATIVE
