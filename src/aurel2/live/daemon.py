@@ -222,6 +222,14 @@ class LiveDaemon:
 
     def _should_run_check(self, now: datetime) -> bool:
         """Determine if we should run the daily check."""
+        # Skip weekends (Saturday=5, Sunday=6) - US markets are closed
+        if now.weekday() >= 5:
+            return False
+
+        # Skip US market holidays
+        if self._is_market_holiday(now.date()):
+            return False
+
         # If we've already checked today, skip
         if self._last_check:
             if self._last_check.date() == now.date():
@@ -236,6 +244,100 @@ class LiveDaemon:
         )
 
         return now >= scheduled
+
+    @staticmethod
+    def _is_market_holiday(date) -> bool:
+        """Check if a date is a US market holiday (NYSE/NASDAQ closed).
+
+        Covers fixed-date and rule-based holidays. Updated annually.
+        """
+        from datetime import date as date_cls
+
+        year = date.year
+        month = date.month
+        day = date.day
+
+        # New Year's Day - Jan 1 (observed Fri if Sat, Mon if Sun)
+        nyd = date_cls(year, 1, 1)
+        if nyd.weekday() == 5:
+            nyd = date_cls(year - 1, 12, 31)
+        elif nyd.weekday() == 6:
+            nyd = date_cls(year, 1, 2)
+        if date == nyd:
+            return True
+
+        # MLK Day - 3rd Monday of January
+        if month == 1 and date.weekday() == 0 and 15 <= day <= 21:
+            return True
+
+        # Presidents' Day - 3rd Monday of February
+        if month == 2 and date.weekday() == 0 and 15 <= day <= 21:
+            return True
+
+        # Good Friday - 2 days before Easter Sunday
+        easter = LiveDaemon._easter_date(year)
+        good_friday = easter - timedelta(days=2)
+        if date == good_friday:
+            return True
+
+        # Memorial Day - Last Monday of May
+        if month == 5 and date.weekday() == 0 and day >= 25:
+            return True
+
+        # Juneteenth - June 19 (observed Fri if Sat, Mon if Sun)
+        juneteenth = date_cls(year, 6, 19)
+        if juneteenth.weekday() == 5:
+            juneteenth = date_cls(year, 6, 18)
+        elif juneteenth.weekday() == 6:
+            juneteenth = date_cls(year, 6, 20)
+        if date == juneteenth:
+            return True
+
+        # Independence Day - July 4 (observed Fri if Sat, Mon if Sun)
+        july4 = date_cls(year, 7, 4)
+        if july4.weekday() == 5:
+            july4 = date_cls(year, 7, 3)
+        elif july4.weekday() == 6:
+            july4 = date_cls(year, 7, 5)
+        if date == july4:
+            return True
+
+        # Labor Day - 1st Monday of September
+        if month == 9 and date.weekday() == 0 and day <= 7:
+            return True
+
+        # Thanksgiving - 4th Thursday of November
+        if month == 11 and date.weekday() == 3 and 22 <= day <= 28:
+            return True
+
+        # Christmas - Dec 25 (observed Fri if Sat, Mon if Sun)
+        xmas = date_cls(year, 12, 25)
+        if xmas.weekday() == 5:
+            xmas = date_cls(year, 12, 24)
+        elif xmas.weekday() == 6:
+            xmas = date_cls(year, 12, 26)
+        if date == xmas:
+            return True
+
+        return False
+
+    @staticmethod
+    def _easter_date(year: int):
+        """Compute Easter Sunday using the Anonymous Gregorian algorithm."""
+        from datetime import date as date_cls
+
+        a = year % 19
+        b, c = divmod(year, 100)
+        d, e = divmod(b, 4)
+        f = (b + 8) // 25
+        g = (b - f + 1) // 3
+        h = (19 * a + b - d - g + 15) % 30
+        i, k = divmod(c, 4)
+        l = (32 + 2 * e + 2 * i - h - k) % 7
+        m = (a + 11 * h + 22 * l) // 451
+        month = (h + l - 7 * m + 114) // 31
+        day = ((h + l - 7 * m + 114) % 31) + 1
+        return date_cls(year, month, day)
 
     async def _poll_pending(self) -> None:
         """Poll for pending decision status changes and timeouts."""

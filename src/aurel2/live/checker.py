@@ -640,8 +640,8 @@ class Checker:
             priority=priority,
             click_url=pending.approval_url,
             actions=[
-                f"view, ✅ Approve, {pending.approval_url}?action=approve",
-                f"view, ❌ Reject, {pending.approval_url}?action=reject",
+                f"view, Approve, {pending.approval_url}?action=approve",
+                f"view, Reject, {pending.approval_url}?action=reject",
             ],
         )
 
