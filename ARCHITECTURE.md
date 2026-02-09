@@ -1631,3 +1631,96 @@ Every metric improved.
    advisor showed +38pp alpha on 10yr backtests but -23pp on recent 5yr
    data closer to training cutoff. Don't trust AI backtest alpha unless
    validated on truly out-of-sample data.
+
+### Experiment 11: Asymmetric Switch Thresholds — Equity Bias (Under Review)
+
+**Change:** Different switch thresholds based on asset category direction:
+- Leaving equity for non-equity: 15% threshold (harder to leave)
+- Returning to equity from non-equity: 5% threshold (easier to return)
+- Same-category switches: 10% threshold (default)
+
+**Rationale:** The system has a 6-year negative alpha period (2016-2022) during
+sustained equity bull markets. The symmetric 10% threshold treats leaving
+equities the same as entering them, but the cost of missing an equity bull
+market is much higher than the cost of being slightly late to rotate out.
+
+**Results:**
+
+| Period | Return | Alpha | CAGR | Max DD | Sharpe | Trades |
+|--------|--------|-------|------|--------|--------|--------|
+| 10yr (baseline) | 500.70% | +164.09% | 19.65% | 17.38% | 0.99 | 10 |
+| 10yr (asym) | 636.60% | +299.98% | 22.12% | 17.38% | 1.05 | 7 |
+| 5yr (baseline) | 252.76% | +163.10% | 28.70% | 17.07% | 1.17 | 4 |
+| 5yr (asym) | 252.76% | +163.10% | 28.70% | 17.07% | 1.17 | 4 |
+
+**Analysis:** +136pp alpha on 10Y with same max drawdown and fewer trades (7 vs
+10). The higher exit threshold kept the system in equities during 2016-2022
+bull, avoiding unnecessary rotations to bonds/gold. The 5Y results are
+identical — the asymmetric thresholds only matter during category transitions,
+which didn't occur in the recent 5Y period.
+
+**Verdict:** Under review for production adoption. Best single-experiment result
+so far.
+
+### Experiment 12: Canary Gate — SPY > 200-SMA Blocks Equity Exit (No Effect)
+
+**Change:** Before rotating from equity to non-equity, require SPY to be below
+its 200-day SMA. If SPY is above 200-SMA, block the rotation and HOLD.
+
+**Results:** Identical to baseline (no effect). The DM strategy + calm-hold
+already prevents equity exits during uptrends. The canary gate never triggered
+because the existing system already acts as its own trend filter.
+
+**Verdict:** Redundant. Confirms lesson #5 — the momentum system IS the risk
+manager.
+
+### Experiment 13: Top-3 Diversification — Equal-Weight (Rejected)
+
+**Change:** Hold top 3 momentum assets equally weighted instead of
+winner-take-all. Monthly rebalance. Absolute momentum filter (only hold assets
+beating cash).
+
+**Results:**
+
+| Period | Return | Alpha | CAGR | Max DD | Sharpe | Trades |
+|--------|--------|-------|------|--------|--------|--------|
+| 10yr | 199.41% | -137.20% | 11.60% | 15.15% | 0.91 | 99 |
+| 5yr | 140.13% | +50.47% | 19.16% | 12.93% | 1.31 | 48 |
+
+**Verdict:** Rejected. Lower drawdown (15% vs 17%) but dramatically worse
+returns (-301% vs baseline). Diversification dilutes the momentum signal that
+makes winner-take-all work. 99 trades in 10Y vs 10 = excessive churn.
+
+### Experiment 14: Composite Momentum — 1/3/6/12 Month Blend (Rejected)
+
+**Change:** Replace pure 12-month momentum with equal-weight average of 1, 3,
+6, 12-month returns. Pilot entry disabled (incompatible with blended scores).
+
+**Results:**
+
+| Period | Return | Alpha | CAGR | Max DD | Sharpe | Trades |
+|--------|--------|-------|------|--------|--------|--------|
+| 10yr | 547.53% | +210.91% | 20.55% | 17.07% | 1.02 | 9 |
+| 5yr | 198.63% | +108.97% | 24.48% | 17.07% | 1.10 | 4 |
+
+**Verdict:** Rejected. Modestly improves 10Y alpha (+211% vs +164%) but hurts
+5Y performance (+109% vs +163%). The shorter timeframes (1m, 3m) add noise.
+Not worth the complexity and loss of pilot entry. Experiment A achieves a
+bigger improvement with a simpler mechanism.
+
+### Lessons Learned (continued)
+
+11. **Asymmetric thresholds work because equity bull markets are the norm.**
+    Making it harder to leave equities (15% vs 10%) aligns the strategy with
+    the long-term equity premium. The cost of whipsawing out of equities during
+    a bull far exceeds the cost of being slightly late to rotate in a bear.
+    (Experiment 11)
+
+12. **Diversification destroys concentrated momentum.** Winner-take-all is not
+    a bug — it's the mechanism. Spreading across top-3 dilutes the signal and
+    adds 10x the trades. (Experiment 13)
+
+13. **Blended momentum timeframes add noise.** Pure 12-month momentum is
+    robust precisely because it filters short-term noise. Adding 1m and 3m
+    returns reintroduces the noise the 12-month window was designed to
+    avoid. (Experiment 14)
