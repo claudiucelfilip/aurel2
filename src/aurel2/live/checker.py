@@ -92,8 +92,13 @@ class Checker:
         # Initialize trade journal for audit trail
         self.journal = TradeJournal()
 
-    async def run(self) -> CheckResult:
-        """Run a single check cycle."""
+    async def run(self, previous_regime: str | None = None) -> CheckResult:
+        """Run a single check cycle.
+
+        Args:
+            previous_regime: The regime value from the last check cycle,
+                used to detect regime transitions and send notifications.
+        """
         logger.info("checker_run_start")
 
         # Check circuit breaker before execution
@@ -174,6 +179,31 @@ class Checker:
             confidence=decision.confidence,
             requires_approval=decision.requires_approval,
         )
+
+        # 6b. Detect regime change and notify
+        current_regime = decision.regime.value if decision.regime else None
+        if (
+            previous_regime is not None
+            and current_regime is not None
+            and current_regime != previous_regime
+        ):
+            logger.info(
+                "regime_change_detected",
+                old_regime=previous_regime,
+                new_regime=current_regime,
+            )
+            explanation = _explain_regime_change(
+                previous_regime, current_regime, market_context
+            )
+            # Determine if conditions are improving or deteriorating
+            REGIME_RANK = {"bear": 0, "volatile_bear": 1, "sideways": 2, "volatile_bull": 3, "bull": 4}
+            improving = REGIME_RANK.get(current_regime, 2) > REGIME_RANK.get(previous_regime, 2)
+            self.notifier.send(
+                message=explanation,
+                title=f"Regime Change: {previous_regime.upper()} → {current_regime.upper()}",
+                tags=["chart_with_upwards_trend" if improving else "chart_with_downwards_trend"],
+                priority="default",
+            )
 
         # 7. AI Advisor review (provides risk commentary for all decisions)
         ai_advice: Optional[AIAdvice] = None
@@ -661,3 +691,111 @@ class Checker:
             current_holding=current_holding,
             account_value=account_value,
         )
+
+
+def _explain_regime_change(old: str, new: str, market_context: dict) -> str:
+    """Build a layman explanation for a market regime transition.
+
+    Uses concrete numbers from market_context (SPY price, drawdown, MA-200)
+    to make the notification immediately useful.
+    """
+    spy_price = market_context.get("spy_price")
+    drawdown = market_context.get("drawdown", 0)
+    ma_200 = market_context.get("ma_200")
+
+    price_note = f" SPY is at ${spy_price:,.0f}." if spy_price else ""
+    ma_note = ""
+    if spy_price and ma_200:
+        pct_vs_ma = ((spy_price / ma_200) - 1) * 100
+        direction = "above" if pct_vs_ma > 0 else "below"
+        ma_note = f" Price is {abs(pct_vs_ma):.1f}% {direction} the 200-day moving average."
+
+    transition = (old, new)
+
+    explanations = {
+        # Deteriorating
+        ("bull", "sideways"): (
+            f"Markets are getting choppy.{price_note} SPY has pulled back"
+            f" {drawdown:.1%} from its 52-week high.{ma_note}"
+            f" The system will be more responsive to momentum shifts."
+        ),
+        ("bull", "bear"): (
+            f"Significant downturn detected.{price_note} SPY is down"
+            f" {drawdown:.1%} from its peak.{ma_note}"
+            f" The system is actively looking to rotate into safer assets like bonds or gold."
+        ),
+        ("bull", "volatile_bull"): (
+            f"Volatility is picking up in a still-rising market.{price_note}"
+            f"{ma_note} The system will tighten its momentum filters."
+        ),
+        ("bull", "volatile_bear"): (
+            f"Sharp sell-off detected.{price_note} SPY is down {drawdown:.1%} from its peak.{ma_note}"
+            f" The system is looking to move to safety quickly."
+        ),
+        ("sideways", "bear"): (
+            f"The choppy market has turned into a proper downturn.{price_note}"
+            f" SPY is now down {drawdown:.1%} from its peak.{ma_note}"
+            f" Defensive positioning is the priority."
+        ),
+        ("sideways", "bull"): (
+            f"Markets are breaking out of the choppy range.{price_note}"
+            f"{ma_note} The system will hold positions more patiently."
+        ),
+        # Recovering
+        ("bear", "sideways"): (
+            f"The downturn may be stabilizing.{price_note} Drawdown has narrowed"
+            f" to {drawdown:.1%}.{ma_note} The system is cautiously watching for a recovery."
+        ),
+        ("bear", "bull"): (
+            f"Market recovery underway.{price_note} SPY is near its highs again.{ma_note}"
+            f" The system will hold current positions more patiently."
+        ),
+        ("bear", "volatile_bull"): (
+            f"Strong bounce from the lows.{price_note}{ma_note}"
+            f" The system is cautiously re-entering risk assets."
+        ),
+        ("volatile_bear", "bear"): (
+            f"Volatility is subsiding but markets remain weak.{price_note}"
+            f" SPY is down {drawdown:.1%} from its peak.{ma_note}"
+        ),
+        ("volatile_bear", "sideways"): (
+            f"Selling pressure is easing.{price_note} Drawdown has narrowed"
+            f" to {drawdown:.1%}.{ma_note} The system is watching for trend confirmation."
+        ),
+        ("volatile_bear", "bull"): (
+            f"Sharp recovery from volatile sell-off.{price_note}{ma_note}"
+            f" The system will hold positions more patiently."
+        ),
+        ("volatile_bull", "bull"): (
+            f"Volatility is calming down while the uptrend continues.{price_note}{ma_note}"
+            f" Steady conditions ahead."
+        ),
+        ("volatile_bull", "sideways"): (
+            f"The volatile rally has stalled.{price_note}"
+            f" SPY has pulled back {drawdown:.1%} from its high.{ma_note}"
+        ),
+        ("volatile_bull", "bear"): (
+            f"The volatile rally has failed.{price_note}"
+            f" SPY is now down {drawdown:.1%} from its peak.{ma_note}"
+            f" The system is rotating to defensive assets."
+        ),
+        ("sideways", "volatile_bull"): (
+            f"Markets are breaking out with increased volatility.{price_note}{ma_note}"
+            f" The system is cautiously adding risk."
+        ),
+        ("sideways", "volatile_bear"): (
+            f"The choppy market is turning ugly.{price_note}"
+            f" SPY is down {drawdown:.1%} from its peak.{ma_note}"
+            f" The system is moving towards safety."
+        ),
+    }
+
+    explanation = explanations.get(transition)
+    if explanation:
+        return explanation
+
+    # Fallback for any unmapped transition
+    return (
+        f"Market regime changed from {old.replace('_', ' ')} to {new.replace('_', ' ')}."
+        f"{price_note}{ma_note}"
+    )

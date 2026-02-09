@@ -80,6 +80,18 @@ class LiveDaemon:
         self._error_count = 0
         self._last_decision_signals: Optional[dict] = None
         self._heartbeat_task: Optional[asyncio.Task] = None
+        self._last_regime: Optional[str] = self._load_last_regime()
+
+    @staticmethod
+    def _load_last_regime() -> Optional[str]:
+        """Load the last known regime from the heartbeat file."""
+        try:
+            if HEARTBEAT_FILE.exists():
+                data = json.loads(HEARTBEAT_FILE.read_text())
+                return data.get("last_regime")
+        except Exception:
+            pass
+        return None
 
     def _write_heartbeat(self) -> None:
         """Write heartbeat file with current daemon status."""
@@ -95,6 +107,7 @@ class LiveDaemon:
                 "paper": self.paper,
                 "dry_run": self.dry_run,
                 "error_count": self._error_count,
+                "last_regime": self._last_regime,
             }
             HEARTBEAT_FILE.write_text(json.dumps(heartbeat, indent=2))
         except Exception as e:
@@ -194,8 +207,12 @@ class LiveDaemon:
                         except Exception as e:
                             logger.debug("accuracy_update_skipped", error=str(e))
 
-                    result = await self.checker.run()
+                    result = await self.checker.run(previous_regime=self._last_regime)
                     self._last_check = now
+
+                    # Update regime tracking
+                    if result.decision and result.decision.regime:
+                        self._last_regime = result.decision.regime.value
 
                     # Store signals for accuracy tracking next cycle
                     if result.decision:
