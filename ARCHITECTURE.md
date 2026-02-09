@@ -405,9 +405,17 @@ orchestrator uses **DM-primary + calm-hold** logic — not blended voting:
    - **Negative momentum escape hatch**: If the held asset has negative 12-month
      momentum, the switch goes through even in calm markets. Prevents getting
      trapped in a losing position during a bull market (e.g. VNQ 2016-2018).
-2. **Dual momentum primary**: Uses the dual momentum signal directly for trade
+2. **Sideways-hold check**: If drawdown is 5-15% (choppy market), holding non-cash,
+   and DM wants to switch — only allow the switch if the target's momentum advantage
+   over the current holding exceeds 20%. Prevents churn from small momentum
+   differences in range-bound markets. (`--no-sideways-hold` to disable)
+3. **Dual momentum primary**: Uses the dual momentum signal directly for trade
    decisions. The 3-strategy weighted vote dilutes conviction and hurts alpha.
-3. **Classification**: The other 2 strategies still determine whether the decision
+4. **Correlation guard**: After DM selects a bond (AGG, TLT, IEF, SHY, TIP), checks
+   SPY-AGG 60-day rolling correlation. If correlation > 0.50 (stocks and bonds
+   falling together, e.g. 2022), redirects to GLD (if positive momentum) or CASH.
+   (`--no-correlation-guard` to disable)
+5. **Classification**: The other 2 strategies still determine whether the decision
    is ROUTINE (all agree → auto-execute) or NON_ROUTINE (disagree → needs approval).
 
 ```
@@ -415,9 +423,11 @@ Decision Flow:
   1. Run all 3 strategies
   2. Check calm-hold: drawdown < 5% + already holding + held asset has positive momentum → HOLD
      (if held asset has negative 12m momentum → escape hatch, allow the switch)
-  3. Otherwise: use dual momentum signal directly
-  4. Classify: all 3 agree → ROUTINE (auto-execute), else → NON_ROUTINE (approval)
-  5. Urgency override: drawdown > 15% → URGENT (short timeout, auto-execute)
+  3. Check sideways-hold: drawdown 5-15% + momentum advantage ≤ 20% → HOLD
+  4. Otherwise: use dual momentum signal directly
+  5. Correlation guard: bond target + SPY-AGG corr > 0.50 → redirect to GLD or CASH
+  6. Classify: all 3 agree → ROUTINE (auto-execute), else → NON_ROUTINE (approval)
+  7. Urgency override: drawdown > 15% → URGENT (short timeout, auto-execute)
 ```
 
 **Decision Classification**:
@@ -1726,3 +1736,42 @@ bigger improvement with a simpler mechanism.
     robust precisely because it filters short-term noise. Adding 1m and 3m
     returns reintroduces the noise the 12-month window was designed to
     avoid. (Experiment 14)
+
+### Experiment 15: Correlation Guard + Sideways Hold (Adopted)
+
+**Change:** Two purely defensive features, both on by default:
+
+1. **Correlation guard**: When DM selects a bond ETF (AGG, TLT, IEF, SHY, TIP)
+   and SPY-AGG 60-day rolling correlation exceeds 0.50, redirect to GLD (if GLD
+   has positive momentum) or CASH. Addresses 2022-style environments where stocks
+   and bonds fall together. CLI: `--no-correlation-guard` to disable.
+
+2. **Sideways hold**: When drawdown is 5-15%, holding non-cash, and DM wants to
+   switch assets — only allow the switch if the target's momentum advantage over
+   the current holding exceeds 20%. Prevents churn from small momentum differences
+   in choppy markets. CLI: `--no-sideways-hold` to disable.
+
+**Market context enhancement**: Both `backtest.py` and `checker.py` now compute
+SPY-AGG 60-day rolling correlation in `_build_market_context()`, stored as
+`spy_agg_correlation`.
+
+**Results (2015-2026, features disabled vs enabled):**
+
+Both features produced identical results to baseline in backtesting — neither
+guard triggered because DM never attempted a bond rotation during a high-correlation
+period in the test data (it held XLE through 2022 instead). The features are
+correctly wired and waiting for the specific conditions they're designed to catch.
+
+**Verdict:** Adopted. Purely defensive — can only suppress or redirect trades,
+never add new ones. Zero backtest regression when disabled. The guards address
+real blind spots (2022 stock-bond correlation, sideways churn) that the current
+data path doesn't happen to trigger but future markets will.
+
+### Lessons Learned (continued)
+
+14. **Defensive features should be adopted even without backtest proof.** The
+    correlation guard and sideways hold didn't fire in backtesting because DM
+    happened to make the right calls (holding XLE through 2022). But the blind
+    spots they address are real — a future bond rotation during high correlation
+    would lose money without the guard. Purely defensive features with zero
+    regression cost should be adopted proactively. (Experiment 15)
