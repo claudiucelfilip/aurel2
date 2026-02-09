@@ -42,10 +42,13 @@ def backtest(
     start: str = typer.Option("2015-01-01", help="Start date (YYYY-MM-DD)"),
     end: str = typer.Option(None, help="End date (YYYY-MM-DD), defaults to today"),
     capital: float = typer.Option(10000.0, help="Initial capital"),
+    dca: float = typer.Option(0.0, "--dca", help="Monthly DCA contribution amount"),
     frequency: str = typer.Option("monthly", help="Rebalance frequency: monthly or quarterly"),
     ai: bool = typer.Option(False, "--ai", help="Enable AI advisor (disabled by default — see ARCHITECTURE.md for findings)"),
     ai_model: str = typer.Option("haiku", "--ai-model", help="AI model: sonnet, opus, haiku"),
     amnesia: bool = typer.Option(False, "--amnesia", help="Tell AI to ignore training data financial knowledge and redact dates"),
+    correlation_guard: bool = typer.Option(True, "--correlation-guard/--no-correlation-guard", help="Redirect bond rotations when SPY-AGG correlation is high"),
+    sideways_hold: bool = typer.Option(True, "--sideways-hold/--no-sideways-hold", help="Suppress switches in sideways markets unless momentum advantage is large"),
     config: Path = typer.Option(None, help="Config file path"),
     verbose: bool = typer.Option(False, "-v", "--verbose", help="Verbose output"),
 ):
@@ -59,11 +62,15 @@ def backtest(
 
     typer.echo(f"Running backtest from {start_date} to {end_date}")
     typer.echo(f"Initial capital: ${capital:,.2f}")
+    if dca > 0:
+        typer.echo(f"Monthly DCA: ${dca:,.2f}")
     typer.echo(f"Rebalance frequency: {frequency}")
     typer.echo(f"AI advisor: {'enabled' if ai else 'disabled'} (model: {ai_model})")
     if amnesia:
         typer.echo(f"AI amnesia mode: enabled (dates redacted, no financial knowledge)")
     typer.echo(f"Calm-market hold: enabled")
+    typer.echo(f"Correlation guard: {'enabled' if correlation_guard else 'disabled'}")
+    typer.echo(f"Sideways hold: {'enabled' if sideways_hold else 'disabled'}")
 
     # Load settings
     settings = load_settings(config)
@@ -89,6 +96,9 @@ def backtest(
         use_ai=ai,
         ai_model=ai_model,
         amnesia=amnesia,
+        dca_amount=dca,
+        correlation_guard=correlation_guard,
+        sideways_hold=sideways_hold,
     )
 
     # Use SPY as benchmark
@@ -124,6 +134,8 @@ def backtest(
         "start_date": str(start_date),
         "end_date": str(end_date),
         "initial_capital": capital,
+        "dca_amount": dca,
+        "total_invested": round(result.total_invested, 2) if dca > 0 else capital,
         "frequency": frequency,
         "years": round(years, 2),
         "final_value": round(result.final_value, 2),

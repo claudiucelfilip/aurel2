@@ -482,6 +482,18 @@ class Checker:
                 else:
                     context["regime"] = "bear"
 
+                # SPY-AGG correlation (60-day rolling)
+                agg_prices = prices[prices["symbol"] == "AGG"].copy()
+                if not agg_prices.empty:
+                    agg_prices = agg_prices.sort_values("date")
+                    spy_ret = spy_prices.set_index("date")["close"].pct_change()
+                    agg_ret = agg_prices.set_index("date")["close"].pct_change()
+                    merged = pd.concat([spy_ret.rename("spy"), agg_ret.rename("agg")], axis=1).dropna()
+                    if len(merged) >= 60:
+                        corr = merged["spy"].tail(120).rolling(60).corr(merged["agg"].tail(120)).iloc[-1]
+                        if pd.notna(corr):
+                            context["spy_agg_correlation"] = float(corr)
+
         except Exception as e:
             logger.warning("checker_market_context_error", error=str(e))
 

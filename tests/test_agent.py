@@ -7,6 +7,7 @@ import pytest
 from aurel2.agent.orchestrator import (
     AgentDecision,
     AgentOrchestrator,
+    BOND_SYMBOLS,
     DecisionType,
     MarketRegime,
     Urgency,
@@ -402,3 +403,116 @@ class TestExecute:
         )
         result = orchestrator.execute(decision)
         assert result["status"] == "pending_approval"
+
+
+# ---------------------------------------------------------------------------
+# Helper: build signals with momentum_scores for orchestrator tests
+# ---------------------------------------------------------------------------
+def _make_signals(action="buy", asset="AGG", momentum_scores=None):
+    """Build a minimal 3-strategy signal dict with DM primary."""
+    mom = momentum_scores or {}
+    return {
+        "dual_momentum": {
+            "action": action,
+            "confidence": 0.8,
+            "asset_symbol": asset,
+            "momentum_scores": mom,
+        },
+        "mean_reversion": {"action": action, "confidence": 0.7},
+        "multi_timeframe": {"action": action, "confidence": 0.6},
+    }
+
+
+class TestCorrelationGuard:
+    """Tests for correlation guard — redirects bond rotations when SPY-AGG correlation is high."""
+
+    def test_bond_redirected_to_gld_when_correlation_high_and_gld_positive(self):
+        """When correlation is high and GLD momentum is positive, redirect to GLD."""
+        orchestrator = AgentOrchestrator(correlation_guard_enabled=True, correlation_threshold=0.50)
+        signals = _make_signals(action="buy", asset="AGG", momentum_scores={"AGG": 0.05, "GLD": 0.03})
+        market_context = {"drawdown": 0.12, "regime": "sideways", "spy_agg_correlation": 0.65}
+        decision = orchestrator.analyze(signals, market_context)
+        assert decision.asset_symbol == "GLD"
+        assert decision.action == SignalAction.BUY
+
+    def test_bond_redirected_to_cash_when_correlation_high_and_gld_negative(self):
+        """When correlation is high and GLD momentum is negative, redirect to CASH."""
+        orchestrator = AgentOrchestrator(correlation_guard_enabled=True, correlation_threshold=0.50)
+        signals = _make_signals(action="buy", asset="TLT", momentum_scores={"TLT": 0.02, "GLD": -0.05})
+        market_context = {"drawdown": 0.12, "regime": "sideways", "spy_agg_correlation": 0.70}
+        decision = orchestrator.analyze(signals, market_context)
+        assert decision.asset_symbol == "CASH"
+        assert decision.action == SignalAction.BUY
+
+    def test_no_redirect_when_correlation_low(self):
+        """When correlation is below threshold, no redirect."""
+        orchestrator = AgentOrchestrator(correlation_guard_enabled=True, correlation_threshold=0.50)
+        signals = _make_signals(action="buy", asset="AGG", momentum_scores={"AGG": 0.05, "GLD": 0.03})
+        market_context = {"drawdown": 0.12, "regime": "sideways", "spy_agg_correlation": 0.30}
+        decision = orchestrator.analyze(signals, market_context)
+        assert decision.asset_symbol == "AGG"
+
+    def test_no_redirect_when_disabled(self):
+        """When correlation guard is disabled, no redirect even with high correlation."""
+        orchestrator = AgentOrchestrator(correlation_guard_enabled=False)
+        signals = _make_signals(action="buy", asset="AGG", momentum_scores={"AGG": 0.05, "GLD": 0.03})
+        market_context = {"drawdown": 0.12, "regime": "sideways", "spy_agg_correlation": 0.80}
+        decision = orchestrator.analyze(signals, market_context)
+        assert decision.asset_symbol == "AGG"
+
+    def test_no_redirect_for_equity_symbols(self):
+        """Correlation guard should not affect equity rotations."""
+        orchestrator = AgentOrchestrator(correlation_guard_enabled=True, correlation_threshold=0.50)
+        signals = _make_signals(action="buy", asset="SPY", momentum_scores={"SPY": 0.10})
+        market_context = {"drawdown": 0.12, "regime": "sideways", "spy_agg_correlation": 0.80}
+        decision = orchestrator.analyze(signals, market_context)
+        assert decision.asset_symbol == "SPY"
+
+
+class TestSidewaysHold:
+    """Tests for sideways-hold — suppresses switches in choppy markets."""
+
+    def test_holds_when_momentum_advantage_small(self):
+        """Should hold when momentum advantage is below threshold."""
+        orchestrator = AgentOrchestrator(sideways_hold_enabled=True, sideways_hold_momentum_threshold=0.20)
+        signals = _make_signals(action="buy", asset="SPY", momentum_scores={"SPY": 0.12, "AGG": 0.11})
+        market_context = {"drawdown": 0.08, "regime": "sideways"}
+        decision = orchestrator.analyze(signals, market_context, current_holding="AGG")
+        assert decision.action == SignalAction.HOLD
+
+    def test_switches_when_momentum_advantage_large(self):
+        """Should allow switch when momentum advantage exceeds threshold."""
+        orchestrator = AgentOrchestrator(sideways_hold_enabled=True, sideways_hold_momentum_threshold=0.20)
+        signals = _make_signals(action="buy", asset="SPY", momentum_scores={"SPY": 0.30, "AGG": 0.10})
+        market_context = {"drawdown": 0.08, "regime": "sideways"}
+        decision = orchestrator.analyze(signals, market_context, current_holding="AGG")
+        assert decision.action == SignalAction.BUY
+        assert decision.asset_symbol == "SPY"
+
+    def test_does_not_apply_in_bull(self):
+        """Sideways-hold should not apply when drawdown < 5% (calm-hold handles that)."""
+        orchestrator = AgentOrchestrator(sideways_hold_enabled=True, sideways_hold_momentum_threshold=0.20)
+        signals = _make_signals(action="buy", asset="SPY", momentum_scores={"SPY": 0.12, "AGG": 0.11})
+        market_context = {"drawdown": 0.03, "regime": "bull"}
+        # In bull, calm-hold fires instead; sideways-hold's drawdown >= 5% condition isn't met
+        decision = orchestrator.analyze(signals, market_context, current_holding="AGG")
+        # calm-hold should have caught this
+        assert decision.action == SignalAction.HOLD
+
+    def test_does_not_apply_when_disabled(self):
+        """Should not suppress when sideways-hold is disabled."""
+        orchestrator = AgentOrchestrator(sideways_hold_enabled=False)
+        signals = _make_signals(action="buy", asset="SPY", momentum_scores={"SPY": 0.12, "AGG": 0.11})
+        market_context = {"drawdown": 0.08, "regime": "sideways"}
+        decision = orchestrator.analyze(signals, market_context, current_holding="AGG")
+        assert decision.action == SignalAction.BUY
+        assert decision.asset_symbol == "SPY"
+
+    def test_does_not_apply_when_holding_cash(self):
+        """Sideways-hold should not apply when holding CASH (allow entry)."""
+        orchestrator = AgentOrchestrator(sideways_hold_enabled=True, sideways_hold_momentum_threshold=0.20)
+        signals = _make_signals(action="buy", asset="SPY", momentum_scores={"SPY": 0.12})
+        market_context = {"drawdown": 0.08, "regime": "sideways"}
+        decision = orchestrator.analyze(signals, market_context, current_holding="CASH")
+        assert decision.action == SignalAction.BUY
+        assert decision.asset_symbol == "SPY"

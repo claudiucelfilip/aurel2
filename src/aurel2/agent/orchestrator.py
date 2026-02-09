@@ -19,6 +19,9 @@ import pytz
 
 from aurel2.core.models import SignalAction
 
+# Bond ETFs — used by correlation guard to detect stock-bond co-movement
+BOND_SYMBOLS = {"AGG", "TLT", "IEF", "SHY", "TIP"}
+
 
 class DecisionType(str, Enum):
     """Type of decision based on strategy agreement."""
@@ -190,6 +193,10 @@ class AgentOrchestrator:
         use_position_sizing: bool = True,
         use_regime_selection: bool = True,
         calm_market_hold_threshold: float = 0.05,
+        correlation_guard_enabled: bool = True,
+        correlation_threshold: float = 0.50,
+        sideways_hold_enabled: bool = True,
+        sideways_hold_momentum_threshold: float = 0.20,
     ) -> None:
         """Initialize the orchestrator.
 
@@ -201,6 +208,13 @@ class AgentOrchestrator:
             use_dynamic_weights: Whether to use dynamic strategy weighting.
             use_position_sizing: Whether to use confidence-based position sizing.
             use_regime_selection: Whether to adjust weights based on regime.
+            correlation_guard_enabled: Redirect bond rotations to GLD/CASH when
+                SPY-AGG correlation is high (stocks and bonds falling together).
+            correlation_threshold: SPY-AGG correlation above which the guard fires.
+            sideways_hold_enabled: Suppress switches in sideways markets unless
+                the momentum advantage is overwhelming.
+            sideways_hold_momentum_threshold: Minimum momentum advantage (fraction)
+                required to allow a switch in a sideways market.
         """
         self.timezone = timezone
         self.sleep_start = sleep_start
@@ -213,6 +227,10 @@ class AgentOrchestrator:
         self.use_position_sizing = use_position_sizing
         self.use_regime_selection = use_regime_selection
         self.calm_market_hold_threshold = calm_market_hold_threshold
+        self.correlation_guard_enabled = correlation_guard_enabled
+        self.correlation_threshold = correlation_threshold
+        self.sideways_hold_enabled = sideways_hold_enabled
+        self.sideways_hold_momentum_threshold = sideways_hold_momentum_threshold
 
         # Rolling accuracy tracking per strategy
         self._accuracy_history: dict[str, deque[bool]] = {
@@ -639,7 +657,37 @@ class AgentOrchestrator:
                 confidence = voted_confidence
                 calm_hold_applied = True
 
-        if not calm_hold_applied:
+        # Sideways-hold: suppress switches in choppy markets unless momentum advantage is large
+        sideways_hold_applied = False
+        if not calm_hold_applied and self.sideways_hold_enabled:
+            drawdown = market_context.get("drawdown", 0.0)
+            sideways_hold_candidate = (
+                current_holding
+                and current_holding not in ("CASH", None)
+                and voted_action == SignalAction.BUY
+                and "dual_momentum" in signals
+                and signals["dual_momentum"].get("asset_symbol") != current_holding
+                and 0.05 <= drawdown < 0.15
+                and decision_type != DecisionType.URGENT
+            )
+            if sideways_hold_candidate:
+                dm_momentum = signals["dual_momentum"].get("momentum_scores", {})
+                target_sym = signals["dual_momentum"].get("asset_symbol")
+                target_mom = dm_momentum.get(target_sym)
+                current_mom = dm_momentum.get(current_holding)
+
+                if target_mom is not None and current_mom is not None and current_mom != 0:
+                    advantage = (target_mom - current_mom) / abs(current_mom)
+                else:
+                    advantage = 0.0
+
+                if advantage <= self.sideways_hold_momentum_threshold:
+                    action = SignalAction.HOLD
+                    asset_symbol = None
+                    confidence = voted_confidence
+                    sideways_hold_applied = True
+
+        if not calm_hold_applied and not sideways_hold_applied:
             if "dual_momentum" in signals:
                 # DM-primary: use dual momentum signal directly for trade decisions.
                 # The 3-strategy weighted vote dilutes DM's conviction and hurts alpha.
@@ -654,6 +702,25 @@ class AgentOrchestrator:
                 action = voted_action
                 asset_symbol = voted_asset
                 confidence = voted_confidence
+
+        # Correlation guard: redirect bond rotations when stocks and bonds are correlated
+        correlation_guard_applied = False
+        if (
+            self.correlation_guard_enabled
+            and not calm_hold_applied
+            and not sideways_hold_applied
+            and action == SignalAction.BUY
+            and asset_symbol in BOND_SYMBOLS
+        ):
+            spy_agg_corr = market_context.get("spy_agg_correlation")
+            if spy_agg_corr is not None and spy_agg_corr > self.correlation_threshold:
+                dm_momentum = signals.get("dual_momentum", {}).get("momentum_scores", {})
+                gld_momentum = dm_momentum.get("GLD")
+                if gld_momentum is not None and gld_momentum > 0:
+                    asset_symbol = "GLD"
+                else:
+                    asset_symbol = "CASH"
+                correlation_guard_applied = True
 
         # Full position sizing — DM-primary trades with full conviction
         position_size = 1.0
@@ -671,6 +738,11 @@ class AgentOrchestrator:
         if calm_hold_applied:
             drawdown = market_context.get("drawdown", 0.0)
             reasoning = f"{regime_info}Calm-market hold: keeping {current_holding} (drawdown {drawdown:.1%} < {self.calm_market_hold_threshold:.0%} threshold)"
+        elif sideways_hold_applied:
+            drawdown = market_context.get("drawdown", 0.0)
+            reasoning = f"{regime_info}Sideways-hold: keeping {current_holding} (drawdown {drawdown:.1%}, momentum advantage {advantage:.0%} <= {self.sideways_hold_momentum_threshold:.0%} threshold)"
+        elif correlation_guard_applied:
+            reasoning = f"{regime_info}Correlation guard: redirected bond rotation to {asset_symbol} (SPY-AGG correlation {spy_agg_corr:.2f} > {self.correlation_threshold:.2f})"
         elif decision_type == DecisionType.ROUTINE:
             reasoning = f"{regime_info}All strategies agree on {action.value.upper()} action (weights: {weights_str})"
         elif decision_type == DecisionType.URGENT:

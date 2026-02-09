@@ -34,6 +34,7 @@ class BacktestResult:
     trades: list[Trade]
     signals: list[Signal]
     snapshots: list[PortfolioSnapshot]
+    total_invested: float = 0.0
     benchmark_final: float | None = None
 
     # AI override tracking
@@ -58,9 +59,13 @@ class BacktestResult:
         dates = [s.date for s in self.snapshots]
 
         # Total return
-        self.total_return = (self.final_value / self.initial_capital) - 1
+        if self.total_invested > self.initial_capital:
+            # DCA: net gain relative to total money invested
+            self.total_return = (self.final_value - self.total_invested) / self.total_invested
+        else:
+            self.total_return = (self.final_value / self.initial_capital) - 1
 
-        # CAGR
+        # CAGR (time-weighted from equity curve returns — naturally handles variable capital)
         years = (self.end_date - self.start_date).days / 365.25
         if years > 0:
             self.cagr = (self.final_value / self.initial_capital) ** (1 / years) - 1
@@ -93,7 +98,12 @@ class BacktestResult:
         print("=" * 60)
         print(f"Period: {self.start_date} to {self.end_date}")
         print(f"Initial Capital: ${self.initial_capital:,.2f}")
+        if self.total_invested > self.initial_capital:
+            print(f"Total Invested: ${self.total_invested:,.2f}")
         print(f"Final Value: ${self.final_value:,.2f}")
+        if self.total_invested > self.initial_capital:
+            net_gain = self.final_value - self.total_invested
+            print(f"Net Gain: ${net_gain:,.2f} ({self.total_return:.2%})")
         print("-" * 60)
         print(f"Total Return: {self.total_return:.2%}")
         print(f"CAGR: {self.cagr:.2%}")
@@ -101,7 +111,8 @@ class BacktestResult:
         print(f"Sharpe Ratio: {self.sharpe_ratio:.2f}")
         print(f"Number of Trades: {self.num_trades}")
         if self.benchmark_final:
-            bench_return = (self.benchmark_final / self.initial_capital) - 1
+            bench_invested = self.total_invested if self.total_invested > self.initial_capital else self.initial_capital
+            bench_return = (self.benchmark_final - bench_invested) / bench_invested if self.total_invested > self.initial_capital else (self.benchmark_final / self.initial_capital) - 1
             print("-" * 60)
             print(f"Benchmark Final: ${self.benchmark_final:,.2f}")
             print(f"Benchmark Return: {bench_return:.2%}")
@@ -140,11 +151,17 @@ class BacktestEngine:
         use_ai: bool = False,
         ai_model: str = "haiku",
         amnesia: bool = False,
+        dca_amount: float = 0.0,
+        correlation_guard: bool = True,
+        sideways_hold: bool = True,
     ):
         self.dual_momentum = DualMomentumStrategy(assets=ASSET_REGISTRY)
         self.mean_reversion = MeanReversionStrategy()
         self.multi_timeframe = MultiTimeframeTrendStrategy()
-        self.orchestrator = AgentOrchestrator()
+        self.orchestrator = AgentOrchestrator(
+            correlation_guard_enabled=correlation_guard,
+            sideways_hold_enabled=sideways_hold,
+        )
 
         self.ai_advisor = None
         if use_ai:
@@ -153,6 +170,7 @@ class BacktestEngine:
             self.ai_advisor = AIAdvisor(model=ai_model, amnesia=amnesia)
         self.initial_capital = initial_capital
         self.transaction_cost_pct = transaction_cost_pct
+        self.dca_amount = dca_amount
 
         # Tradeable symbols for AI override validation
         self._tradeable_symbols = {
@@ -232,6 +250,21 @@ class BacktestEngine:
                 else:
                     context["regime"] = "bear"
 
+                # SPY-AGG correlation (60-day rolling)
+                agg_prices = prices[prices["symbol"] == "AGG"].copy()
+                if not agg_prices.empty:
+                    agg_prices["date"] = pd.to_datetime(agg_prices["date"])
+                    agg_prices = agg_prices[agg_prices["date"] <= pd.Timestamp(calc_date)]
+                    if not agg_prices.empty:
+                        agg_prices = agg_prices.sort_values("date")
+                        spy_ret = spy_prices.set_index("date")["close"].pct_change()
+                        agg_ret = agg_prices.set_index("date")["close"].pct_change()
+                        merged = pd.concat([spy_ret.rename("spy"), agg_ret.rename("agg")], axis=1).dropna()
+                        if len(merged) >= 60:
+                            corr = merged["spy"].tail(120).rolling(60).corr(merged["agg"].tail(120)).iloc[-1]
+                            if pd.notna(corr):
+                                context["spy_agg_correlation"] = float(corr)
+
         except Exception as e:
             logger.warning("backtest_market_context_error", error=str(e))
 
@@ -284,6 +317,7 @@ class BacktestEngine:
 
         # Initialize portfolio
         cash = Decimal(str(self.initial_capital))
+        total_invested = self.initial_capital
         current_holding: AssetClass | None = None
         current_holding_symbol: str | None = None
         current_shares = Decimal("0")
@@ -293,9 +327,34 @@ class BacktestEngine:
         snapshots: list[PortfolioSnapshot] = []
         ai_overrides: list[dict] = []
 
+        # DCA benchmark tracking
+        bench_shares = Decimal("0")
+        bench_cash = Decimal(str(self.initial_capital))
+        bench_invested = self.initial_capital
+
         total_dates = len(rebalance_dates)
         for i, rebal_date in enumerate(rebalance_dates, 1):
             print(f"\r  [{i}/{total_dates}] {rebal_date}", end="", flush=True)
+
+            # ================================================================
+            # DCA: inject cash contribution (skip first rebalance date)
+            # ================================================================
+            if self.dca_amount > 0 and i > 1:
+                dca = Decimal(str(self.dca_amount))
+                cash += dca
+                total_invested += self.dca_amount
+
+                # If currently holding shares, buy more with DCA amount
+                if current_holding and current_holding != AssetClass.CASH and current_shares > 0:
+                    held_asset = ASSET_REGISTRY.get(current_holding)
+                    if held_asset and held_asset.yahoo_symbol:
+                        buy_price = self._get_price(prices, held_asset.yahoo_symbol, rebal_date)
+                        if buy_price:
+                            commission = float(dca) * self.transaction_cost_pct
+                            net_value = float(dca) - commission
+                            new_shares = Decimal(str(net_value / buy_price))
+                            current_shares += new_shares
+                            cash -= dca  # spent the DCA cash
 
             # ================================================================
             # Step 1: Run all 3 strategies (mirrors checker._run_strategies)
@@ -588,19 +647,50 @@ class BacktestEngine:
         # Calculate benchmark if provided
         benchmark_final = None
         if benchmark_symbol:
-            bench_prices = prices[prices["symbol"] == benchmark_symbol].copy()
-            if not bench_prices.empty:
-                bench_prices["date"] = pd.to_datetime(bench_prices["date"])
+            if self.dca_amount > 0:
+                # DCA benchmark: simulate same contributions into benchmark
+                bench_prices_df = prices[prices["symbol"] == benchmark_symbol].copy()
+                if not bench_prices_df.empty:
+                    bench_prices_df["date"] = pd.to_datetime(bench_prices_df["date"])
 
-                start_row = bench_prices[bench_prices["date"] >= pd.Timestamp(start_date)]
-                if not start_row.empty:
-                    start_price = float(start_row.iloc[0]["close"])
+                    # Buy initial position
+                    start_row = bench_prices_df[bench_prices_df["date"] >= pd.Timestamp(start_date)]
+                    if not start_row.empty:
+                        initial_price = float(start_row.iloc[0]["close"])
+                        initial_commission = self.initial_capital * self.transaction_cost_pct
+                        bench_shares = Decimal(str((self.initial_capital - initial_commission) / initial_price))
+                        bench_cash = Decimal("0")
 
-                    end_row = bench_prices[bench_prices["date"] <= pd.Timestamp(end_date)]
-                    if not end_row.empty:
-                        end_price = float(end_row.iloc[-1]["close"])
-                        benchmark_return = end_price / start_price
-                        benchmark_final = self.initial_capital * benchmark_return
+                        # Add DCA at each rebalance date (skip first)
+                        for j, rd in enumerate(rebalance_dates):
+                            if j == 0:
+                                continue
+                            bp = self._get_price(prices, benchmark_symbol, rd)
+                            if bp:
+                                dca_commission = self.dca_amount * self.transaction_cost_pct
+                                dca_net = self.dca_amount - dca_commission
+                                bench_shares += Decimal(str(dca_net / bp))
+
+                        # Final value
+                        end_row = bench_prices_df[bench_prices_df["date"] <= pd.Timestamp(end_date)]
+                        if not end_row.empty:
+                            end_price = float(end_row.iloc[-1]["close"])
+                            benchmark_final = float(bench_shares) * end_price + float(bench_cash)
+            else:
+                # Lump-sum benchmark
+                bench_prices_df = prices[prices["symbol"] == benchmark_symbol].copy()
+                if not bench_prices_df.empty:
+                    bench_prices_df["date"] = pd.to_datetime(bench_prices_df["date"])
+
+                    start_row = bench_prices_df[bench_prices_df["date"] >= pd.Timestamp(start_date)]
+                    if not start_row.empty:
+                        start_price = float(start_row.iloc[0]["close"])
+
+                        end_row = bench_prices_df[bench_prices_df["date"] <= pd.Timestamp(end_date)]
+                        if not end_row.empty:
+                            end_price = float(end_row.iloc[-1]["close"])
+                            benchmark_return = end_price / start_price
+                            benchmark_final = self.initial_capital * benchmark_return
 
         # Evaluate AI overrides: look forward 1 month for each override
         ai_override_wins = 0
@@ -637,6 +727,7 @@ class BacktestEngine:
             start_date=start_date,
             end_date=end_date,
             initial_capital=self.initial_capital,
+            total_invested=total_invested,
             final_value=final_value,
             trades=trades,
             signals=all_signals,
