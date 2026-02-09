@@ -27,7 +27,7 @@ Tax-optimized dual momentum trading system with AI-assisted decision making.
 **Aurel2** is an automated trading system that implements momentum-based strategies with AI oversight. The system:
 
 - Uses **proven momentum anomaly** (200+ years of data) rather than ML price prediction
-- Employs **multi-strategy voting** for robust decisions
+- Employs **DM-primary + calm-hold** orchestration with multi-strategy classification
 - Includes **conservative AI advisor** to guard against known failure patterns
 - Requires **human approval** for non-routine decisions
 - Optimizes for **Romanian tax efficiency** (UCITS ETFs, quarterly rebalancing)
@@ -35,11 +35,12 @@ Tax-optimized dual momentum trading system with AI-assisted decision making.
 ### Key Principles
 
 1. **Momentum-first**: Core strategy based on 12-month relative momentum
-2. **Multi-strategy consensus**: 3 strategies vote on decisions
-3. **Conservative AI**: AI guards against failures, doesn't replace system
-4. **Human-in-the-loop**: Key decisions require approval
-5. **Tax optimized**: Quarterly rebalancing, Irish-domiciled UCITS ETFs
-6. **Audit trail**: Every decision logged for analysis
+2. **DM-primary + calm-hold**: Dual momentum drives trades; calm-hold prevents churn in bull markets
+3. **Multi-strategy classification**: 3 strategies determine decision type (routine vs non-routine), but DM signal drives the actual trade
+4. **Conservative AI**: AI guards against failures, doesn't replace system (disabled by default)
+5. **Human-in-the-loop**: Non-routine decisions require approval
+6. **Tax optimized**: Monthly rebalancing, Irish-domiciled UCITS ETFs
+7. **Audit trail**: Every decision logged for analysis
 
 ---
 
@@ -209,6 +210,7 @@ aurel2/
 │   ├── failure_learnings.json
 │   ├── session_progress.json
 │   ├── backtest_results.json
+│   ├── backtest_comparison.json  # Pre-computed 5Y/10Y backtest for dashboard
 │   └── ai_eval_cache/       # AI evaluation cache
 ├── tests/                   # pytest test suite
 ├── docker/                  # Docker deployment
@@ -395,12 +397,24 @@ Dynamically adjusts lookback period based on market conditions.
 
 **File**: `src/aurel2/agent/orchestrator.py`
 
-Central decision-making engine that:
-1. Collects signals from all 3 strategies
-2. Classifies decisions (ROUTINE, NON_ROUTINE, URGENT)
-3. Calculates confidence using weighted voting
-4. Detects market regime
-5. Produces final decision
+Central decision-making engine. All 3 strategies run on each rebalance, but the
+orchestrator uses **DM-primary + calm-hold** logic — not blended voting:
+
+1. **Calm-hold check**: If already holding an asset, drawdown < 5%, and market
+   isn't urgent → HOLD current position. Prevents unnecessary churn in bull markets.
+2. **DM-primary**: Uses the dual momentum signal directly for trade decisions.
+   The 3-strategy weighted vote dilutes DM's conviction and hurts alpha.
+3. **Classification**: The other 2 strategies still determine whether the decision
+   is ROUTINE (all agree → auto-execute) or NON_ROUTINE (disagree → needs approval).
+
+```
+Decision Flow:
+  1. Run all 3 strategies
+  2. Check calm-hold: drawdown < 5% + already holding → HOLD (skip trade)
+  3. Otherwise: use dual momentum signal directly (DM-primary)
+  4. Classify: all 3 agree → ROUTINE (auto-execute), else → NON_ROUTINE (approval)
+  5. Urgency override: drawdown > 15% → URGENT (short timeout, auto-execute)
+```
 
 **Decision Classification**:
 ```
@@ -409,31 +423,9 @@ NON_ROUTINE: Strategies disagree → requires approval
 URGENT:      High drawdown (>15%) or extreme conditions
 ```
 
-**Strategy Weighting**:
-| Strategy | Base Weight |
-|----------|-------------|
-| Dual Momentum | 45% |
-| Mean Reversion | 25% |
-| Multi-Timeframe | 30% |
-
-Weights adjust dynamically based on rolling accuracy (last 10 decisions).
-
-**Output** (`AgentDecision`):
-```python
-{
-    "decision_type": DecisionType,
-    "action": SignalAction,
-    "asset_symbol": str,
-    "reasoning": str,
-    "confidence": float,          # 0.0-1.0
-    "strategy_signals": dict,     # Per-strategy signals
-    "requires_approval": bool,
-    "timeout_hours": float,
-    "urgency": Urgency,           # LOW, MEDIUM, HIGH
-    "position_size_pct": float,   # 0.0-1.0
-    "regime": MarketRegime,
-}
-```
+**Calm-Hold Threshold**: `calm_market_hold_threshold = 0.05` (5% drawdown from
+52-week high). This is adaptive — when markets drop >5%, calm-hold turns off and
+the system starts actively switching assets. In a crash (>15%), it goes URGENT.
 
 **Urgency Levels**:
 - `LOW`: 24-48 hours to decide
@@ -783,8 +775,8 @@ pipeline as production on each rebalance date.
          ▼
 ┌─────────────────┐
 │   Orchestrator  │
-│ (Voting/Weight/ │
-│  Position Size) │
+│  (DM-primary +  │
+│   calm-hold)    │
 └────────┬────────┘
          │
          ▼
@@ -1098,6 +1090,23 @@ Historical backtest performance.
   "sharpe_ratio": 0.72
 }
 ```
+
+### backtest_comparison.json
+
+Pre-computed backtest results for the dashboard chart. Generated by `python -m aurel2.engine.backtest`.
+
+```json
+{
+  "10y": {
+    "metrics": { "cagr": 17.9, "sharpe_ratio": 0.91, "max_drawdown": -23.5, "alpha": 83.1, "num_trades": 9 },
+    "portfolio": [{"date": "2016-03-01", "value": 10000}, ...],
+    "benchmark": [{"date": "2016-03-01", "value": 10000}, ...]
+  },
+  "5y": { ... }
+}
+```
+
+Committed to git so it deploys with rsync. Re-generate periodically to update with latest prices.
 
 ### ai_eval_cache/
 
