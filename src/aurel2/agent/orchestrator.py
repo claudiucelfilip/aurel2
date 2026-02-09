@@ -615,33 +615,45 @@ class AgentOrchestrator:
         )
 
         # Calm-market hold: don't switch assets when drawdown is low
+        # Escape hatch: if held asset has negative 12m momentum, let DM switch through
         calm_hold_applied = False
-        if (
+        calm_hold_candidate = (
             current_holding
             and current_holding not in ("CASH", None)
             and voted_action == SignalAction.BUY
             and voted_asset != current_holding
             and market_context.get("drawdown", 0.0) < self.calm_market_hold_threshold
             and decision_type != DecisionType.URGENT
-        ):
-            action = SignalAction.HOLD
-            asset_symbol = None
-            confidence = voted_confidence
-            calm_hold_applied = True
-        elif "dual_momentum" in signals:
-            # DM-primary: use dual momentum signal directly for trade decisions.
-            # The 3-strategy weighted vote dilutes DM's conviction and hurts alpha.
-            # Other strategies still contribute to decision classification and urgency.
-            dm = signals["dual_momentum"]
-            dm_action_str = dm.get("action", "hold")
-            action = SignalAction(dm_action_str) if dm_action_str in ("buy", "sell", "hold") else SignalAction.HOLD
-            asset_symbol = dm.get("asset_symbol")
-            confidence = dm.get("confidence", 0.8)
-        else:
-            # Fallback to weighted vote if dual_momentum is missing
-            action = voted_action
-            asset_symbol = voted_asset
-            confidence = voted_confidence
+        )
+        if calm_hold_candidate:
+            # Check held asset's 12-month momentum from DM signal
+            dm_momentum = signals.get("dual_momentum", {}).get("momentum_scores", {})
+            held_momentum = dm_momentum.get(current_holding)
+
+            if held_momentum is not None and held_momentum < 0:
+                # Negative momentum escape: held asset is losing, let DM switch
+                calm_hold_candidate = False
+            else:
+                action = SignalAction.HOLD
+                asset_symbol = None
+                confidence = voted_confidence
+                calm_hold_applied = True
+
+        if not calm_hold_applied:
+            if "dual_momentum" in signals:
+                # DM-primary: use dual momentum signal directly for trade decisions.
+                # The 3-strategy weighted vote dilutes DM's conviction and hurts alpha.
+                # Other strategies still contribute to decision classification and urgency.
+                dm = signals["dual_momentum"]
+                dm_action_str = dm.get("action", "hold")
+                action = SignalAction(dm_action_str) if dm_action_str in ("buy", "sell", "hold") else SignalAction.HOLD
+                asset_symbol = dm.get("asset_symbol")
+                confidence = dm.get("confidence", 0.8)
+            else:
+                # Fallback to weighted vote if dual_momentum is missing
+                action = voted_action
+                asset_symbol = voted_asset
+                confidence = voted_confidence
 
         # Full position sizing — DM-primary trades with full conviction
         position_size = 1.0

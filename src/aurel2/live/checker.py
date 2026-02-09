@@ -390,11 +390,18 @@ class Checker:
                 # Get reasoning
                 reasoning = getattr(signal, 'reasoning', None) or getattr(signal, 'reason', '')
 
+                # Include per-asset momentum scores for orchestrator calm-hold escape hatch
+                mom_dict = {}
+                if hasattr(signal, 'momentum_scores') and signal.momentum_scores:
+                    for ac, ms in signal.momentum_scores.items():
+                        mom_dict[ms.asset.symbol] = ms.momentum_12m
+
                 signals[name] = {
                     "action": action,
                     "confidence": confidence,
                     "asset_symbol": asset_symbol,
                     "reasoning": reasoning,
+                    "momentum_scores": mom_dict,
                 }
 
                 logger.info(

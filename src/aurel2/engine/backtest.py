@@ -181,12 +181,19 @@ class BacktestEngine:
         if hasattr(signal, 'reason') and signal.reason and 'PILOT' in signal.reason:
             is_pilot = True
 
+        # Include per-asset momentum scores for orchestrator calm-hold escape hatch
+        mom_dict = {}
+        if hasattr(signal, 'momentum_scores') and signal.momentum_scores:
+            for ac, ms in signal.momentum_scores.items():
+                mom_dict[ms.asset.symbol] = ms.momentum_12m
+
         return {
             "action": action,
             "confidence": confidence,
             "asset_symbol": asset_symbol,
             "reasoning": reasoning,
             "pilot_position": is_pilot,
+            "momentum_scores": mom_dict,
         }
 
     def _build_market_context(self, prices: pd.DataFrame, calc_date: date) -> dict:
