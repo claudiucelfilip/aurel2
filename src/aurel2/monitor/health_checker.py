@@ -2,6 +2,7 @@
 
 import json
 import re
+import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
@@ -125,7 +126,12 @@ class HealthChecker:
         )
 
     def _check_process(self) -> ProcessInfo:
-        """Check if daemon process is running."""
+        """Check if daemon process is running.
+
+        First tries local process scan (when monitor runs on same host as daemon).
+        Falls back to Docker container health check (when running as separate container).
+        """
+        # Try local process scan first
         for proc in psutil.process_iter(["pid", "name", "cmdline", "create_time"]):
             try:
                 cmdline = proc.info.get("cmdline") or []
@@ -149,6 +155,39 @@ class HealthChecker:
                     )
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
+
+        # Fall back to Docker container check (when running as separate container)
+        return self._check_docker_container()
+
+    def _check_docker_container(self) -> ProcessInfo:
+        """Check if the aurel2 daemon container is running via Docker."""
+        try:
+            result = subprocess.run(
+                ["docker", "inspect", "--format", "{{.State.Status}} {{.State.Health.Status}}", "aurel2-trading-aurel2-1"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            if result.returncode == 0:
+                parts = result.stdout.strip().split()
+                status = parts[0] if parts else ""
+                health = parts[1] if len(parts) > 1 else ""
+                if status == "running":
+                    return ProcessInfo(running=True)
+                logger.warning("daemon_container_not_running", status=status, health=health)
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            pass
+
+        # If neither local process nor Docker container found, check heartbeat freshness
+        # as a last resort — if heartbeat is recent, daemon is probably running somewhere
+        if self.heartbeat_file.exists():
+            try:
+                data = json.loads(self.heartbeat_file.read_text())
+                age = datetime.now().timestamp() - data.get("timestamp", 0)
+                if age < 120:  # Heartbeat updated within last 2 minutes
+                    return ProcessInfo(running=True)
+            except (json.JSONDecodeError, KeyError):
+                pass
 
         return ProcessInfo(running=False)
 
@@ -197,6 +236,11 @@ class HealthChecker:
                 r"connection.*lost",
                 r"Traceback",
                 r"CRITICAL",
+                r"notification_error",
+                r"notification_failed",
+                r"executor_buy_error",
+                r"executor_sell_error",
+                r"order_verification_failed",
             ]
             combined_pattern = "|".join(error_patterns)
 

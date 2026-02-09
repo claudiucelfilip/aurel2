@@ -8,7 +8,7 @@ from typing import Optional
 import structlog
 
 from aurel2.monitor.health_checker import HealthChecker, HealthStatus, HealthReport
-from aurel2.monitor.error_analyzer import ErrorAnalyzer, ErrorSeverity, AnalyzedError
+from aurel2.monitor.error_analyzer import ErrorAnalyzer, ErrorCategory, ErrorSeverity, AnalyzedError
 from aurel2.monitor.auto_fixer import AutoFixer
 from aurel2.monitor.session_tracker import SessionTracker
 from aurel2.monitor.incident_tracker import IncidentTracker
@@ -35,6 +35,7 @@ class DaemonMonitor:
     CONSECUTIVE_UNHEALTHY_THRESHOLD = 3
     CONSECUTIVE_DISCONNECTED_THRESHOLD = 5  # 5 minutes of disconnection triggers restart
     MAX_RESTARTS_PER_HOUR = 3
+    DAEMON_RESTARTS_BEFORE_GATEWAY_RESTART = 2  # After 2 failed daemon restarts, restart IB Gateway
 
     def __init__(
         self,
@@ -63,6 +64,7 @@ class DaemonMonitor:
         self._running = False
         self._consecutive_unhealthy = 0
         self._consecutive_disconnected = 0  # Track consecutive disconnected checks
+        self._daemon_restarts_without_recovery = 0  # Daemon restarts that didn't fix disconnection
         self._last_health_report: Optional[HealthReport] = None
         self._minutes_since_start = 0
         self._restarts_today = 0
@@ -186,11 +188,12 @@ class DaemonMonitor:
         self.session_tracker.record_restart()
 
     async def _handle_persistent_disconnection(self, report: HealthReport) -> None:
-        """Handle persistent IBKR disconnection by restarting the daemon."""
+        """Handle persistent IBKR disconnection by restarting daemon or IB Gateway."""
         logger.warning(
             "persistent_disconnection_detected",
             consecutive_checks=self._consecutive_disconnected,
             threshold=self.CONSECUTIVE_DISCONNECTED_THRESHOLD,
+            daemon_restarts_without_recovery=self._daemon_restarts_without_recovery,
         )
 
         print(f"[{datetime.now().strftime('%H:%M')}] Persistent disconnection detected ({self._consecutive_disconnected}x)")
@@ -215,22 +218,32 @@ class DaemonMonitor:
             )
             return
 
-        # Attempt restart
-        print(f"  Attempting automatic restart...")
+        # Escalate to IB Gateway restart if daemon restarts haven't helped
+        if self._daemon_restarts_without_recovery >= self.DAEMON_RESTARTS_BEFORE_GATEWAY_RESTART:
+            await self._restart_ib_gateway(report)
+            return
+
+        # Attempt daemon restart
+        print(f"  Attempting automatic daemon restart...")
 
         result = self.auto_fixer.fix("restart_daemon", {"reason": "persistent IBKR disconnection"})
 
         if result.success:
             self._record_restart()
+            self._daemon_restarts_without_recovery += 1
             self._consecutive_disconnected = 0
 
-            logger.info("daemon_restarted_for_disconnection", message=result.message)
+            logger.info(
+                "daemon_restarted_for_disconnection",
+                message=result.message,
+                restarts_without_recovery=self._daemon_restarts_without_recovery,
+            )
 
             self.notifier.send(
                 message=(
                     f"Daemon automatically restarted due to persistent disconnection.\n\n"
-                    f"Was disconnected for: {self._consecutive_disconnected} checks\n"
                     f"Result: {result.message}\n"
+                    f"Restarts without recovery: {self._daemon_restarts_without_recovery}/{self.DAEMON_RESTARTS_BEFORE_GATEWAY_RESTART}\n"
                     f"Restarts this hour: {len(self._restarts_this_hour)}/{self.MAX_RESTARTS_PER_HOUR}"
                 ),
                 title="Aurel2: Auto-Restart (Disconnection)",
@@ -253,6 +266,54 @@ class DaemonMonitor:
                 category="restart_failed",
             )
 
+    async def _restart_ib_gateway(self, report: HealthReport) -> None:
+        """Restart IB Gateway container when daemon restarts haven't fixed disconnection."""
+        logger.warning(
+            "escalating_to_gateway_restart",
+            daemon_restarts_without_recovery=self._daemon_restarts_without_recovery,
+        )
+
+        print(f"  Daemon restarts haven't fixed disconnection. Restarting IB Gateway...")
+
+        result = self.auto_fixer.fix(
+            "restart_ib_gateway",
+            {"reason": f"Daemon restarted {self._daemon_restarts_without_recovery}x without recovery"},
+        )
+
+        if result.success:
+            self._record_restart()
+            self._daemon_restarts_without_recovery = 0
+            self._consecutive_disconnected = 0
+
+            logger.info("ib_gateway_restarted_for_disconnection", message=result.message)
+
+            self.notifier.send(
+                message=(
+                    f"IB Gateway container restarted due to persistent disconnection.\n\n"
+                    f"Daemon was restarted {self.DAEMON_RESTARTS_BEFORE_GATEWAY_RESTART}x without recovery.\n"
+                    f"Result: {result.message}"
+                ),
+                title="Aurel2: IB Gateway Restarted",
+                tags=["arrows_counterclockwise", "satellite"],
+                priority="high",
+                category="gateway_restart",
+            )
+        else:
+            logger.error("ib_gateway_restart_failed", message=result.message)
+
+            self.notifier.send(
+                message=(
+                    f"Failed to restart IB Gateway container.\n\n"
+                    f"Error: {result.message}\n\n"
+                    "Manual intervention required:\n"
+                    "ssh root@SERVER && cd /opt/aurel2/docker && docker compose restart ib-gateway"
+                ),
+                title="Aurel2: Gateway Restart Failed",
+                tags=["x", "warning"],
+                priority="urgent",
+                category="gateway_restart_failed",
+            )
+
     async def _handle_healthy(self, report: HealthReport) -> None:
         """Handle healthy status."""
         # Reset consecutive counters
@@ -267,6 +328,7 @@ class DaemonMonitor:
             )
             self._consecutive_unhealthy = 0
             self._consecutive_disconnected = 0
+            self._daemon_restarts_without_recovery = 0
 
             # Reset auto-fixer attempts on recovery
             self.auto_fixer.reset_attempts()
@@ -468,6 +530,11 @@ class DaemonMonitor:
             }
         )
 
+        # Check for notification failures and send fallback alert
+        notification_errors = [e for e in errors if e.category == ErrorCategory.NOTIFICATION]
+        if notification_errors:
+            self._handle_notification_failure(notification_errors)
+
         # Handle each error
         for error in errors:
             await self._handle_error(error)
@@ -558,6 +625,31 @@ class DaemonMonitor:
                     self._notify_fix_success(error, result.message)
                 else:
                     self._notify_fix_failure(error, result.message)
+
+    def _handle_notification_failure(self, errors: list[AnalyzedError]) -> None:
+        """Send a simplified fallback notification when notification system is failing.
+
+        Uses ASCII-only content and no action buttons to maximize delivery chance,
+        since the original notification may have failed due to encoding issues.
+        """
+        logger.warning(
+            "notification_system_failing",
+            error_count=len(errors),
+        )
+
+        # Use a separate notifier with no rate limit for this meta-alert
+        fallback = NtfyNotifier(topic=self.notifier.topic, rate_limit_seconds=3600)
+        fallback.send(
+            message=(
+                "Aurel2 notification system is failing.\n\n"
+                "Trade approval alerts may not be delivered.\n"
+                "Check daemon logs for notification_error entries."
+            ),
+            title="Aurel2: Notification System Failing",
+            tags=["warning"],
+            priority="high",
+            category="notification_system_failure",
+        )
 
     def _notify_error(self, error: AnalyzedError) -> None:
         """Send notification for an error (rate limited to 1 per hour per category)."""

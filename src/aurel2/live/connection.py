@@ -88,6 +88,11 @@ class IBKRConnection:
     def is_connected(self) -> bool:
         return self.broker is not None and self.broker.is_connected
 
+    def _on_connectivity_restored(self) -> None:
+        """Called when IBKR upstream connectivity is restored (error 1102)."""
+        logger.info("ibkr_connectivity_restored_resetting_circuit_breaker")
+        self.circuit_breaker.record_success()
+
     async def connect(self, launch_tws_if_needed: bool = True, max_retries: int = 3) -> bool:
         """
         Connect to IBKR.
@@ -126,6 +131,8 @@ class IBKRConnection:
                 connected = await self.broker.connect()
                 if connected:
                     logger.info("ibkr_connected", port=self.port, paper=self.paper)
+                    # Reset circuit breaker when IBKR upstream connectivity restores (error 1102)
+                    self.broker.on_connectivity_restored = self._on_connectivity_restored
                     self._start_heartbeat()
                     self.circuit_breaker.record_success()
                     return True
@@ -306,7 +313,9 @@ class IBKRConnection:
         reconnect_attempts = 0
         max_reconnect_attempts = 3
         total_consecutive_failures = 0
-        max_total_failures = 30  # ~30 min at 60s intervals → fatal exit
+        max_total_failures = 10  # ~10 min at 60s intervals → fatal exit
+        upstream_down_consecutive = 0
+        max_upstream_down_wait = 3  # Wait max 3 min for error 1102 before hard reconnect
 
         while True:
             try:
@@ -318,20 +327,40 @@ class IBKRConnection:
                     logger.debug("ibkr_heartbeat_sent")
                     reconnect_attempts = 0
                     total_consecutive_failures = 0
+                    upstream_down_consecutive = 0
                 elif (
                     self.broker
                     and self.broker.ib.isConnected()
                     and not self.broker._server_connected
                 ):
                     # Gateway TCP is up but IBKR upstream is down (error 1100).
-                    # Don't attempt reconnection — wait for error 1102 to restore.
+                    upstream_down_consecutive += 1
                     total_consecutive_failures += 1
                     logger.warning(
                         "ibkr_heartbeat_upstream_down",
                         total_failures=total_consecutive_failures,
+                        upstream_down_minutes=upstream_down_consecutive,
+                        max_wait=max_upstream_down_wait,
                     )
+
+                    # If upstream has been down too long, stop waiting for 1102
+                    # and attempt a hard disconnect/reconnect
+                    if upstream_down_consecutive >= max_upstream_down_wait:
+                        logger.warning(
+                            "ibkr_upstream_down_timeout",
+                            message="Giving up waiting for error 1102, attempting hard reconnect",
+                        )
+                        upstream_down_consecutive = 0
+                        # Disconnect and try fresh connection
+                        try:
+                            await self.broker.disconnect()
+                        except Exception:
+                            pass
+                        self.broker = None
+                        # Fall through to fatal exit check
                 else:
                     total_consecutive_failures += 1
+                    upstream_down_consecutive = 0
                     logger.warning(
                         "ibkr_heartbeat_connection_lost",
                         reconnect_attempts=reconnect_attempts,

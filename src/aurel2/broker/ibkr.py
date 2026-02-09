@@ -96,6 +96,7 @@ class IBKRBroker(BaseBroker):
         self._connected = False
         self._server_connected = True  # Track IBKR server connectivity (Error 1100/1102)
         self._client_id_conflict = False
+        self.on_connectivity_restored: Optional[callable] = None  # Callback for error 1102
 
     @property
     def is_connected(self) -> bool:
@@ -153,6 +154,8 @@ class IBKRBroker(BaseBroker):
         elif errorCode in (1101, 1102):
             logger.info("ibkr_server_connectivity_restored", error_code=errorCode, message=errorString)
             self._server_connected = True
+            if self.on_connectivity_restored:
+                self.on_connectivity_restored()
 
     async def disconnect(self) -> None:
         """Disconnect from IB."""

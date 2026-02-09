@@ -62,10 +62,33 @@ services:
 
       # Claude Code auth (mount from host - needs to be writable for CLI)
       - ${CLAUDE_CONFIG_PATH:-./claude-config}:/root/.claude
+
+      # Docker socket for restarting IB Gateway container on persistent disconnection
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - trading-net
     # Command uses environment variables via typer's envvar support
     command: ["live", "--paper"]
+
+  # Daemon Monitor - watches health and auto-recovers
+  monitor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      aurel2:
+        condition: service_healthy
+    environment:
+      NTFY_TOPIC: ${NTFY_TOPIC:-aurel2}
+    volumes:
+      # Share aurel2 data volume to read heartbeat file
+      - aurel2-data:/root/.aurel2
+      # Docker socket for restarting IB Gateway container
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - trading-net
+    command: ["monitor", "--paper"]
 
   # Dashboard (optional web UI)
   dashboard:

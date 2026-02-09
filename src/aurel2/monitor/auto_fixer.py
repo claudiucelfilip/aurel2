@@ -74,6 +74,8 @@ class AutoFixer:
         # Route to appropriate fix method
         if action == "restart_daemon":
             result = self._restart_daemon(context)
+        elif action == "restart_ib_gateway":
+            result = self._restart_ib_gateway(context)
         elif action == "wait_and_restart":
             result = self._wait_and_restart(context)
         elif action == "kill_daemon":
@@ -119,23 +121,99 @@ class AutoFixer:
         }
 
     def _restart_daemon(self, context: dict) -> FixResult:
-        """Kill existing daemon and start a new one."""
+        """Restart the daemon — tries Docker container restart first, falls back to process restart."""
         logger.info("auto_fixer_restarting_daemon", paper=self.paper, dry_run=self.dry_run)
 
-        # Kill existing daemon
+        # Try Docker container restart first (when running as separate container)
+        docker_result = self._restart_docker_container("aurel2-trading-aurel2-1")
+        if docker_result.success:
+            return docker_result
+
+        # Fall back to process-level restart (local/non-Docker mode)
         kill_result = self._kill_daemon()
         if not kill_result.success:
             logger.warning("kill_daemon_failed", message=kill_result.message)
-            # Continue anyway - process might already be dead
 
-        # Wait for process to fully terminate
         time.sleep(2)
-
-        # Ensure IB Gateway is running before starting daemon
         self._ensure_gateway_running()
-
-        # Start new daemon
         return self._start_daemon()
+
+    def _restart_docker_container(self, container_name: str) -> FixResult:
+        """Restart a Docker container by name."""
+        try:
+            result = subprocess.run(
+                ["docker", "restart", container_name],
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            if result.returncode == 0:
+                logger.info("docker_container_restarted", container=container_name)
+                time.sleep(10)  # Wait for container to come up
+                return FixResult(
+                    success=True,
+                    message=f"Docker container {container_name} restarted",
+                    action_taken="restart_daemon",
+                    attempts_remaining=0,
+                )
+            logger.warning("docker_restart_failed", container=container_name, stderr=result.stderr[:200])
+        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+            logger.debug("docker_restart_not_available", error=str(e))
+
+        return FixResult(
+            success=False,
+            message="Docker restart not available, falling back to process restart",
+            action_taken="restart_daemon",
+            attempts_remaining=0,
+        )
+
+    def _restart_ib_gateway(self, context: dict) -> FixResult:
+        """Restart the IB Gateway Docker container.
+
+        Uses the Docker socket (must be mounted) to restart the ib-gateway
+        container when the gateway has authentication or connectivity issues
+        that daemon restarts can't fix.
+        """
+        logger.info("auto_fixer_restarting_ib_gateway", reason=context.get("reason", ""))
+
+        # Try docker compose restart first (works if docker CLI is available)
+        for cmd in [
+            ["docker", "compose", "-p", "aurel2-trading", "restart", "ib-gateway"],
+            ["docker", "restart", "aurel2-trading-ib-gateway-1"],
+        ]:
+            try:
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                )
+                if result.returncode == 0:
+                    logger.info("ib_gateway_restarted", cmd=" ".join(cmd))
+                    # Wait for gateway to become healthy
+                    time.sleep(30)
+                    return FixResult(
+                        success=True,
+                        message=f"IB Gateway container restarted successfully",
+                        action_taken="restart_ib_gateway",
+                        attempts_remaining=0,
+                    )
+                else:
+                    logger.warning(
+                        "ib_gateway_restart_cmd_failed",
+                        cmd=" ".join(cmd),
+                        stderr=result.stderr[:200],
+                    )
+            except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+                logger.warning("ib_gateway_restart_cmd_error", cmd=" ".join(cmd), error=str(e))
+                continue
+
+        return FixResult(
+            success=False,
+            message="Failed to restart IB Gateway container (docker not available or socket not mounted)",
+            action_taken="restart_ib_gateway",
+            attempts_remaining=0,
+        )
 
     def _ensure_gateway_running(self) -> bool:
         """Check if IB Gateway is running, launch it if not."""
