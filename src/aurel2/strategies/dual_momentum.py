@@ -5,7 +5,7 @@ from datetime import date
 import pandas as pd
 import structlog
 
-from aurel2.core.models import Asset, AssetClass, MomentumScore, Signal, SignalAction
+from aurel2.core.models import Asset, AssetCategory, AssetClass, MomentumScore, Signal, SignalAction
 from aurel2.data.momentum import calculate_momentum_scores
 
 logger = structlog.get_logger()
@@ -223,20 +223,31 @@ class DualMomentumStrategy:
                 )
 
         # Check if winner beats current holding by threshold
+        # Asymmetric thresholds: harder to leave equity (15%), easier to return (5%)
         momentum_diff = winner_score.momentum_12m - current_score.momentum_12m
 
-        if winner_class != self.current_holding and momentum_diff > self.switch_threshold:
-            # Switch to new winner
-            old_holding = self.current_holding
-            self.current_holding = winner_class
-            self.is_pilot_position = False
-            return Signal(
-                date=calc_date,
-                action=SignalAction.BUY,
-                asset=winner_score.asset,
-                reason=f"Switching from {old_holding.value} ({current_score.momentum_12m:.2%}) to {winner_class.value} ({winner_score.momentum_12m:.2%}). Diff: {momentum_diff:.2%} > {self.switch_threshold:.2%}",
-                momentum_scores=scores,
-            )
+        if winner_class != self.current_holding and momentum_diff > 0:
+            current_is_equity = current_score.asset.category == AssetCategory.EQUITY
+            winner_is_equity = winner_score.asset.category == AssetCategory.EQUITY
+
+            if current_is_equity and not winner_is_equity:
+                effective_threshold = 0.15  # Hard to leave equity
+            elif not current_is_equity and winner_is_equity:
+                effective_threshold = 0.05  # Easy to return to equity
+            else:
+                effective_threshold = self.switch_threshold  # Same-category default
+
+            if momentum_diff > effective_threshold:
+                old_holding = self.current_holding
+                self.current_holding = winner_class
+                self.is_pilot_position = False
+                return Signal(
+                    date=calc_date,
+                    action=SignalAction.BUY,
+                    asset=winner_score.asset,
+                    reason=f"Switching from {old_holding.value} ({current_score.momentum_12m:.2%}) to {winner_class.value} ({winner_score.momentum_12m:.2%}). Diff: {momentum_diff:.2%} > {effective_threshold:.2%}",
+                    momentum_scores=scores,
+                )
 
         # Hold current position
         position_type = "PILOT " if self.is_pilot_position else ""

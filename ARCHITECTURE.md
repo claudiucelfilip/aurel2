@@ -314,7 +314,7 @@ The core strategy using 12-month relative momentum with absolute momentum filter
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `lookback_months` | 12 | Momentum calculation period |
-| `switch_threshold` | 0.10 | Only switch if winner beats current by >10% |
+| `switch_threshold` | 0.10 | Same-category switch threshold (asymmetric: 15% to leave equity, 5% to return) |
 | `cash_rate` | 0.04 | Baseline for absolute momentum |
 
 **Logic**:
@@ -1269,11 +1269,12 @@ use `--no-ai` backtests to isolate strategy impact from AI variability.
 
 **Current baseline (main branch, Feb 2026):**
 
-Dual momentum primary + calm-hold with negative momentum escape hatch.
+Dual momentum primary + calm-hold with negative momentum escape hatch +
+asymmetric switch thresholds (15% to leave equity, 5% to return, 10% same-category).
 
 | Period | Return | Alpha vs SPY | CAGR | Max DD | Sharpe | Trades |
 |--------|--------|-------------|------|--------|--------|--------|
-| 10yr (2016-2026) | 500.70% | +164.09% | 19.65% | 17.38% | 0.99 | 10 |
+| 10yr (2016-2026) | 636.60% | +299.98% | 22.12% | 17.38% | 1.05 | 7 |
 | 5yr (2021-2026) | 252.76% | +163.10% | 28.70% | 17.07% | 1.17 | 4 |
 
 **Original baseline (before calm-hold + escape hatch):**
@@ -1632,7 +1633,7 @@ Every metric improved.
    data closer to training cutoff. Don't trust AI backtest alpha unless
    validated on truly out-of-sample data.
 
-### Experiment 11: Asymmetric Switch Thresholds — Equity Bias (Under Review)
+### Experiment 11: Asymmetric Switch Thresholds — Equity Bias (Adopted)
 
 **Change:** Different switch thresholds based on asset category direction:
 - Leaving equity for non-equity: 15% threshold (harder to leave)
@@ -1659,8 +1660,9 @@ bull, avoiding unnecessary rotations to bonds/gold. The 5Y results are
 identical — the asymmetric thresholds only matter during category transitions,
 which didn't occur in the recent 5Y period.
 
-**Verdict:** Under review for production adoption. Best single-experiment result
-so far.
+**Verdict:** Adopted. Best single-experiment result — doubles 10Y alpha with no
+downside. Integrated into `DualMomentumStrategy.generate_signal()` at the
+switch threshold check.
 
 ### Experiment 12: Canary Gate — SPY > 200-SMA Blocks Equity Exit (No Effect)
 
