@@ -194,7 +194,7 @@ class Executor:
                     fill_price=order_result.avg_fill_price,
                 )
 
-            success = order_result.status == "FILLED"
+            success = order_result.status in ("FILLED", "PARTIAL")
             return ExecutionResult(
                 success=success,
                 action="buy",
@@ -276,7 +276,7 @@ class Executor:
                     fill_price=order_result.avg_fill_price,
                 )
 
-            success = order_result.status == "FILLED"
+            success = order_result.status in ("FILLED", "PARTIAL")
             return ExecutionResult(
                 success=success,
                 action="sell",

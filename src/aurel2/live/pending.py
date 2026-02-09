@@ -51,16 +51,9 @@ class PendingDecision:
     # Rich context for display
     deterministic_action: Optional[str] = None
     deterministic_asset: Optional[str] = None
-    ai_agrees: bool = True
-    ai_action: Optional[str] = None
-    ai_asset: Optional[str] = None
-    ai_reasoning: Optional[str] = None
     strategies: list = field(default_factory=list)
     market_regime: Optional[str] = None
     current_holding: Optional[str] = None
-
-    # AI risk commentary (always-on advisory)
-    ai_commentary: Optional[str] = None
 
     # Position sizing from regime detection (0.0 to 1.0)
     position_size_pct: float = 1.0
@@ -131,17 +124,12 @@ class PendingManager:
         confidence: float,
         deterministic_action: Optional[str] = None,
         deterministic_asset: Optional[str] = None,
-        ai_agrees: bool = True,
-        ai_action: Optional[str] = None,
-        ai_asset: Optional[str] = None,
-        ai_reasoning: Optional[str] = None,
         strategies: Optional[list] = None,
         market_regime: Optional[str] = None,
         current_holding: Optional[str] = None,
         original_price: Optional[float] = None,
         position_size_pct: float = 1.0,
         journal_decision_id: Optional[str] = None,
-        ai_commentary: Optional[str] = None,
     ) -> PendingDecision:
         """Create a new pending decision."""
         decision_id = str(uuid.uuid4())[:8]
@@ -159,14 +147,9 @@ class PendingManager:
             approval_url=f"{self.approval_base_url}/{decision_id}",
             deterministic_action=deterministic_action,
             deterministic_asset=deterministic_asset,
-            ai_agrees=ai_agrees,
-            ai_action=ai_action,
-            ai_asset=ai_asset,
-            ai_reasoning=ai_reasoning,
             strategies=strategies or [],
             market_regime=market_regime,
             current_holding=current_holding,
-            ai_commentary=ai_commentary,
             position_size_pct=position_size_pct,
             journal_decision_id=journal_decision_id,
         )
@@ -198,10 +181,6 @@ class PendingManager:
                         "confidence": decision.confidence,
                         "deterministic_action": decision.deterministic_action,
                         "deterministic_asset": decision.deterministic_asset,
-                        "ai_agrees": decision.ai_agrees,
-                        "ai_action": decision.ai_action,
-                        "ai_asset": decision.ai_asset,
-                        "ai_reasoning": decision.ai_reasoning[:300] if decision.ai_reasoning else None,
                         "strategies_agree": all(
                             s.get("action") == decision.action.upper()
                             for s in decision.strategies
@@ -209,7 +188,6 @@ class PendingManager:
                         "strategies": decision.strategies,
                         "market_regime": decision.market_regime,
                         "current_holding": decision.current_holding,
-                        "ai_commentary": decision.ai_commentary[:300] if decision.ai_commentary else None,
                     },
                     timeout=10.0,
                 )

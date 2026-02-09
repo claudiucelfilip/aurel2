@@ -27,17 +27,12 @@ interface Decision {
   // Rich context
   deterministic_action?: string;
   deterministic_asset?: string;
-  ai_agrees?: boolean;
-  ai_action?: string;
-  ai_asset?: string;
-  ai_reasoning?: string;
   strategies_agree?: boolean;
   strategies?: StrategySignal[];
   market_regime?: string;
   spy_price?: number;
   drawdown?: number;
   current_holding?: string;
-  ai_commentary?: string;
 }
 
 // Generate the approval HTML page
@@ -73,41 +68,28 @@ function generateApprovalHTML(decision: Decision): string {
   }).join('') || '';
 
   // Determine agreement status
-  const hasRichContext = decision.ai_agrees !== undefined;
-  const aiAgrees = decision.ai_agrees ?? true;
   const strategiesAgree = decision.strategies_agree ?? true;
-  const allAgree = aiAgrees && strategiesAgree;
 
   // Agreement banner
   let agreementBanner = '';
-  if (hasRichContext) {
-    if (allAgree) {
+  if (decision.strategies && decision.strategies.length > 0) {
+    if (strategiesAgree) {
       agreementBanner = `
         <div class="agreement-banner agree">
           <div class="agreement-icon">✓</div>
           <div class="agreement-text">
-            <strong>Full Agreement</strong>
-            <span>All 3 strategies and the AI recommend the same action</span>
+            <strong>Strategies Agree</strong>
+            <span>All 3 strategies recommend the same action</span>
           </div>
         </div>
       `;
-    } else if (!strategiesAgree && aiAgrees) {
+    } else {
       agreementBanner = `
         <div class="agreement-banner partial">
           <div class="agreement-icon">⚖️</div>
           <div class="agreement-text">
-            <strong>Mixed Strategy Signals</strong>
-            <span>The 3 strategies below don't fully agree, but the AI confirms the final recommendation is sound</span>
-          </div>
-        </div>
-      `;
-    } else if (!aiAgrees) {
-      agreementBanner = `
-        <div class="agreement-banner disagree">
-          <div class="agreement-icon">🤖</div>
-          <div class="agreement-text">
-            <strong>AI Override</strong>
-            <span>The AI suggests a different action than the base system</span>
+            <strong>Mixed Signals</strong>
+            <span>The 3 strategies below don't fully agree</span>
           </div>
         </div>
       `;
@@ -217,11 +199,6 @@ function generateApprovalHTML(decision: Decision): string {
     .agreement-banner.partial {
       background: rgba(245, 158, 11, 0.15);
       border: 1px solid rgba(245, 158, 11, 0.3);
-    }
-
-    .agreement-banner.disagree {
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.3);
     }
 
     .agreement-icon {
@@ -366,75 +343,6 @@ function generateApprovalHTML(decision: Decision): string {
       color: #f59e0b;
     }
 
-    .comparison-section {
-      margin-bottom: 20px;
-    }
-
-    .comparison-title {
-      font-size: 11px;
-      color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
-      font-weight: 600;
-      text-align: center;
-    }
-
-    .comparison-grid {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-    }
-
-    .comparison-box {
-      flex: 1;
-      max-width: 140px;
-      background: rgba(15, 23, 42, 0.5);
-      padding: 14px;
-      border-radius: 12px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .comparison-box.original {
-      border: 1px solid rgba(100, 116, 139, 0.3);
-    }
-
-    .comparison-box.override {
-      border: 2px solid rgba(139, 92, 246, 0.5);
-      background: rgba(139, 92, 246, 0.1);
-    }
-
-    .comparison-box.agree {
-      border: 2px solid rgba(34, 197, 94, 0.5);
-      background: rgba(34, 197, 94, 0.1);
-    }
-
-    .comparison-label {
-      font-size: 10px;
-      color: #64748b;
-      text-transform: uppercase;
-    }
-
-    .comparison-action {
-      font-size: 20px;
-      font-weight: 700;
-    }
-
-    .comparison-asset {
-      font-size: 14px;
-      color: #cbd5e1;
-      font-weight: 500;
-    }
-
-    .comparison-arrow {
-      font-size: 24px;
-      color: #64748b;
-    }
-
     .confidence-bar {
       height: 6px;
       background: #334155;
@@ -568,29 +476,10 @@ function generateApprovalHTML(decision: Decision): string {
 
       ${agreementBanner}
 
-      ${decision.deterministic_action ? `
-      <div class="comparison-section">
-        <div class="comparison-title">${decision.ai_agrees === false ? 'What Changed' : 'Decision Summary'}</div>
-        <div class="comparison-grid">
-          <div class="comparison-box original">
-            <span class="comparison-label">Rules Say</span>
-            <span class="comparison-action" style="color: ${actionColors[decision.deterministic_action?.toUpperCase()] || '#6b7280'}">${decision.deterministic_action?.toUpperCase()}</span>
-            <span class="comparison-asset">${decision.deterministic_asset || '-'}</span>
-          </div>
-          <div class="comparison-arrow">${decision.ai_agrees === false ? '→' : '='}</div>
-          <div class="comparison-box ${decision.ai_agrees === false ? 'override' : 'agree'}">
-            <span class="comparison-label">AI Says</span>
-            <span class="comparison-action" style="color: ${actionColors[decision.ai_action?.toUpperCase()] || '#6b7280'}">${decision.ai_action?.toUpperCase()}</span>
-            <span class="comparison-asset">${decision.ai_asset || decision.deterministic_asset || '-'}</span>
-          </div>
-        </div>
-      </div>
-      ` : `
       <div class="action-section">
         <div class="action-badge">${decision.action}</div>
         <div class="symbol">${decision.symbol}</div>
       </div>
-      `}
 
       ${marketHtml}
 
@@ -613,17 +502,8 @@ function generateApprovalHTML(decision: Decision): string {
 
       <div class="section">
         <div class="label">Why This Recommendation</div>
-        <div class="reasoning-text">${escapeHtml(decision.ai_reasoning || decision.reasoning)}</div>
+        <div class="reasoning-text">${escapeHtml(decision.reasoning)}</div>
       </div>
-
-      ${decision.ai_commentary ? `
-      <div class="section">
-        <div class="label">AI Risk Assessment</div>
-        <div class="reasoning-text" style="border-left: 3px solid #3b82f6; background: rgba(59, 130, 246, 0.08);">
-          ${escapeHtml(decision.ai_commentary)}
-        </div>
-      </div>
-      ` : ''}
 
       ${decision.current_holding && decision.current_holding !== decision.symbol ? `
       <div class="section">
@@ -761,14 +641,12 @@ export default async function handler(
 
       // POST - Creates new decision
       case 'POST': {
-        const { 
+        const {
           action, symbol, reasoning, confidence,
           // Rich context fields
           deterministic_action, deterministic_asset,
-          ai_agrees, ai_action, ai_asset, ai_reasoning,
           strategies_agree, strategies,
           market_regime, spy_price, drawdown, current_holding,
-          ai_commentary
         } = req.body;
 
         // Validate required fields
@@ -812,17 +690,12 @@ export default async function handler(
           // Rich context (optional fields)
           deterministic_action,
           deterministic_asset,
-          ai_agrees,
-          ai_action,
-          ai_asset,
-          ai_reasoning,
           strategies_agree,
           strategies,
           market_regime,
           spy_price,
           drawdown,
           current_holding,
-          ai_commentary,
         };
 
         // Store in KV with 7-day expiration

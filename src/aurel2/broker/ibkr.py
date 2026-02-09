@@ -66,18 +66,23 @@ class IBKRBroker(BaseBroker):
         "VWRA": {"symbol": "VWRA", "exchange": "SBF", "currency": "EUR"},  # Vanguard All-World
         "CSPX": {"symbol": "CSPX", "exchange": "SBF", "currency": "EUR"},  # iShares S&P 500
         "AGGH": {"symbol": "AGGH", "exchange": "SBF", "currency": "EUR"},  # iShares Global Agg Bond
-        # US ETFs — all 11 tradeable symbols
-        "SPY": {"symbol": "SPY", "exchange": "ARCA", "currency": "USD"},
-        "EFA": {"symbol": "EFA", "exchange": "ARCA", "currency": "USD"},
-        "EEM": {"symbol": "EEM", "exchange": "ARCA", "currency": "USD"},
-        "XLK": {"symbol": "XLK", "exchange": "ARCA", "currency": "USD"},
-        "XLF": {"symbol": "XLF", "exchange": "ARCA", "currency": "USD"},
-        "XLE": {"symbol": "XLE", "exchange": "ARCA", "currency": "USD"},
-        "XLV": {"symbol": "XLV", "exchange": "ARCA", "currency": "USD"},
-        "AGG": {"symbol": "AGG", "exchange": "ARCA", "currency": "USD"},
-        "TLT": {"symbol": "TLT", "exchange": "ARCA", "currency": "USD"},
-        "GLD": {"symbol": "GLD", "exchange": "ARCA", "currency": "USD"},
-        "DBC": {"symbol": "DBC", "exchange": "ARCA", "currency": "USD"},
+        # US ETFs — use SMART routing for best execution
+        "SPY": {"symbol": "SPY", "exchange": "SMART", "currency": "USD"},
+        "EFA": {"symbol": "EFA", "exchange": "SMART", "currency": "USD"},
+        "EEM": {"symbol": "EEM", "exchange": "SMART", "currency": "USD"},
+        "XLK": {"symbol": "XLK", "exchange": "SMART", "currency": "USD"},
+        "XLF": {"symbol": "XLF", "exchange": "SMART", "currency": "USD"},
+        "XLE": {"symbol": "XLE", "exchange": "SMART", "currency": "USD"},
+        "XLV": {"symbol": "XLV", "exchange": "SMART", "currency": "USD"},
+        "AGG": {"symbol": "AGG", "exchange": "SMART", "currency": "USD"},
+        "TLT": {"symbol": "TLT", "exchange": "SMART", "currency": "USD"},
+        "SHY": {"symbol": "SHY", "exchange": "SMART", "currency": "USD"},
+        "IEF": {"symbol": "IEF", "exchange": "SMART", "currency": "USD"},
+        "TIP": {"symbol": "TIP", "exchange": "SMART", "currency": "USD"},
+        "VNQ": {"symbol": "VNQ", "exchange": "SMART", "currency": "USD"},
+        "IJS": {"symbol": "IJS", "exchange": "SMART", "currency": "USD"},
+        "GLD": {"symbol": "GLD", "exchange": "SMART", "currency": "USD"},
+        "DBC": {"symbol": "DBC", "exchange": "SMART", "currency": "USD"},
     }
 
     def __init__(
@@ -126,6 +131,9 @@ class IBKRBroker(BaseBroker):
             )
             self._connected = True
             self._server_connected = True
+
+            # Accept delayed market data when live subscription isn't available
+            self.ib.reqMarketDataType(3)
 
             # Register permanent error handler for server connectivity
             self.ib.errorEvent -= on_connect_error
@@ -246,7 +254,7 @@ class IBKRBroker(BaseBroker):
             return Stock(symbol=symbol, exchange="SMART", currency="USD")
 
     async def get_market_price(self, symbol: str) -> Optional[float]:
-        """Get current market price."""
+        """Get current market price (live or delayed)."""
         if not self.is_connected:
             return None
 
@@ -259,6 +267,12 @@ class IBKRBroker(BaseBroker):
             await asyncio.sleep(2)  # Wait for data
 
             price = ticker.marketPrice()
+
+            # Delayed data can take longer to arrive — retry once
+            if not price or not (price > 0):
+                await asyncio.sleep(3)
+                price = ticker.marketPrice()
+
             self.ib.cancelMktData(contract)
 
             if price and price > 0:
@@ -303,7 +317,7 @@ class IBKRBroker(BaseBroker):
         trade = self.ib.placeOrder(contract, ib_order)
 
         # Wait for fill (with timeout)
-        timeout = 30  # seconds
+        timeout = 60  # seconds
         for _ in range(timeout * 10):
             if trade.isDone():
                 break
@@ -368,7 +382,7 @@ class IBKRBroker(BaseBroker):
             )
 
         fill_ratio = order_result.filled_quantity / expected_shares if expected_shares > 0 else 0
-        if fill_ratio < 0.95:
+        if fill_ratio < 0.80:
             return OrderVerification(
                 verified=False,
                 expected_shares=expected_shares,

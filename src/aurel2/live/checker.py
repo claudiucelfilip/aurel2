@@ -322,15 +322,11 @@ class Checker:
         if decision.action.value == "hold":
             # No action needed, but notify
             hold_msg = f"HOLD {current_holding or 'cash'}"
-            ai_note = ""
-            if ai_advice and ai_advice.risk_commentary:
-                ai_note = f"\n\nAI Note: {ai_advice.risk_commentary[:150]}"
 
             self.notifier.send(
                 message=(
                     f"{hold_msg}\n"
                     f"Confidence: {decision.confidence:.0%}"
-                    f"{ai_note}"
                 ),
                 title=f"Aurel2: HOLD {current_holding or 'cash'}",
                 tags=["white_check_mark"],
@@ -621,58 +617,31 @@ class Checker:
                     "confidence": sig.get("confidence", 0.5),
                 })
 
-        # Determine if AI agrees and extract AI info
-        ai_agrees = True
-        ai_action = None
-        ai_asset = None
-        ai_reasoning = None
-        if ai_advice:
-            ai_agrees = ai_advice.agrees_with_deterministic
-            ai_action = ai_advice.recommended_action
-            ai_asset = ai_advice.recommended_asset
-            ai_reasoning = ai_advice.reasoning
-
-        # Create pending decision with AI advice context
+        # Create pending decision
         pending = self.pending_manager.create_decision(
             urgency=urgency,
             action=decision.action.value,
             symbol=decision.asset_symbol,
             reasoning=decision.reasoning,
             confidence=decision.confidence,
-            deterministic_action=ai_advice.deterministic_action if ai_advice else decision.action.value,
-            deterministic_asset=ai_advice.deterministic_asset if ai_advice else decision.asset_symbol,
-            ai_agrees=ai_agrees,
-            ai_action=ai_action,
-            ai_asset=ai_asset,
-            ai_reasoning=ai_reasoning,
+            deterministic_action=decision.action.value,
+            deterministic_asset=decision.asset_symbol,
             strategies=strategy_context,
             market_regime=market_context.get("regime"),
             current_holding=current_holding,
             original_price=original_price,
             position_size_pct=decision.position_size_pct,
             journal_decision_id=journal_decision_id,
-            ai_commentary=ai_advice.risk_commentary if ai_advice else None,
         )
 
         # Post to Vercel endpoint
         await self.pending_manager.post_to_approval_endpoint(pending)
 
-        # Send notification with AI context if relevant
+        # Send notification
         priority = "high" if urgency == DecisionUrgency.URGENT else "default"
         tags = ["warning", "chart_with_upwards_trend"] if urgency == DecisionUrgency.URGENT else ["question", "chart_with_upwards_trend"]
 
-        # Add robot tag if AI is involved
-        if ai_advice and not ai_agrees:
-            tags.append("robot")
-
         timeout_mins = pending.timeout_seconds() // 60
-
-        # Build message with AI context
-        ai_context = ""
-        if ai_advice and not ai_agrees:
-            ai_context = f"\n\nAI Override: {ai_advice.recommended_action.upper()} {ai_advice.recommended_asset or ''}\nAI Reasoning: {ai_advice.reasoning[:100]}..."
-        elif ai_advice and ai_advice.risk_commentary:
-            ai_context = f"\n\nAI Note: {ai_advice.risk_commentary[:100]}"
 
         self.notifier.send(
             message=(
@@ -680,8 +649,7 @@ class Checker:
                 f"Action: {decision.action.value.upper()} {decision.asset_symbol or ''}\n"
                 f"Confidence: {decision.confidence:.0%}\n"
                 f"Timeout: {timeout_mins} minutes\n\n"
-                f"Reasoning: {decision.reasoning[:150]}..."
-                f"{ai_context}\n\n"
+                f"Reasoning: {decision.reasoning[:150]}...\n\n"
                 f"Approve/Reject: {pending.approval_url}"
             ),
             title=f"Aurel2: {decision.action.value.upper()} {decision.asset_symbol or ''}",
