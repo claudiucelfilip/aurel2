@@ -609,8 +609,8 @@ class AgentOrchestrator:
         # Calculate timeout
         timeout_hours = self._calculate_timeout(decision_type, urgency)
 
-        # Select the best action using dynamic weights
-        action, asset_symbol, confidence, agreement_count = self._select_best_action(
+        # Use weighted vote only to detect if any trade signal exists
+        voted_action, voted_asset, voted_confidence, agreement_count = self._select_best_action(
             signals, market_context, regime
         )
 
@@ -619,19 +619,32 @@ class AgentOrchestrator:
         if (
             current_holding
             and current_holding not in ("CASH", None)
-            and action == SignalAction.BUY
-            and asset_symbol != current_holding
+            and voted_action == SignalAction.BUY
+            and voted_asset != current_holding
             and market_context.get("drawdown", 0.0) < self.calm_market_hold_threshold
             and decision_type != DecisionType.URGENT
         ):
             action = SignalAction.HOLD
             asset_symbol = None
+            confidence = voted_confidence
             calm_hold_applied = True
+        elif "dual_momentum" in signals:
+            # DM-primary: use dual momentum signal directly for trade decisions.
+            # The 3-strategy weighted vote dilutes DM's conviction and hurts alpha.
+            # Other strategies still contribute to decision classification and urgency.
+            dm = signals["dual_momentum"]
+            dm_action_str = dm.get("action", "hold")
+            action = SignalAction(dm_action_str) if dm_action_str in ("buy", "sell", "hold") else SignalAction.HOLD
+            asset_symbol = dm.get("asset_symbol")
+            confidence = dm.get("confidence", 0.8)
+        else:
+            # Fallback to weighted vote if dual_momentum is missing
+            action = voted_action
+            asset_symbol = voted_asset
+            confidence = voted_confidence
 
-        # Calculate position size based on confidence and agreement
-        position_size = self._calculate_position_size(
-            confidence, agreement_count, total_strategies=len(signals)
-        )
+        # Full position sizing — DM-primary trades with full conviction
+        position_size = 1.0
 
         # Determine if approval is needed
         # ROUTINE decisions don't need approval
@@ -651,8 +664,9 @@ class AgentOrchestrator:
         elif decision_type == DecisionType.URGENT:
             reasoning = f"{regime_info}Urgent condition detected. Recommended action: {action.value.upper()} (position: {position_size:.0%})"
         else:
+            dm_note = " (DM-primary)" if "dual_momentum" in signals else ""
             actions = [s.get("action", "unknown") for s in signals.values()]
-            reasoning = f"{regime_info}Strategy disagreement: {actions}. Weighted vote: {action.value.upper()} ({agreement_count}/3 agree, position: {position_size:.0%})"
+            reasoning = f"{regime_info}Strategy signals: {actions}. Action: {action.value.upper()}{dm_note} ({agreement_count}/3 agree)"
 
         return AgentDecision(
             decision_type=decision_type,
