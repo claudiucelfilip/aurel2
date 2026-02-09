@@ -109,6 +109,72 @@ This is config 2 in our backtest: 15.0% CAGR (10y), 13.4% CAGR (5y). It gives up
 
 ---
 
+## 20-Year Regime Analysis (2026-02-09)
+
+Extended the backtest from 10y to a full 20-year history (2005-2026) to test across different market regimes. Also compared 6-month and 9-month lookback periods against the production 12-month.
+
+**Scripts**: `scripts/backtest_periods.py`, `scripts/backtest_lookback.py`
+
+### Performance by Market Regime (production strategy, 12m lookback)
+
+| Period | Dates | Strat CAGR | SPY CAGR | Alpha | MaxDD |
+|---|---|---|---|---|---|
+| **Full 20y** | 2005-01 → 2026-02 | +11.1% | +10.7% | **+0.5%** | -53.3% |
+| Full 15y | 2010-01 → 2026-02 | +13.7% | +13.9% | -0.3% | -26.6% |
+| Pre-GFC Bull | 2005-01 → 2007-10 | +31.7% | +11.5% | **+20.3%** | -9.2% |
+| GFC Crash | 2007-10 → 2009-03 | -38.2% | -39.3% | **+1.1%** | -49.4% |
+| GFC Recovery | 2009-03 → 2013-01 | -0.2% | +22.7% | **-23.0%** | -26.6% |
+| Steady Bull | 2013-01 → 2016-01 | +13.0% | +14.0% | -1.0% | -9.7% |
+| Late Bull+COVID | 2016-01 → 2020-03 | +21.5% | +4.5% | **+16.9%** | -17.4% |
+| COVID V-shape | 2020-03 → 2022-01 | +32.5% | +55.3% | **-22.8%** | -10.1% |
+| Rate Hike Bear | 2022-01 → 2022-12 | +38.4% | -18.7% | **+57.1%** | -17.1% |
+| AI Bull | 2023-01 → 2026-02 | +18.1% | +22.9% | -4.8% | -14.9% |
+| GFC Full Cycle | 2005-01 → 2013-01 | +2.8% | +4.2% | -1.4% | -53.3% |
+| COVID Full Cycle | 2019-01 → 2023-12 | +26.0% | +15.6% | **+10.4%** | -17.1% |
+
+**Key findings**:
+- Strategy wins in **regime changes** (Rate Hike Bear +57% alpha, Pre-GFC Bull +20%, Late Bull+COVID +17%)
+- Strategy loses in **V-shaped recoveries** (GFC Recovery -23%, COVID V-shape -23%) — 12-month momentum is still pointing backward when the market turns
+- The -53.3% max drawdown is from the GFC — monthly rebalance too slow for Lehman
+- Over 20 years: $10,000 → $92,719 (strategy) vs $84,794 (SPY). Modest +0.5% alpha
+
+### Lookback Period Comparison
+
+**6-month lookback**: Decisively worse. Lost 11/12 periods vs 12-month. More whipsaw (32 trades vs 19 over 20y), didn't even fix the recovery problem (GFC Recovery still -0.9% CAGR). Killed the big winners — Rate Hike Bear dropped from +38.4% to +10.4%.
+
+**9-month lookback**: Interesting. Won 9/12 periods vs 12-month, +1.6% CAGR over full 20y.
+
+| Period | 12m CAGR | 9m CAGR | Winner |
+|---|---|---|---|
+| Full 20y | +11.1% | **+12.7%** | 9m |
+| Pre-GFC Bull | +31.7% | **+35.2%** | 9m |
+| GFC Recovery | -0.2% | **+1.0%** | 9m |
+| Steady Bull | +13.0% | **+18.8%** | 9m |
+| Late Bull+COVID | **+21.5%** | +4.1% | **12m** |
+| Rate Hike Bear | +38.4% | +38.4% | tie |
+| AI Bull | +18.1% | **+24.6%** | 9m |
+
+**Decision: Keep 12m in production.** Despite 9m winning most periods, the Late Bull+COVID collapse (+21.5% → +4.1%) is a 4-year period where 9m whipsawed during the 2018 correction while 12m sat tight. Additional concerns: overfitting risk (we tested 6/9/12 and picked the winner), the existing pilot entry system (3m lookback) already provides faster reaction, and max drawdown slightly worse (55.1% vs 53.3%). Note 9m as future research but don't change production.
+
+### Strategy Research: What Else Could Work?
+
+Researched complementary strategies from academic literature (Keller's VAA/PAA/DAA/BAA, ADM, volatility targeting, Faber's GTAA, Adaptive Asset Allocation). Key finding: **most of these are already implemented and tested** in `EnhancedMomentumStrategy`:
+
+| Strategy Concept | Already Tested? | Result |
+|---|---|---|
+| Canary universe (DAA/VAA) | Yes (`use_canary`) | -1.1% CAGR |
+| Multi-lookback ensemble (ADM) | Yes (`use_multi_lookback`) | Marginal improvement |
+| 200-day SMA filter (GTAA/Faber) | Yes (`use_sma_filter`) | -3.5% CAGR |
+| Volatility-weighted scoring (AAA) | Yes (`use_vol_weighting`) | -1% CAGR |
+| Absolute momentum gate (GEM) | Yes (`use_absolute_momentum`) | -4.9% CAGR |
+| Expanded defensive universe (BAA) | Yes (SHY/IEF/TIP/GLD) | Worse than AGG |
+
+**One untested idea**: Volatility-scaled position sizing as an orchestrator overlay (different from vol-weighted *scoring*). Instead of adjusting how assets are ranked, this adjusts *how much capital to deploy*: `position_size = target_vol / realized_vol`. Academic evidence suggests it more than doubles Sharpe ratio and cuts max drawdown significantly. However, given that every other "enhancement" hurt returns, skepticism is warranted.
+
+**Bottom line**: The strategy space has been thoroughly explored. The simple approach (12m momentum, 8% switch threshold, no defensive rotation) consistently wins over more complex alternatives. The 20-year backtest validates the 10-year findings across multiple market regimes.
+
+---
+
 ## Bugs Found & Fixed
 
 1. **ASSET_SYMBOL_MAP was module-level with hardcoded assets** — configs using CLASSIC_DEF (AGG) silently failed to trade because AGG wasn't in the map. Fixed by building from full ASSET_REGISTRY.
