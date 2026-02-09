@@ -25,6 +25,7 @@ dev = [
 ]
 broker = [
     "ib_insync>=0.9.86",
+    "tzdata>=2024.1",
 ]
 dashboard = [
     "fastapi>=0.100.0",
