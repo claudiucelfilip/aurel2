@@ -66,9 +66,9 @@ class EnhancedMomentumStrategy(BaseStrategy):
     Production configuration (backtested 2016-2026):
       - Classic SPY/EFA offensive universe (no dilution)
       - 8% switch threshold (only rotate on strong signals)
-      - Deep crash gate at -15% (protect against 2008-style events,
-        but don't trigger on normal corrections like 2022)
-      - Result: 15.0% CAGR (10y), 1.03 Sharpe, with tail-risk protection
+      - No absolute momentum gate (always offensive)
+      - Result: 16.1% CAGR (10y), 1.08 Sharpe, +0.3% alpha
+               15.5% CAGR (5y), 1.05 Sharpe, +1.8% alpha
 
     All features are individually toggleable for backtest experimentation.
     """
@@ -83,7 +83,7 @@ class EnhancedMomentumStrategy(BaseStrategy):
         use_sma_filter: bool = False,
         use_vol_weighting: bool = False,
         use_partial_rotation: bool = False,
-        use_absolute_momentum: bool = True,
+        use_absolute_momentum: bool = False,
         # Parameters
         lookback_months: list[int] | None = None,
         lookback_weights: list[float] | None = None,

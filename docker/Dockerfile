@@ -51,8 +51,9 @@ RUN npm install -g @anthropic-ai/claude-code
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/src /app/src
 
-# Copy config
+# Copy config and pre-computed data
 COPY config/ /app/config/
+COPY data/backtest_comparison.json /app/data/backtest_comparison.json
 
 # Set up environment
 ENV PATH="/app/.venv/bin:$PATH"

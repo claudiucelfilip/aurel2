@@ -380,6 +380,26 @@
             {% endif %}
         </div>
 
+        <!-- Backtest Comparison -->
+        <div class="card" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div class="card-title" style="margin-bottom: 0;">Strategy Backtest vs SPY</div>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <div id="backtest-metrics" style="display: flex; gap: 12px; font-size: 0.75rem; color: var(--text-muted);"></div>
+                    <div class="period-toggle" id="backtest-toggle">
+                        <a href="#" data-period="10y" class="active">10Y</a>
+                        <a href="#" data-period="5y">5Y</a>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container" style="position: relative;">
+                <canvas id="backtestChart"></canvas>
+                <div id="backtest-loading" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.85rem;">
+                    Loading backtest...
+                </div>
+            </div>
+        </div>
+
         <!-- Positions -->
         <div class="card" style="margin-bottom: 20px;">
             <div class="card-title">Positions</div>
@@ -575,6 +595,125 @@
             Aurel2 Trading System · Paper Trading
         </footer>
     </div>
+
+    <script>
+        // ── Backtest comparison chart (async load, toggle 5Y/10Y) ────────
+        let backtestData = null;
+        let backtestChart = null;
+
+        fetch('/api/backtest-comparison')
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('backtest-loading').textContent = 'Backtest unavailable';
+                    return;
+                }
+                backtestData = data;
+                showBacktestPeriod('10y');
+            })
+            .catch(() => {
+                document.getElementById('backtest-loading').textContent = 'Failed to load';
+            });
+
+        document.getElementById('backtest-toggle').addEventListener('click', function(e) {
+            e.preventDefault();
+            const link = e.target.closest('a[data-period]');
+            if (!link || !backtestData) return;
+            this.querySelectorAll('a').forEach(a => a.classList.remove('active'));
+            link.classList.add('active');
+            showBacktestPeriod(link.dataset.period);
+        });
+
+        function showBacktestPeriod(period) {
+            const data = backtestData[period];
+            if (!data) return;
+
+            document.getElementById('backtest-loading').style.display = 'none';
+
+            // Update metrics
+            const m = data.metrics;
+            const alphaColor = m.alpha >= 0 ? '#22c55e' : '#ef4444';
+            document.getElementById('backtest-metrics').innerHTML =
+                '<span>CAGR <strong>' + m.cagr + '%</strong></span>' +
+                '<span>Sharpe <strong>' + m.sharpe_ratio + '</strong></span>' +
+                '<span>Max DD <strong>-' + m.max_drawdown + '%</strong></span>' +
+                '<span style="color:' + alphaColor + '">Alpha <strong>' + (m.alpha >= 0 ? '+' : '') + m.alpha + '%</strong></span>';
+
+            // Prepare data
+            const dates = data.portfolio.map(p => p.date);
+            const strategyVals = data.portfolio.map(p => p.value);
+            const benchMap = {};
+            data.benchmark.forEach(b => { benchMap[b.date] = b.value; });
+            let lastBench = data.benchmark.length > 0 ? data.benchmark[0].value : 10000;
+            const benchVals = dates.map(d => {
+                if (benchMap[d] !== undefined) lastBench = benchMap[d];
+                return lastBench;
+            });
+
+            // Destroy old chart and create new one
+            if (backtestChart) backtestChart.destroy();
+
+            const ctx = document.getElementById('backtestChart').getContext('2d');
+            backtestChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        {
+                            label: 'Strategy',
+                            data: strategyVals,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0,
+                            borderWidth: 2,
+                        },
+                        {
+                            label: 'SPY (buy & hold)',
+                            data: benchVals,
+                            borderColor: '#94a3b8',
+                            backgroundColor: 'transparent',
+                            fill: false,
+                            tension: 0.3,
+                            pointRadius: 0,
+                            borderWidth: 1.5,
+                            borderDash: [5, 5],
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { color: '#94a3b8' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString()
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8', maxTicksLimit: 8 }
+                        },
+                        y: {
+                            grid: { color: '#334155' },
+                            ticks: {
+                                color: '#94a3b8',
+                                callback: (v) => '$' + (v/1000).toFixed(0) + 'k'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
 
     {% if chart_data and chart_data.dates %}
     <script>

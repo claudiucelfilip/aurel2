@@ -83,7 +83,7 @@ def run_backtest(
     initial_capital: float = 10000.0,
     benchmark_symbol: str = "SPY",
 ) -> dict:
-    """Run a single backtest and return metrics."""
+    """Run a single backtest and return metrics + equity curves."""
     rebalance_dates = strategy.get_rebalance_dates(start_date, end_date)
 
     cash = initial_capital
@@ -92,6 +92,7 @@ def run_backtest(
     shares = 0.0
     trades = 0
     values = []
+    portfolio_curve = []  # (date, value) for equity curve
 
     for rebal_date in rebalance_dates:
         signal = strategy.generate_signal(prices, rebal_date, holding)
@@ -135,6 +136,7 @@ def run_backtest(
         else:
             total = cash
         values.append(total)
+        portfolio_curve.append({"date": rebal_date.isoformat(), "value": round(total, 0)})
 
     final = values[-1] if values else initial_capital
 
@@ -159,9 +161,13 @@ def run_backtest(
     else:
         sharpe = 0
 
-    # Benchmark
+    # Benchmark (equity curve + metrics)
     bench_return = _benchmark_return(prices, benchmark_symbol, start_date, end_date)
     bench_cagr = (1 + bench_return) ** (1 / years) - 1 if years > 0 else 0
+
+    benchmark_curve = _benchmark_curve(
+        prices, benchmark_symbol, rebalance_dates, initial_capital, start_date,
+    )
 
     return {
         "final": final,
@@ -173,6 +179,8 @@ def run_backtest(
         "alpha": cagr - bench_cagr,
         "bench_return": bench_return,
         "bench_cagr": bench_cagr,
+        "portfolio_curve": portfolio_curve,
+        "benchmark_curve": benchmark_curve,
     }
 
 
@@ -193,6 +201,22 @@ def _benchmark_return(
     if start_p and end_p and start_p > 0:
         return (end_p / start_p) - 1
     return 0.0
+
+
+def _benchmark_curve(
+    prices: pd.DataFrame, symbol: str, rebalance_dates: list[date],
+    initial_capital: float, start_date: date,
+) -> list[dict]:
+    """Build SPY buy-and-hold equity curve aligned to rebalance dates."""
+    start_p = _get_price(prices, symbol, start_date + timedelta(days=5))
+    if not start_p or start_p <= 0:
+        return []
+    curve = []
+    for rebal_date in rebalance_dates:
+        p = _get_price(prices, symbol, rebal_date)
+        if p:
+            curve.append({"date": rebal_date.isoformat(), "value": round(initial_capital * (p / start_p), 0)})
+    return curve
 
 
 # ── Focused asset sets ────────────────────────────────────────────────────
@@ -314,6 +338,10 @@ def main():
     prices = fetch_prices(console, earliest, today)
     console.print(f"Total: {len(prices)} price records\n")
 
+    # Production config index (Config 1: 8% threshold, always offensive)
+    PRODUCTION_CONFIG_IDX = 1
+    dashboard_data = {}
+
     for period_label, start_date, end_date in periods:
         console.print(f"\n[bold]═══ {period_label} PERIOD: {start_date} → {end_date} ═══[/bold]\n")
 
@@ -326,7 +354,7 @@ def main():
         table.add_column("Alpha", justify="right")
         table.add_column("Trades", justify="right")
 
-        for config in CONFIGS:
+        for i, config in enumerate(CONFIGS):
             strategy = EnhancedMomentumStrategy(**config["params"])
             result = run_backtest(strategy, prices, start_date, end_date)
 
@@ -343,6 +371,23 @@ def main():
                 f"[{alpha_color}]{result['alpha']:+.1%}[/{alpha_color}]",
                 str(result["trades"]),
             )
+
+            # Save production config results for dashboard
+            if i == PRODUCTION_CONFIG_IDX:
+                dashboard_data[period_label] = {
+                    "metrics": {
+                        "cagr": round(result["cagr"] * 100, 1),
+                        "max_drawdown": round(result["max_drawdown"] * 100, 1),
+                        "sharpe_ratio": round(float(result["sharpe"]), 2),
+                        "alpha": round(result["alpha"] * 100, 1),
+                        "total_return": round(result["total_return"] * 100, 1),
+                        "benchmark_return": round(result["bench_return"] * 100, 1),
+                        "benchmark_cagr": round(result["bench_cagr"] * 100, 1),
+                        "num_trades": result["trades"],
+                    },
+                    "portfolio": result["portfolio_curve"],
+                    "benchmark": result["benchmark_curve"],
+                }
 
         # Add SPY benchmark row
         bench = _benchmark_return(prices, "SPY", start_date, end_date)
@@ -362,7 +407,13 @@ def main():
 
         console.print(table)
 
-    # Save results
+    # Save dashboard comparison data
+    import json
+    output_path = Path(__file__).parent.parent / "data" / "backtest_comparison.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(dashboard_data, indent=2))
+    console.print(f"\n[dim]Dashboard data saved to {output_path}[/dim]")
+
     console.print("\n[bold green]Backtest complete.[/bold green]")
 
 
