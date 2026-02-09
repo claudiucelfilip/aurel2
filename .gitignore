@@ -25,6 +25,7 @@ docker/.env
 *.db
 *.sqlite
 data/cache/
+data/price_cache/
 
 # Logs
 logs/
