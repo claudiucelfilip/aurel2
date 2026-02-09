@@ -27,6 +27,7 @@ class ErrorCategory(Enum):
     PRICE_FETCH = "price_fetch"  # Failed to get market data
     DAEMON_CRASH = "daemon_crash"  # Process not running
     EXECUTION = "execution"  # Trade execution errors
+    NOTIFICATION = "notification"  # Notification delivery failures
     TIMEOUT = "timeout"  # Operation timeout
     UNKNOWN = "unknown"
 
@@ -78,6 +79,11 @@ ERROR_PATTERNS = {
         r"insufficient.*funds",
         r"position.*error",
     ],
+    ErrorCategory.NOTIFICATION: [
+        r"notification.*error",
+        r"notification.*failed",
+        r"ascii.*codec.*can't encode",
+    ],
     ErrorCategory.TIMEOUT: [
         r"timeout",
         r"timed.*out",
@@ -92,6 +98,7 @@ AUTO_FIXABLE_CATEGORIES = {
     ErrorCategory.PRICE_FETCH: True,
     ErrorCategory.DAEMON_CRASH: True,
     ErrorCategory.EXECUTION: False,  # Money involved - never auto-fix
+    ErrorCategory.NOTIFICATION: False,  # Code bug - needs human attention
     ErrorCategory.TIMEOUT: True,
     ErrorCategory.UNKNOWN: False,
 }
@@ -198,6 +205,10 @@ class ErrorAnalyzer:
         if category == ErrorCategory.PRICE_FETCH:
             return ErrorSeverity.WARNING
 
+        # Notification failures are warnings (system still works, but alerts are broken)
+        if category == ErrorCategory.NOTIFICATION:
+            return ErrorSeverity.WARNING
+
         # Unknown errors default to warning
         return ErrorSeverity.WARNING
 
@@ -225,5 +236,9 @@ class ErrorAnalyzer:
                 proc = context["process"]
                 if proc.get("pid"):
                     details_parts.append(f"Last known PID: {proc['pid']}")
+
+        if category == ErrorCategory.NOTIFICATION:
+            details_parts.append("Notification delivery failed - trade alerts may not be reaching you")
+            details_parts.append("Check ntfy configuration and daemon logs")
 
         return "; ".join(details_parts) if details_parts else None

@@ -729,6 +729,21 @@ When `ai_agrees=false`, the AI column shows "Override" with the original determi
 
 Shown as a separate block above the activity table (only when pending decisions exist). Each shows action badge, symbol, time remaining, confidence, and Approve/Reject buttons linking to the Vercel approval endpoint.
 
+### Backtest Comparison Chart
+
+Async-loaded Chart.js chart showing strategy equity curve vs SPY buy-and-hold with 5Y/10Y toggle. Loaded via `fetch('/api/backtest-comparison')` on page load — not re-fetched on the 60s auto-refresh.
+
+**Endpoint**: `GET /api/backtest-comparison` — reads pre-computed results from `data/backtest_comparison.json`.
+
+**Generating results**:
+```bash
+python -m aurel2.engine.backtest
+```
+
+This runs the production `BacktestEngine` (DM-primary + calm-hold via orchestrator, all 3 strategies, no AI) for both 5Y and 10Y periods and saves the JSON.
+
+**Metrics displayed**: CAGR, Sharpe, Max Drawdown, Alpha vs SPY.
+
 ### Post-Trade State Recording
 
 All three execution paths (`daemon._execute_approved`, `daemon._execute_timeout`, `checker._execute_decision`) capture post-trade state:

@@ -7,7 +7,7 @@ Runs the same pipeline as production:
 """
 
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 import pandas as pd
@@ -35,6 +35,11 @@ class BacktestResult:
     signals: list[Signal]
     snapshots: list[PortfolioSnapshot]
     benchmark_final: float | None = None
+
+    # AI override tracking
+    ai_overrides: list[dict] = field(default_factory=list)
+    ai_override_count: int = 0
+    ai_override_win_rate: float = 0.0
 
     # Calculated metrics
     total_return: float = 0.0
@@ -101,6 +106,23 @@ class BacktestResult:
             print(f"Benchmark Final: ${self.benchmark_final:,.2f}")
             print(f"Benchmark Return: {bench_return:.2%}")
             print(f"Alpha: {self.total_return - bench_return:.2%}")
+        if self.ai_overrides:
+            print("-" * 60)
+            print(f"AI OVERRIDE ANALYSIS ({self.ai_override_count} overrides)")
+            print("-" * 60)
+            safety = [o for o in self.ai_overrides if o["override_type"] == "to_safety"]
+            opportunity = [o for o in self.ai_overrides if o["override_type"] == "to_opportunity"]
+            print(f"  To safety: {len(safety)}  |  To opportunity: {len(opportunity)}")
+            print(f"  Overall win rate: {self.ai_override_win_rate:.0%}")
+            print()
+            for o in self.ai_overrides:
+                det_ret = f"{o['det_1m_return']:+.1%}" if o.get("det_1m_return") is not None else "N/A"
+                ai_ret = f"{o['ai_1m_return']:+.1%}" if o.get("ai_1m_return") is not None else "N/A"
+                winner = "AI" if o.get("ai_won") else ("DET" if o.get("ai_won") is False else "?")
+                print(f"  {o['date']}  {o['override_type']:<15}  "
+                      f"DET: {o['det_action']} {o['det_asset'] or 'CASH':<5} ({det_ret})  →  "
+                      f"AI: {o['ai_action']} {o['ai_asset'] or 'CASH':<5} ({ai_ret})  "
+                      f"Winner: {winner}")
         print("=" * 60)
 
 
@@ -262,6 +284,7 @@ class BacktestEngine:
         trades: list[Trade] = []
         all_signals: list[Signal] = []
         snapshots: list[PortfolioSnapshot] = []
+        ai_overrides: list[dict] = []
 
         total_dates = len(rebalance_dates)
         for i, rebal_date in enumerate(rebalance_dates, 1):
@@ -362,8 +385,13 @@ class BacktestEngine:
                         ai_advice.recommended_asset is None
                         or ai_advice.recommended_asset in self._tradeable_symbols
                     )
+                    SAFETY_ASSETS = {"AGG", "TLT", "GLD", "CASH"}
+                    ai_asset = ai_advice.recommended_asset
+                    override_type = "to_safety" if ai_asset in SAFETY_ASSETS else "to_opportunity"
+                    OVERRIDE_THRESHOLDS = {"to_safety": 0.65, "to_opportunity": 0.85}
+                    threshold = OVERRIDE_THRESHOLDS[override_type]
                     if (not ai_advice.agrees_with_deterministic
-                            and ai_advice.confidence > 0.70
+                            and ai_advice.confidence > threshold
                             and ai_asset_tradeable):
                         logger.info(
                             "backtest_ai_override",
@@ -373,6 +401,15 @@ class BacktestEngine:
                             new_action=ai_advice.recommended_action,
                             new_asset=ai_advice.recommended_asset,
                         )
+                        ai_overrides.append({
+                            "date": rebal_date,
+                            "det_action": decision.action.value,
+                            "det_asset": decision.asset_symbol,
+                            "ai_action": ai_advice.recommended_action,
+                            "ai_asset": ai_advice.recommended_asset,
+                            "override_type": override_type,
+                            "confidence": ai_advice.confidence,
+                        })
                         decision = AgentDecision(
                             decision_type=DecisionType.NON_ROUTINE,
                             action=SignalAction(ai_advice.recommended_action),
@@ -558,6 +595,37 @@ class BacktestEngine:
                         benchmark_return = end_price / start_price
                         benchmark_final = self.initial_capital * benchmark_return
 
+        # Evaluate AI overrides: look forward 1 month for each override
+        ai_override_wins = 0
+        for override in ai_overrides:
+            forward_date = override["date"] + timedelta(days=30)
+
+            def _get_return(symbol: str) -> float | None:
+                if not symbol or symbol == "CASH":
+                    return 0.0
+                asset_class = self._symbol_to_asset_class(symbol)
+                asset = ASSET_REGISTRY.get(asset_class) if asset_class else None
+                yahoo = (asset.yahoo_symbol or asset.symbol) if asset else symbol
+                start_p = self._get_price(prices, yahoo, override["date"])
+                end_p = self._get_price(prices, yahoo, forward_date)
+                if start_p and end_p:
+                    return (end_p / start_p) - 1
+                return None
+
+            det_return = _get_return(override["det_asset"])
+            ai_return = _get_return(override["ai_asset"])
+            override["det_1m_return"] = det_return
+            override["ai_1m_return"] = ai_return
+            if det_return is not None and ai_return is not None:
+                override["ai_won"] = ai_return > det_return
+                if override["ai_won"]:
+                    ai_override_wins += 1
+            else:
+                override["ai_won"] = None
+
+        scoreable = [o for o in ai_overrides if o.get("ai_won") is not None]
+        override_win_rate = ai_override_wins / len(scoreable) if scoreable else 0.0
+
         result = BacktestResult(
             start_date=start_date,
             end_date=end_date,
@@ -567,7 +635,108 @@ class BacktestEngine:
             signals=all_signals,
             snapshots=snapshots,
             benchmark_final=benchmark_final,
+            ai_overrides=ai_overrides,
+            ai_override_count=len(ai_overrides),
+            ai_override_win_rate=override_win_rate,
         )
         result.calculate_metrics()
 
         return result
+
+
+def generate_comparison_json(output_path: str = "data/backtest_comparison.json"):
+    """Run 5y and 10y backtests and save results for the dashboard.
+
+    Usage:
+        python -m aurel2.engine.backtest
+    """
+    import json
+    from pathlib import Path
+    from aurel2.data.providers.yahoo import YahooFinanceProvider
+    from aurel2.core.assets import get_all_yahoo_symbols
+
+    end_date = date.today()
+    capital = 10000
+    provider = YahooFinanceProvider()
+
+    # Fetch prices once (10y covers both periods)
+    symbols = get_all_yahoo_symbols()
+    if "SPY" not in symbols:
+        symbols.append("SPY")
+    extended_start = end_date - timedelta(days=10 * 365 + 600)
+
+    print(f"Fetching prices for {len(symbols)} symbols...")
+    prices = provider.get_multi_prices(symbols, extended_start, end_date + timedelta(days=5))
+    if prices.empty:
+        print("ERROR: No price data available")
+        return
+
+    print(f"Total: {len(prices)} price records\n")
+
+    results = {}
+    for label, years in [("10y", 10), ("5y", 5)]:
+        start_date = end_date - timedelta(days=years * 365)
+        print(f"Running {label} backtest ({start_date} -> {end_date})...")
+
+        engine = BacktestEngine(initial_capital=capital, use_ai=False)
+        result = engine.run(
+            prices=prices,
+            start_date=start_date,
+            end_date=end_date,
+            benchmark_symbol="SPY",
+        )
+
+        # Build portfolio series
+        portfolio_data = [
+            {"date": s.date.isoformat(), "value": round(float(s.total_value), 0)}
+            for s in result.snapshots
+        ]
+
+        # Build benchmark series
+        spy_df = prices[prices["symbol"] == "SPY"].copy()
+        benchmark_data = []
+        if not spy_df.empty:
+            spy_df["date"] = pd.to_datetime(spy_df["date"])
+            spy_df = spy_df.sort_values("date")
+            start_rows = spy_df[spy_df["date"] >= pd.Timestamp(start_date)]
+            if not start_rows.empty:
+                spy_start_p = float(start_rows.iloc[0]["close"])
+                for snap in result.snapshots:
+                    row = spy_df[spy_df["date"] <= pd.Timestamp(snap.date)]
+                    if not row.empty:
+                        spy_p = float(row.iloc[-1]["close"])
+                        benchmark_data.append({
+                            "date": snap.date.isoformat(),
+                            "value": round(capital * (spy_p / spy_start_p), 0),
+                        })
+
+        bench_return = ((result.benchmark_final / capital) - 1) * 100 if result.benchmark_final else 0
+        bench_years = (end_date - start_date).days / 365.25
+        bench_cagr = ((result.benchmark_final / capital) ** (1 / bench_years) - 1) * 100 if result.benchmark_final and bench_years > 0 else 0
+
+        results[label] = {
+            "metrics": {
+                "total_return": round(result.total_return * 100, 1),
+                "cagr": round(result.cagr * 100, 1),
+                "max_drawdown": round(result.max_drawdown * 100, 1),
+                "sharpe_ratio": round(result.sharpe_ratio, 2),
+                "num_trades": result.num_trades,
+                "benchmark_return": round(bench_return, 1),
+                "benchmark_cagr": round(bench_cagr, 1),
+                "alpha": round(result.total_return * 100 - bench_return, 1),
+            },
+            "portfolio": portfolio_data,
+            "benchmark": benchmark_data,
+        }
+
+        result.print_summary()
+
+    # Save
+    out = Path(output_path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(results, indent=2))
+    print(f"\nSaved to {out.resolve()}")
+
+
+if __name__ == "__main__":
+    generate_comparison_json()
