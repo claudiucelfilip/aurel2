@@ -749,7 +749,11 @@
                 pointRadius: 0,
                 borderWidth: 2.5,
             },
-            {
+        ];
+
+        // Add SPY benchmark only when benchmark data is available
+        if (chartData.spy && chartData.spy.length > 0) {
+            datasets.push({
                 label: 'SPY (buy & hold)',
                 data: chartData.spy,
                 borderColor: '#94a3b8',
@@ -759,8 +763,8 @@
                 pointRadius: 0,
                 borderWidth: 1.5,
                 borderDash: [5, 5],
-            }
-        ];
+            });
+        }
 
         // Add position benchmark if available
         if (chartData.position && chartData.position.length > 0 && chartData.position_symbol) {

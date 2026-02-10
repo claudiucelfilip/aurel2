@@ -12,8 +12,6 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-import yfinance as yf
-
 app = FastAPI(title="Aurel2 Dashboard")
 
 # Templates
@@ -383,13 +381,10 @@ PERIOD_DAYS = {
 
 
 def get_comparison_chart_data(positions: list[dict], account: dict, period: str = "1m") -> dict:
-    """Get chart data showing actual portfolio value vs benchmarks.
+    """Get chart data using local snapshots + current account data.
 
-    Shows:
-    - Flat cash period before first trade
-    - Actual portfolio performance after trade
-    - SPY benchmark (what if we'd bought SPY instead)
-    - Position benchmark (e.g., GLD - buy and hold from start)
+    Deliberately avoids external market-data calls so dashboard remains responsive
+    and deterministic even when network access is unavailable.
     """
     if not account:
         return {"dates": [], "portfolio": [], "spy": [], "position": []}
@@ -417,102 +412,43 @@ def get_comparison_chart_data(positions: list[dict], account: dict, period: str 
     for p in positions:
         starting_capital += p["shares"] * p["avg_cost"]
 
-    # Get SPY data for benchmark
-    try:
-        spy = yf.Ticker("SPY")
-        spy_hist = spy.history(start=start_date.isoformat(), end=end_date.isoformat())
-        if spy_hist.empty:
-            return {"dates": [], "portfolio": [], "spy": [], "position": []}
-    except Exception:
-        return {"dates": [], "portfolio": [], "spy": [], "position": []}
-
-    # Get historical prices for current positions
-    position_hist = {}
-    main_position_symbol = None
-    for p in positions:
-        symbol = p["symbol"]
-        if main_position_symbol is None:
-            main_position_symbol = symbol  # Use first/largest position for benchmark
+    snapshots = load_snapshots()
+    filtered = []
+    for snap in snapshots:
         try:
-            ticker = yf.Ticker(symbol)
-            hist = ticker.history(start=start_date.isoformat(), end=end_date.isoformat())
-            if not hist.empty:
-                position_hist[symbol] = {
-                    "prices": hist["Close"],
-                    "shares": p["shares"],
-                    "avg_cost": p["avg_cost"],
-                }
+            snap_date = date.fromisoformat(snap["date"])
         except Exception:
-            pass
+            continue
+        if start_date <= snap_date <= end_date:
+            filtered.append((snap_date, float(snap.get("total_value", 0))))
 
-    # Calculate values for each day
+    filtered.sort(key=lambda x: x[0])
+
+    # Calculate values from local snapshots only
     dates = []
     portfolio_values = []
-    spy_values = []
-    position_values = []  # Buy-and-hold the main position from day 1
+    for snap_date, total_value in filtered:
+        dates.append(snap_date.isoformat())
+        portfolio_values.append(round(total_value, 0))
 
-    spy_start = float(spy_hist["Close"].iloc[0])
+    # Ensure there is always at least one point
+    if not dates:
+        dates = [end_date.isoformat()]
+        portfolio_values = [round(current_total, 0)]
 
-    # Get position start price for buy-and-hold benchmark
-    position_start = None
-    if main_position_symbol and main_position_symbol in position_hist:
-        pos_prices = position_hist[main_position_symbol]["prices"]
-        if len(pos_prices) > 0:
-            position_start = float(pos_prices.iloc[0])
-
-    for idx, row in spy_hist.iterrows():
-        current_date = idx.date() if hasattr(idx, 'date') else idx
-        date_str = idx.strftime("%Y-%m-%d")
-        dates.append(date_str)
-
-        # Before first trade: portfolio is all cash
-        if first_trade and current_date < first_trade:
-            portfolio_val = starting_capital
-        else:
-            # After first trade: calculate actual portfolio value
-            portfolio_val = current_cash
-            for symbol, data in position_hist.items():
-                prices = data["prices"]
-                shares = data["shares"]
-
-                if idx in prices.index:
-                    price = float(prices[idx])
-                else:
-                    earlier = prices[prices.index <= idx]
-                    price = float(earlier.iloc[-1]) if len(earlier) > 0 else data["avg_cost"]
-
-                portfolio_val += shares * price
-
-        portfolio_values.append(round(portfolio_val, 0))
-
-        # SPY benchmark: what if we had invested starting_capital in SPY from day 1
-        spy_price = float(row["Close"])
-        spy_val = (spy_price / spy_start) * starting_capital
-        spy_values.append(round(spy_val, 0))
-
-        # Position benchmark: what if we had bought the main position from day 1
-        if position_start and main_position_symbol in position_hist:
-            pos_prices = position_hist[main_position_symbol]["prices"]
-            if idx in pos_prices.index:
-                pos_price = float(pos_prices[idx])
-            else:
-                earlier = pos_prices[pos_prices.index <= idx]
-                pos_price = float(earlier.iloc[-1]) if len(earlier) > 0 else position_start
-            pos_val = (pos_price / position_start) * starting_capital
-            position_values.append(round(pos_val, 0))
-        else:
-            position_values.append(round(starting_capital, 0))
-
-    # Anchor the last portfolio point to the real IBKR account value
-    if portfolio_values and current_total > 0:
+    # Anchor latest point to live account value
+    if dates[-1] == end_date.isoformat():
         portfolio_values[-1] = round(current_total, 0)
+    else:
+        dates.append(end_date.isoformat())
+        portfolio_values.append(round(current_total, 0))
 
     return {
         "dates": dates,
-        "portfolio": portfolio_values,
-        "spy": spy_values,
-        "position": position_values,
-        "position_symbol": main_position_symbol,
+        "portfolio": portfolio_values,  # snapshot-based equity curve
+        "spy": [],  # Disabled: dashboard no longer fetches Yahoo
+        "position": [],  # Disabled: dashboard no longer fetches Yahoo
+        "position_symbol": None,
         "starting_value": round(starting_capital, 0),
         "current_value": round(current_total, 0),
         "first_trade_date": first_trade.isoformat() if first_trade else None,
