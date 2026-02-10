@@ -45,7 +45,7 @@ class IBKRBroker(BaseBroker):
     Interactive Brokers integration.
 
     Requires:
-    - IB Gateway running locally (preferred) or TWS
+    - IB Gateway running locally
     - API connections enabled in IB Gateway settings
     - pip install ib_insync
 
@@ -57,7 +57,6 @@ class IBKRBroker(BaseBroker):
 
     Port reference:
         IB Gateway: 4001 (live), 4002 (paper)
-        TWS: 7496 (live), 7497 (paper)
     """
 
     # Symbol mappings: our symbols -> IBKR contract details
@@ -108,7 +107,7 @@ class IBKRBroker(BaseBroker):
         return self._connected and self.ib.isConnected() and self._server_connected
 
     async def connect(self) -> bool:
-        """Connect to IB Gateway/TWS.
+        """Connect to IB Gateway.
 
         Raises ClientIdConflictError if the client ID is already in use,
         allowing the caller to retry with a different ID.
@@ -183,14 +182,30 @@ class IBKRBroker(BaseBroker):
         total_value = 0.0
         cash_balance = 0.0
         buying_power = 0.0
+        unrealized_pnl = 0.0
+        realized_pnl = 0.0
+        gross_position_value = 0.0
+        accrued_cash = 0.0
         currency = "EUR"
 
         for av in account_values:
-            if av.tag == "NetLiquidation" and av.currency == "EUR":
-                total_value = float(av.value)
-            elif av.tag == "TotalCashValue" and av.currency == "EUR":
-                cash_balance = float(av.value)
-            elif av.tag == "BuyingPower":
+            if av.currency == "EUR":
+                if av.tag == "NetLiquidation":
+                    total_value = float(av.value)
+                elif av.tag == "TotalCashValue":
+                    cash_balance = float(av.value)
+                elif av.tag == "BuyingPower":
+                    buying_power = float(av.value)
+                elif av.tag == "UnrealizedPnL":
+                    unrealized_pnl = float(av.value)
+                elif av.tag == "RealizedPnL":
+                    realized_pnl = float(av.value)
+                elif av.tag == "GrossPositionValue":
+                    gross_position_value = float(av.value)
+                elif av.tag == "AccruedCash":
+                    accrued_cash = float(av.value)
+            elif av.tag == "BuyingPower" and buying_power == 0.0:
+                # BuyingPower sometimes only appears without currency filter
                 buying_power = float(av.value)
 
         return AccountSummary(
@@ -198,6 +213,10 @@ class IBKRBroker(BaseBroker):
             cash_balance=cash_balance,
             buying_power=buying_power,
             currency=currency,
+            unrealized_pnl=unrealized_pnl,
+            realized_pnl=realized_pnl,
+            gross_position_value=gross_position_value,
+            accrued_cash=accrued_cash,
         )
 
     async def get_positions(self) -> list[BrokerPosition]:
@@ -320,18 +339,35 @@ class IBKRBroker(BaseBroker):
         timeout = 60  # seconds
         for _ in range(timeout * 10):
             if trade.isDone():
+                # Small delay to let IBKR error messages arrive via callback
+                await asyncio.sleep(0.3)
                 break
             await asyncio.sleep(0.1)
 
         # Get result
         if trade.orderStatus.status == "Filled":
             status = "FILLED"
-        elif trade.orderStatus.status == "Cancelled":
+        elif trade.orderStatus.status in ("Cancelled", "ApiCancelled", "Inactive"):
             status = "REJECTED"
         elif trade.orderStatus.filled > 0:
             status = "PARTIAL"
         else:
             status = "PENDING"
+
+        # Extract the real error reason from trade log entries
+        error_reason = ""
+        for entry in reversed(trade.log):
+            if entry.message:
+                error_reason = entry.message
+                break
+
+        # Build a useful message: prefer the error reason over raw status
+        if status in ("REJECTED", "PENDING") and error_reason:
+            message = error_reason
+        elif status in ("REJECTED", "PENDING"):
+            message = trade.orderStatus.status
+        else:
+            message = trade.orderStatus.status
 
         result = OrderResult(
             order_id=str(trade.order.orderId),
@@ -341,7 +377,7 @@ class IBKRBroker(BaseBroker):
             filled_quantity=float(trade.orderStatus.filled),
             avg_fill_price=float(trade.orderStatus.avgFillPrice or 0),
             status=status,
-            message=trade.orderStatus.status,
+            message=message,
         )
 
         logger.info(
@@ -457,8 +493,8 @@ class IBKRBroker(BaseBroker):
 
         # Calculate shares to buy:
         # - Apply position_size_pct (regime-based sizing)
-        # - Apply 99% buffer for execution safety
-        effective_pct = position_size_pct * 0.99
+        # - Apply 98% buffer to leave room for commissions/settlement
+        effective_pct = position_size_pct * 0.98
         buy_quantity = int(proceeds * effective_pct / buy_price)
 
         logger.info(

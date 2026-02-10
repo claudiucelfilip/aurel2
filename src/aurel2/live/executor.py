@@ -100,8 +100,9 @@ class Executor:
 
         Args:
             symbol: The symbol to buy.
-            position_size_pct: Position size as percentage of buying power (0.0 to 1.0).
+            position_size_pct: Position size as percentage of cash balance (0.0 to 1.0).
                 This is determined by regime detection and confidence scoring.
+                Uses cash_balance (never margin/buying_power) to avoid leverage.
         """
         logger.info("executor_buy_start", symbol=symbol, position_size_pct=position_size_pct)
 
@@ -126,18 +127,18 @@ class Executor:
                     message=f"Could not get market price for {symbol}",
                 )
 
-            # Apply position sizing: use position_size_pct of buying power
-            # Then apply 99% buffer for execution safety
-            # E.g., 80% position_size in volatile market -> use 80% * 99% = 79.2% of buying power
-            effective_pct = position_size_pct * 0.99
-            available = summary.buying_power * effective_pct
+            # Apply position sizing: use position_size_pct of cash balance
+            # Use cash_balance (not buying_power which includes margin leverage)
+            # Then apply 98% buffer to leave room for commissions/settlement
+            effective_pct = position_size_pct * 0.98
+            available = summary.cash_balance * effective_pct
             shares = int(available / price)
 
             logger.info(
                 "executor_position_sizing",
                 symbol=symbol,
                 position_size_pct=f"{position_size_pct:.0%}",
-                buying_power=summary.buying_power,
+                cash_balance=summary.cash_balance,
                 effective_amount=available,
                 shares=shares,
             )
