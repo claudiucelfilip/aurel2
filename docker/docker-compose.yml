@@ -103,6 +103,7 @@ services:
       IBKR_PORT: ${IBKR_PORT:-4004}
     volumes:
       - aurel2-data:/root/.aurel2
+      - /opt/aurel2/data:/app/host-data:ro
     ports:
       - "${DASHBOARD_PORT:-8080}:8080"
     networks:
