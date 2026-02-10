@@ -449,6 +449,8 @@ class IBKRBroker(BaseBroker):
         buy_symbol: str,
         sell_quantity: Optional[float] = None,
         position_size_pct: float = 1.0,
+        settlement_headroom_pct: float = 0.02,
+        settlement_min_cash_buffer: float = 0.0,
     ) -> tuple[OrderResult, OrderResult]:
         """
         Execute a position switch: sell one ETF and buy another.
@@ -462,6 +464,8 @@ class IBKRBroker(BaseBroker):
             sell_quantity: Quantity to sell (None = entire position).
             position_size_pct: Position size percentage for buy leg (0.0 to 1.0).
                 In volatile/bear markets, this may be reduced to hold more cash.
+            settlement_headroom_pct: Additional settlement reserve percentage for buy leg.
+            settlement_min_cash_buffer: Absolute cash buffer to keep unspent after buy leg.
         """
         # Get current position to sell
         if sell_quantity is None:
@@ -491,18 +495,56 @@ class IBKRBroker(BaseBroker):
         if buy_price is None:
             raise RuntimeError(f"Could not get price for {buy_symbol}")
 
-        # Calculate shares to buy:
+        # Calculate shares to buy with settlement guard:
         # - Apply position_size_pct (regime-based sizing)
-        # - Apply 98% buffer to leave room for commissions/settlement
-        effective_pct = position_size_pct * 0.98
-        buy_quantity = int(proceeds * effective_pct / buy_price)
+        # - Reserve settlement headroom and optional absolute cash buffer
+        position_pct = min(max(position_size_pct, 0.0), 1.0)
+        headroom_pct = min(max(settlement_headroom_pct, 0.0), 0.95)
+        min_cash_buffer = max(settlement_min_cash_buffer, 0.0)
+
+        gross_funds = proceeds * position_pct
+        unguarded_qty = int(gross_funds / buy_price)
+        guarded_funds = max(0.0, gross_funds * (1.0 - headroom_pct) - min_cash_buffer)
+        buy_quantity = int(guarded_funds / buy_price)
+
+        guard_note = ""
+        if buy_quantity < unguarded_qty:
+            guard_note = (
+                f"Settlement guard reduced switch BUY size {buy_symbol}: "
+                f"{unguarded_qty} -> {buy_quantity} shares "
+                f"(headroom={headroom_pct:.1%}, cash_buffer=${min_cash_buffer:,.2f})"
+            )
+            logger.warning(
+                "settlement_guard_reduced_switch_buy",
+                sell_symbol=sell_symbol,
+                buy_symbol=buy_symbol,
+                proceeds=proceeds,
+                gross_funds=gross_funds,
+                guarded_funds=guarded_funds,
+                unguarded_qty=unguarded_qty,
+                buy_quantity=buy_quantity,
+                headroom_pct=headroom_pct,
+                min_cash_buffer=min_cash_buffer,
+            )
+
+        if buy_quantity <= 0:
+            reason = (
+                f"Settlement guard blocked switch BUY {buy_symbol}: "
+                f"proceeds={proceeds:.2f}, position_pct={position_pct:.0%}, "
+                f"headroom={headroom_pct:.1%}, min_buffer=${min_cash_buffer:,.2f}, "
+                f"price={buy_price:.2f}"
+            )
+            logger.warning("settlement_guard_blocked_switch_buy", reason=reason)
+            raise RuntimeError(reason)
 
         logger.info(
             "execute_switch_sizing",
             sell_symbol=sell_symbol,
             buy_symbol=buy_symbol,
             proceeds=proceeds,
-            position_size_pct=f"{position_size_pct:.0%}",
+            position_size_pct=f"{position_pct:.0%}",
+            settlement_headroom_pct=headroom_pct,
+            settlement_min_cash_buffer=min_cash_buffer,
             buy_quantity=buy_quantity,
         )
 
@@ -514,5 +556,7 @@ class IBKRBroker(BaseBroker):
             order_type="MKT",
         )
         buy_result = await self.place_order(buy_order)
+        if guard_note:
+            buy_result.message = f"{buy_result.message} | {guard_note}".strip(" |")
 
         return sell_result, buy_result

@@ -1,13 +1,15 @@
 """Shared execute → record → notify pipeline for trade execution."""
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 import structlog
 
-from aurel2.live.connection import IBKRConnection
 from aurel2.live.executor import Executor, ExecutionResult
 from aurel2.live.journal import TradeJournal
 from aurel2.notifications.ntfy import NtfyNotifier
+
+if TYPE_CHECKING:
+    from aurel2.live.connection import IBKRConnection
 
 logger = structlog.get_logger()
 
@@ -22,7 +24,7 @@ class TradeRecorder:
     def __init__(
         self,
         executor: Executor,
-        connection: IBKRConnection,
+        connection: "IBKRConnection",
         journal: TradeJournal,
         notifier: NtfyNotifier,
     ):
@@ -98,12 +100,14 @@ class TradeRecorder:
             total_cost = result.shares * result.fill_price
             acct_str = f"Account: ${account_after:,.0f}\n" if account_after else ""
             holding_str = f"Holding: {holding_after}\n" if holding_after else ""
+            guard_str = f"\n{result.settlement_guard_note}\n" if result.settlement_guard_note else ""
             msg = (
                 f"{action.upper()} {symbol or ''}\n"
                 f"Shares: {result.shares:.0f} @ ${result.fill_price:.2f} "
                 f"(${total_cost:,.0f})\n"
                 f"{acct_str}"
                 f"{holding_str}"
+                f"{guard_str}"
                 f"\n{notify_context}"
             ).strip()
             self.notifier.send(

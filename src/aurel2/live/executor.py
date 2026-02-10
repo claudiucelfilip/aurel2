@@ -1,13 +1,15 @@
 """Trade executor - translates decisions into IBKR orders."""
 
+import os
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, Optional, TYPE_CHECKING
 
 import structlog
 
 from aurel2.broker.base import BrokerOrder, OrderResult, BrokerPosition
-from aurel2.broker.ibkr import OrderVerification
-from aurel2.live.connection import IBKRConnection
+
+if TYPE_CHECKING:
+    from aurel2.live.connection import IBKRConnection
 
 logger = structlog.get_logger()
 
@@ -23,6 +25,7 @@ class ExecutionResult:
     fill_price: float = 0
     message: str = ""
     order_result: Optional[OrderResult] = None
+    settlement_guard_note: str = ""
 
 
 class Executor:
@@ -36,8 +39,65 @@ class Executor:
     - SWITCH: Sell current, buy new (atomic operation)
     """
 
-    def __init__(self, connection: IBKRConnection):
+    def __init__(
+        self,
+        connection: "IBKRConnection",
+        settlement_headroom_pct: float = 0.02,
+        settlement_min_cash_buffer: float = 0.0,
+    ):
         self.connection = connection
+        self.settlement_headroom_pct = self._clamp_pct(settlement_headroom_pct)
+        self.settlement_min_cash_buffer = max(0.0, settlement_min_cash_buffer)
+
+        env_headroom = os.getenv("AUREL2_SETTLEMENT_HEADROOM_PCT")
+        env_buffer = os.getenv("AUREL2_SETTLEMENT_MIN_CASH_BUFFER")
+        if env_headroom:
+            self.settlement_headroom_pct = self._clamp_pct(float(env_headroom))
+        if env_buffer:
+            self.settlement_min_cash_buffer = max(0.0, float(env_buffer))
+
+    @staticmethod
+    def _clamp_pct(value: float) -> float:
+        return min(max(value, 0.0), 0.95)
+
+    def _apply_settlement_guard(
+        self,
+        *,
+        symbol: str,
+        price: float,
+        gross_funds: float,
+        context: str,
+    ) -> tuple[int, str]:
+        """Apply pre-trade settlement headroom guard and return (shares, note)."""
+        if price <= 0:
+            return 0, ""
+
+        unguarded_shares = int(gross_funds / price)
+        guarded_funds = gross_funds * (1.0 - self.settlement_headroom_pct)
+        guarded_funds = max(0.0, guarded_funds - self.settlement_min_cash_buffer)
+        guarded_shares = int(guarded_funds / price)
+
+        note = ""
+        if guarded_shares < unguarded_shares:
+            note = (
+                f"Settlement guard reduced BUY size for {symbol} ({context}): "
+                f"{unguarded_shares} -> {guarded_shares} shares "
+                f"(headroom={self.settlement_headroom_pct:.1%}, "
+                f"cash_buffer=${self.settlement_min_cash_buffer:,.2f})"
+            )
+            logger.warning(
+                "settlement_guard_reduced_order",
+                symbol=symbol,
+                context=context,
+                unguarded_shares=unguarded_shares,
+                guarded_shares=guarded_shares,
+                headroom_pct=self.settlement_headroom_pct,
+                min_cash_buffer=self.settlement_min_cash_buffer,
+                gross_funds=gross_funds,
+                guarded_funds=guarded_funds,
+            )
+
+        return guarded_shares, note
 
     async def execute(
         self,
@@ -127,28 +187,41 @@ class Executor:
                     message=f"Could not get market price for {symbol}",
                 )
 
-            # Apply position sizing: use position_size_pct of cash balance
-            # Use cash_balance (not buying_power which includes margin leverage)
-            # Then apply 98% buffer to leave room for commissions/settlement
-            effective_pct = position_size_pct * 0.98
-            available = summary.cash_balance * effective_pct
-            shares = int(available / price)
+            # Apply position sizing first (cash only, never margin buying power),
+            # then settlement headroom guard.
+            gross_funds = summary.cash_balance * position_size_pct
+            shares, guard_note = self._apply_settlement_guard(
+                symbol=symbol,
+                price=price,
+                gross_funds=gross_funds,
+                context="buy",
+            )
 
             logger.info(
                 "executor_position_sizing",
                 symbol=symbol,
                 position_size_pct=f"{position_size_pct:.0%}",
                 cash_balance=summary.cash_balance,
-                effective_amount=available,
+                gross_funds=gross_funds,
                 shares=shares,
+                settlement_headroom_pct=self.settlement_headroom_pct,
+                settlement_min_cash_buffer=self.settlement_min_cash_buffer,
             )
 
             if shares <= 0:
+                message = (
+                    f"Settlement guard blocked BUY {symbol}: "
+                    f"cash={summary.cash_balance:.2f}, position_pct={position_size_pct:.0%}, "
+                    f"headroom={self.settlement_headroom_pct:.1%}, "
+                    f"min_buffer=${self.settlement_min_cash_buffer:,.2f}, price={price:.2f}"
+                )
+                logger.warning("settlement_guard_blocked_order", symbol=symbol, context="buy", message=message)
                 return ExecutionResult(
                     success=False,
                     action="buy",
                     symbol=symbol,
-                    message=f"Insufficient funds. Available: {available:.2f}, Price: {price:.2f}",
+                    message=message,
+                    settlement_guard_note=message,
                 )
 
             # Place order
@@ -196,14 +269,18 @@ class Executor:
                 )
 
             success = order_result.status in ("FILLED", "PARTIAL")
+            message = f"Order {order_result.status}: {order_result.message}"
+            if guard_note:
+                message = f"{message} | {guard_note}"
             return ExecutionResult(
                 success=success,
                 action="buy",
                 symbol=symbol,
                 shares=order_result.filled_quantity,
                 fill_price=order_result.avg_fill_price,
-                message=f"Order {order_result.status}: {order_result.message}",
+                message=message,
                 order_result=order_result,
+                settlement_guard_note=guard_note,
             )
 
         except Exception as e:
@@ -321,6 +398,8 @@ class Executor:
                 sell_symbol=sell_symbol,
                 buy_symbol=buy_symbol,
                 position_size_pct=position_size_pct,
+                settlement_headroom_pct=self.settlement_headroom_pct,
+                settlement_min_cash_buffer=self.settlement_min_cash_buffer,
             )
 
             # Check results
@@ -334,6 +413,7 @@ class Executor:
                 )
 
             success = buy_result.status == "FILLED"
+            guard_note = buy_result.message if "Settlement guard" in (buy_result.message or "") else ""
             return ExecutionResult(
                 success=success,
                 action="switch",
@@ -342,6 +422,7 @@ class Executor:
                 fill_price=buy_result.avg_fill_price,
                 message=f"Sold {sell_symbol}, bought {buy_symbol}. Status: {buy_result.status}",
                 order_result=buy_result,
+                settlement_guard_note=guard_note,
             )
 
         except Exception as e:

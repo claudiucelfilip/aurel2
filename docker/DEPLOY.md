@@ -86,6 +86,8 @@ nano .env  # or use your preferred editor
 - `TWS_USERID` and `TWS_PASSWORD`: Your IBKR credentials
 - `TRADING_MODE=paper`: Start with paper trading!
 - `NTFY_TOPIC`: Your notification topic
+- `AUREL2_SETTLEMENT_HEADROOM_PCT` (optional, default `0.02`): reserve percentage before BUY sizing to reduce settlement-limit rejects
+- `AUREL2_SETTLEMENT_MIN_CASH_BUFFER` (optional, default `0`): fixed cash to keep unspent before BUY sizing
 
 ## Step 4: Deploy to Server
 
@@ -148,15 +150,14 @@ docker compose down
 
 ### Update Aurel2 Code
 ```bash
-# From local machine
-cd ~/Sites/aurel2
-rsync -avz --exclude='.git' --exclude='data/' . root@YOUR_SERVER_IP:/opt/aurel2/
+# If running on the VPS directly (recommended):
+cd /root/aurel2
+./scripts/deploy.sh
+# This runs tests, syncs to /opt/aurel2/, and rebuilds containers.
 
-# On server
-ssh root@YOUR_SERVER_IP
-cd /opt/aurel2/docker
-docker compose build aurel2
-docker compose up -d aurel2
+# From a remote machine:
+rsync -avz --exclude='.git' --exclude='data/' . root@YOUR_SERVER_IP:/opt/aurel2/
+ssh root@YOUR_SERVER_IP "cd /opt/aurel2/docker && docker compose build aurel2 && docker compose up -d aurel2"
 ```
 
 ### Re-authenticate Claude
