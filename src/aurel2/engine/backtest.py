@@ -152,8 +152,8 @@ class BacktestEngine:
         ai_model: str = "haiku",
         amnesia: bool = False,
         dca_amount: float = 0.0,
-        correlation_guard: bool = True,
-        sideways_hold: bool = True,
+        correlation_guard: bool = False,
+        sideways_hold: bool = False,
     ):
         self.dual_momentum = DualMomentumStrategy(assets=ASSET_REGISTRY)
         self.mean_reversion = MeanReversionStrategy()
@@ -778,7 +778,7 @@ def generate_comparison_json(output_path: str = "data/backtest_comparison.json")
         ("10y", timedelta(days=10 * 365)),
         ("5y", timedelta(days=5 * 365)),
         ("1y", timedelta(days=365)),
-        ("1m", timedelta(days=30)),
+        ("3m", timedelta(days=90)),
     ]
     for label, delta in periods:
         start_date = end_date - delta
