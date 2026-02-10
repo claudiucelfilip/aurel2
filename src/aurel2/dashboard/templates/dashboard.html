@@ -315,31 +315,44 @@
         {% endif %}
 
         <!-- Account Summary -->
-        <div class="grid" style="grid-template-columns: 1fr 1fr;">
+        {% if account %}
+        {% set total_pnl = account.unrealized_pnl + account.realized_pnl %}
+        <div class="grid" style="grid-template-columns: 1fr 1fr 1fr;">
             <div class="card">
-                <div class="stat-value">${{ "{:,.0f}".format(account.total_value) if account else "—" }}</div>
-                <div class="stat-label">Total Value</div>
-                {% if account and account.cash_balance != account.total_value %}
+                <div class="stat-value">${{ "{:,.0f}".format(account.total_value) }}</div>
+                <div class="stat-label">Net Liquidation</div>
+                {% if account.cash_balance != account.total_value %}
                 <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">
                     Cash: ${{ "{:,.0f}".format(account.cash_balance) }}
                 </div>
                 {% endif %}
             </div>
             <div class="card">
-                {% if overall_gain is not none %}
-                <div class="stat-value {% if overall_gain >= 0 %}positive{% else %}negative{% endif %}">
-                    {{ "{:+.1f}".format(overall_gain_pct) }}%
+                <div class="stat-value {% if account.unrealized_pnl >= 0 %}positive{% elif account.unrealized_pnl < 0 %}negative{% endif %}">
+                    {{ "{:+,.0f}".format(account.unrealized_pnl) }}
                 </div>
-                <div class="stat-change {% if overall_gain >= 0 %}positive{% else %}negative{% endif %}">
-                    {{ "{:+,.0f}".format(overall_gain) }}
+                <div class="stat-label">Unrealized P&L</div>
+                {% if account.gross_position_value > 0 %}
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">
+                    Positions: ${{ "{:,.0f}".format(account.gross_position_value) }}
                 </div>
-                <div class="stat-label">Overall P&L</div>
-                {% else %}
-                <div class="stat-value">—</div>
-                <div class="stat-label">Overall P&L</div>
                 {% endif %}
             </div>
+            <div class="card">
+                <div class="stat-value {% if account.realized_pnl >= 0 %}positive{% elif account.realized_pnl < 0 %}negative{% endif %}">
+                    {{ "{:+,.0f}".format(account.realized_pnl) }}
+                </div>
+                <div class="stat-label">Realized P&L</div>
+            </div>
         </div>
+        {% else %}
+        <div class="grid" style="grid-template-columns: 1fr;">
+            <div class="card">
+                <div class="stat-value">—</div>
+                <div class="stat-label">Not connected</div>
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Performance Chart -->
         <div class="card" style="margin-bottom: 20px;">
@@ -392,7 +405,7 @@
                         <a href="#" data-period="10y" class="active">10Y</a>
                         <a href="#" data-period="5y">5Y</a>
                         <a href="#" data-period="1y">1Y</a>
-                        <a href="#" data-period="1m">1M</a>
+                        <a href="#" data-period="3m">3M</a>
                     </div>
                 </div>
             </div>

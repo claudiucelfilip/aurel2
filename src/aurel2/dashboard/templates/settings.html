@@ -227,49 +227,13 @@
 
             <div class="info-box">
                 <h4>Requirements</h4>
-                <p>1. Install IB Gateway (recommended) or TWS</p>
+                <p>1. Install IB Gateway</p>
                 <p>2. Enable API connections in settings</p>
-                <p>3. IB Gateway: 4002 = Paper, 4001 = Live (TWS: 7497/7496)</p>
+                <p>3. Ports: 4002 = Paper, 4001 = Live</p>
                 <p>4. Install: <code>pip install ib_insync</code></p>
             </div>
 
             <button onclick="connectIBKR()">Connect to IBKR</button>
-        </div>
-
-        <!-- TradeVille Connection -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">TradeVille</div>
-                <span class="status status-pending" id="tv-status">Not Configured</span>
-            </div>
-
-            <div class="warning-box">
-                <h4>Read-Only API</h4>
-                <p>TradeVille's API only supports portfolio sync and market data. Order placement must be done manually through their platform.</p>
-                <div class="broker-features">
-                    <div class="feature feature-no">✗ No auto-execute</div>
-                    <div class="feature feature-yes">✓ Portfolio sync</div>
-                    <div class="feature feature-yes">✓ Live prices</div>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Username</label>
-                <input type="text" id="tv-username" placeholder="Your TradeVille username">
-            </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="tv-password" placeholder="Your TradeVille password">
-            </div>
-
-            <div class="info-box">
-                <h4>Requirements</h4>
-                <p>1. Request API access from TradeVille</p>
-                <p>2. Sign the API addendum to your contract</p>
-                <p>3. Contact: <code>[email protected]</code></p>
-            </div>
-
-            <button onclick="connectTradeVille()">Save & Sync Portfolio</button>
         </div>
 
         <!-- Tax Settings -->
@@ -280,18 +244,14 @@
 
             <div class="info-box">
                 <h4>Romanian Capital Gains Tax</h4>
-                <p>Via Romanian broker (TradeVille, BT Capital, etc.):</p>
-                <p>• Held &gt;365 days: <strong>1%</strong></p>
-                <p>• Held &lt;365 days: <strong>3%</strong></p>
-                <p>Via foreign broker (IBKR):</p>
+                <p>Via IBKR (foreign broker):</p>
                 <p>• Any holding period: <strong>16%</strong> on net annual gains</p>
             </div>
 
             <div class="form-group">
                 <label>Preferred Broker for Recommendations</label>
                 <select id="preferred-broker">
-                    <option value="tradeville">TradeVille (1-3% tax)</option>
-                    <option value="ibkr">IBKR (16% tax, but can offset losses)</option>
+                    <option value="ibkr">IBKR (16% tax, can offset losses)</option>
                 </select>
             </div>
 
@@ -308,21 +268,7 @@
             const host = document.getElementById('ibkr-host').value;
             const port = document.getElementById('ibkr-port').value;
 
-            // In a real implementation, this would try to connect
-            alert(`IBKR Connection:\n\nTo connect to IBKR:\n1. Start IB Gateway or TWS\n2. Enable API at ${host}:${port}\n3. The dashboard will auto-sync when connected\n\nNote: Connection feature coming soon.`);
-        }
-
-        async function connectTradeVille() {
-            const username = document.getElementById('tv-username').value;
-            const password = document.getElementById('tv-password').value;
-
-            if (!username || !password) {
-                alert('Please enter username and password');
-                return;
-            }
-
-            // In a real implementation, this would try to connect
-            alert(`TradeVille Sync:\n\nTo sync with TradeVille:\n1. Request API access from TradeVille\n2. Sign the API addendum\n3. Credentials will be stored locally\n\nNote: Connection feature coming soon.`);
+            alert(`IBKR Connection:\n\nTo connect to IBKR:\n1. Start IB Gateway\n2. Enable API at ${host}:${port}\n3. The dashboard will auto-sync when connected\n\nNote: Connection feature coming soon.`);
         }
 
         function saveSettings() {

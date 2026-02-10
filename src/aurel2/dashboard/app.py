@@ -26,7 +26,13 @@ IBKR_PORT = int(os.environ.get("IBKR_PORT", "4002"))
 
 # Data directory
 DATA_DIR = Path(os.environ.get("AUREL2_DATA_DIR", str(Path.home() / ".aurel2")))
-SNAPSHOTS_FILE = DATA_DIR / "snapshots.json"
+
+# Trading mode for data partitioning (paper/live)
+TRADING_MODE = os.environ.get("TRADING_MODE", "paper")
+MODE_DATA_DIR = Path(f"data/{TRADING_MODE}")
+
+# Snapshots are mode-partitioned so paper/live don't mix
+SNAPSHOTS_FILE = MODE_DATA_DIR / "snapshots.json"
 
 # Thread pool for running blocking IBKR calls
 executor = ThreadPoolExecutor(max_workers=2)
@@ -71,10 +77,7 @@ def save_snapshot(total_value: float, cash: float, positions_value: float):
 
 def load_pending_decisions() -> list[dict]:
     """Load pending decisions awaiting approval."""
-    pending_file = DATA_DIR / "pending_decisions.json"
-    if not pending_file.exists():
-        # Fall back to project data dir
-        pending_file = Path("data/pending_decisions.json")
+    pending_file = MODE_DATA_DIR / "pending_decisions.json"
 
     if pending_file.exists():
         try:
@@ -102,15 +105,11 @@ def load_pending_decisions() -> list[dict]:
 
 def load_trade_history(page: int = 1, per_page: int = 10) -> dict:
     """Load trade journal and compute summary stats with pagination."""
-    journal_file = DATA_DIR / "trade_journal.json"
-    if not journal_file.exists():
-        journal_file = Path("data/trade_journal.json")
+    journal_file = MODE_DATA_DIR / "trade_journal.json"
 
     # Load pending decisions for status cross-reference
     pending_statuses = {}
-    pending_file = DATA_DIR / "pending_decisions.json"
-    if not pending_file.exists():
-        pending_file = Path("data/pending_decisions.json")
+    pending_file = MODE_DATA_DIR / "pending_decisions.json"
     if pending_file.exists():
         try:
             pdata = json.loads(pending_file.read_text())
@@ -127,8 +126,6 @@ def load_trade_history(page: int = 1, per_page: int = 10) -> dict:
         "total_decisions": 0,
         "executed_trades": 0,
         "all_decisions": [],
-        "first_account_value": None,
-        "latest_account_value": None,
         "page": page,
         "per_page": per_page,
         "total_pages": 1,
@@ -139,14 +136,6 @@ def load_trade_history(page: int = 1, per_page: int = 10) -> dict:
             entries = json.loads(journal_file.read_text())
             result["total_decisions"] = len(entries)
             result["executed_trades"] = sum(1 for e in entries if e.get("executed"))
-
-            # Get first and latest account values for overall P&L
-            for entry in entries:
-                val = entry.get("account_value_before")
-                if val and val > 0:
-                    if result["first_account_value"] is None:
-                        result["first_account_value"] = val
-                    result["latest_account_value"] = val
 
             # All non-hold decisions, newest first
             all_sorted = sorted(
@@ -255,47 +244,37 @@ def _sync_get_ibkr_data() -> dict:
             positions = await broker.get_positions()
             account = await broker.get_account_summary()
 
-            # Get live prices from Yahoo for accurate P&L
+            # Use IBKR-provided position data directly
             positions_data = []
             for p in positions:
-                # Get current price from Yahoo Finance for accurate P&L
-                try:
-                    ticker = yf.Ticker(p.symbol)
-                    current_price = ticker.info.get("regularMarketPrice") or ticker.info.get("previousClose") or p.market_price
-                except Exception:
-                    current_price = p.market_price
-
-                market_value = p.shares * current_price
-                cost_basis = p.shares * p.avg_cost
-                unrealized_pnl = market_value - cost_basis
-                pnl_pct = ((current_price / p.avg_cost) - 1) * 100 if p.avg_cost else 0
-
+                if p.shares == 0:
+                    continue  # Skip closed positions still reported by IBKR
+                pnl_pct = ((p.market_price / p.avg_cost) - 1) * 100 if p.avg_cost else 0
                 positions_data.append({
                     "symbol": p.symbol,
                     "shares": p.shares,
                     "avg_cost": p.avg_cost,
-                    "market_price": current_price,
-                    "market_value": market_value,
-                    "unrealized_pnl": unrealized_pnl,
+                    "market_price": p.market_price,
+                    "market_value": p.market_value,
+                    "unrealized_pnl": p.unrealized_pnl,
                     "pnl_pct": pnl_pct,
                 })
-
-            # Filter out 0-share positions (closed positions still reported by IBKR)
-            positions_data = [p for p in positions_data if p["shares"] != 0]
 
             account_data = {
                 "total_value": account.total_value if account else 0,
                 "cash_balance": account.cash_balance if account else 0,
                 "buying_power": account.buying_power if account else 0,
+                "unrealized_pnl": account.unrealized_pnl if account else 0,
+                "realized_pnl": account.realized_pnl if account else 0,
+                "gross_position_value": account.gross_position_value if account else 0,
             } if account else None
 
             # Save daily snapshot
             if account_data:
-                positions_value = sum(p["market_value"] for p in positions_data)
                 save_snapshot(
                     account_data["total_value"],
                     account_data["cash_balance"],
-                    positions_value,
+                    account_data["gross_position_value"],
                 )
 
             return {
@@ -347,15 +326,6 @@ async def dashboard(request: Request, period: str = "1m", page: int = 1):
     # Add first trade date info for display
     first_trade_date = get_first_trade_date()
 
-    # Calculate overall gain/loss
-    overall_gain = None
-    overall_gain_pct = None
-    if account and trade_history["first_account_value"]:
-        starting = trade_history["first_account_value"]
-        current = account["total_value"]
-        overall_gain = current - starting
-        overall_gain_pct = ((current / starting) - 1) * 100 if starting else 0
-
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
         "today": date.today(),
@@ -369,8 +339,6 @@ async def dashboard(request: Request, period: str = "1m", page: int = 1):
         "first_trade_date": first_trade_date,
         "pending_decisions": pending_decisions,
         "trade_history": trade_history,
-        "overall_gain": overall_gain,
-        "overall_gain_pct": overall_gain_pct,
         "period": period,
         "page": page,
     })
@@ -390,10 +358,7 @@ async def api_snapshots():
 
 def get_first_trade_date() -> date | None:
     """Get the date of the first executed trade from the journal."""
-    journal_file = DATA_DIR / "trade_journal.json"
-    if not journal_file.exists():
-        # Fall back to data directory in project
-        journal_file = Path("data/trade_journal.json")
+    journal_file = MODE_DATA_DIR / "trade_journal.json"
 
     if journal_file.exists():
         try:

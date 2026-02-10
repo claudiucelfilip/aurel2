@@ -12,8 +12,9 @@ import pytest
 
 @pytest.fixture
 def tmp_data_dir(tmp_path):
-    """Create a temporary data directory and patch DATA_DIR."""
-    with patch("aurel2.dashboard.app.DATA_DIR", tmp_path):
+    """Create a temporary data directory and patch DATA_DIR + MODE_DATA_DIR."""
+    with patch("aurel2.dashboard.app.DATA_DIR", tmp_path), \
+         patch("aurel2.dashboard.app.MODE_DATA_DIR", tmp_path):
         yield tmp_path
 
 
@@ -320,12 +321,12 @@ class TestLoadTradeHistoryAIOverride:
 class TestLoadTradeHistoryAccountValues:
     """Tests for account value tracking."""
 
-    def test_first_account_value_captured(self, tmp_data_dir, journal_entries):
-        """first_account_value should be the earliest non-null account_value_before."""
+    def test_total_decisions_counted(self, tmp_data_dir, journal_entries):
+        """total_decisions should count all journal entries."""
         from aurel2.dashboard.app import load_trade_history
         write_journal(tmp_data_dir, journal_entries)
         result = load_trade_history()
-        assert result["first_account_value"] == 1004835.04
+        assert result["total_decisions"] == len(journal_entries)
 
     def test_executed_trades_count(self, tmp_data_dir, journal_entries):
         """executed_trades should count entries with executed=True."""
@@ -341,7 +342,6 @@ class TestLoadTradeHistoryAccountValues:
         result = load_trade_history()
         assert result["total_decisions"] == 0
         assert result["all_decisions"] == []
-        assert result["first_account_value"] is None
 
     def test_missing_journal_file(self, tmp_data_dir, monkeypatch):
         """Missing journal should return defaults without error."""
@@ -489,6 +489,9 @@ class TestDashboardRoutes:
                 "total_value": 1005374.59,
                 "cash_balance": 1004826.0,
                 "buying_power": 2000000.0,
+                "unrealized_pnl": 0.0,
+                "realized_pnl": 0.0,
+                "gross_position_value": 0.0,
             },
         }
 
