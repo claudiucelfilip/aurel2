@@ -506,7 +506,7 @@ class TestDashboardRoutes:
     def test_dashboard_contains_total_value(self, client):
         """Dashboard should show account total value."""
         response = client.get("/")
-        assert "$1,005,375" in response.text or "1,005,374" in response.text
+        assert "€1,005,375" in response.text or "1,005,374" in response.text
 
     def test_dashboard_contains_activity_table(self, client):
         """Dashboard should have activity table."""

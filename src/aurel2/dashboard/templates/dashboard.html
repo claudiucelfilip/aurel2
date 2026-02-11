@@ -319,11 +319,11 @@
         {% set total_pnl = account.unrealized_pnl + account.realized_pnl %}
         <div class="grid" style="grid-template-columns: 1fr 1fr 1fr;">
             <div class="card">
-                <div class="stat-value">${{ "{:,.0f}".format(account.total_value) }}</div>
+                <div class="stat-value">€{{ "{:,.0f}".format(account.total_value) }}</div>
                 <div class="stat-label">Net Liquidation</div>
                 {% if account.cash_balance != account.total_value %}
                 <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">
-                    Cash: ${{ "{:,.0f}".format(account.cash_balance) }}
+                    Cash: €{{ "{:,.0f}".format(account.cash_balance) }}
                 </div>
                 {% endif %}
             </div>
@@ -334,7 +334,7 @@
                 <div class="stat-label">Unrealized P&L</div>
                 {% if account.gross_position_value > 0 %}
                 <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">
-                    Positions: ${{ "{:,.0f}".format(account.gross_position_value) }}
+                    Positions: €{{ "{:,.0f}".format(account.gross_position_value) }}
                 </div>
                 {% endif %}
             </div>
@@ -378,8 +378,8 @@
                 <canvas id="performanceChart"></canvas>
             </div>
             <div style="display: flex; gap: 20px; margin-top: 12px; font-size: 0.8rem; color: var(--text-muted);">
-                <span>Starting: ${{ "{:,.0f}".format(chart_data.starting_value) }}</span>
-                <span>Current: ${{ "{:,.0f}".format(chart_data.current_value) }}</span>
+                <span>Starting: €{{ "{:,.0f}".format(chart_data.starting_value) }}</span>
+                <span>Current: €{{ "{:,.0f}".format(chart_data.current_value) }}</span>
                 {% set gain = chart_data.current_value - chart_data.starting_value %}
                 {% set gain_pct = ((chart_data.current_value / chart_data.starting_value) - 1) * 100 if chart_data.starting_value else 0 %}
                 <span class="{% if gain >= 0 %}positive{% else %}negative{% endif %}">
@@ -437,11 +437,11 @@
                     <tr>
                         <td class="symbol">{{ p.symbol }}</td>
                         <td>{{ "{:,.0f}".format(p.shares) }}</td>
-                        <td>${{ "{:,.2f}".format(p.avg_cost) }}</td>
-                        <td>${{ "{:,.2f}".format(p.market_price) }}</td>
-                        <td>${{ "{:,.0f}".format(p.market_value) }}</td>
+                        <td>€{{ "{:,.2f}".format(p.avg_cost) }}</td>
+                        <td>€{{ "{:,.2f}".format(p.market_price) }}</td>
+                        <td>€{{ "{:,.0f}".format(p.market_value) }}</td>
                         <td class="{% if p.unrealized_pnl >= 0 %}positive{% else %}negative{% endif %}">
-                            ${{ "{:,.0f}".format(p.unrealized_pnl) }}
+                            €{{ "{:,.0f}".format(p.unrealized_pnl) }}
                             <span style="font-size: 0.8rem; opacity: 0.8;">({{ "{:+.2f}".format(p.pnl_pct) }}%)</span>
                         </td>
                     </tr>
@@ -555,7 +555,7 @@
                         </td>
                         <td style="text-align: right;">
                             {% if d.account_value_before %}
-                            ${{ "{:,.0f}".format(d.account_value_before) }}
+                            €{{ "{:,.0f}".format(d.account_value_before) }}
                             {% else %}
                             —
                             {% endif %}
@@ -565,9 +565,9 @@
                     <tr>
                         <td></td>
                         <td colspan="5" style="font-size: 0.75rem; color: var(--text-muted); padding-top: 0;">
-                            {{ "{:,.0f}".format(d.shares) }} shares @ ${{ "{:,.2f}".format(d.fill_price) }}
+                            {{ "{:,.0f}".format(d.shares) }} shares @ €{{ "{:,.2f}".format(d.fill_price) }}
                             {% if d.account_value_after %}
-                            · After: ${{ "{:,.0f}".format(d.account_value_after) }}
+                            · After: €{{ "{:,.0f}".format(d.account_value_after) }}
                             {% endif %}
                         </td>
                     </tr>
@@ -710,7 +710,7 @@
                         },
                         tooltip: {
                             callbacks: {
-                                label: (ctx) => ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString()
+                                label: (ctx) => ctx.dataset.label + ': €' + ctx.parsed.y.toLocaleString()
                             }
                         }
                     },
@@ -723,7 +723,7 @@
                             grid: { color: '#334155' },
                             ticks: {
                                 color: '#94a3b8',
-                                callback: (v) => '$' + (v/1000).toFixed(0) + 'k'
+                                callback: (v) => '€' + (v/1000).toFixed(0) + 'k'
                             }
                         }
                     }
@@ -801,7 +801,7 @@
                     },
                     tooltip: {
                         callbacks: {
-                            label: (ctx) => ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString()
+                            label: (ctx) => ctx.dataset.label + ': €' + ctx.parsed.y.toLocaleString()
                         }
                     },
                     // Add vertical line annotation for first trade date
@@ -832,7 +832,7 @@
                         grid: { color: '#334155' },
                         ticks: {
                             color: '#94a3b8',
-                            callback: (v) => '$' + (v/1000).toFixed(0) + 'k'
+                            callback: (v) => '€' + (v/1000).toFixed(0) + 'k'
                         }
                     }
                 }

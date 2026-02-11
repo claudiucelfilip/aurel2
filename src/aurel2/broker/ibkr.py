@@ -220,31 +220,39 @@ class IBKRBroker(BaseBroker):
         )
 
     async def get_positions(self) -> list[BrokerPosition]:
-        """Get all positions."""
+        """Get all positions with EUR-converted values.
+
+        Uses ib.portfolio() which returns marketValue and unrealizedPNL
+        in the account's base currency (EUR), unlike reqPositions which
+        returns values in the contract's native currency.
+        """
         if not self.is_connected:
             raise ConnectionError("Not connected to IBKR")
 
         positions = []
-        ib_positions = await self.ib.reqPositionsAsync()
-        for pos in ib_positions:
-            contract = pos.contract
+        portfolio_items = self.ib.portfolio()
+        for item in portfolio_items:
+            contract = item.contract
+            shares = float(item.position)
+            if shares == 0:
+                continue
 
-            # Get market price
-            market_price = await self.get_market_price(contract.symbol)
-            if market_price is None:
-                market_price = pos.avgCost  # Fallback to avg cost
+            # portfolio() gives EUR-converted values
+            market_value = float(item.marketValue)
+            unrealized_pnl = float(item.unrealizedPNL)
 
-            market_value = pos.position * market_price
-            unrealized_pnl = market_value - (pos.position * pos.avgCost)
+            # Derive per-share EUR prices from EUR totals
+            market_price = market_value / shares if shares else 0.0
+            avg_cost = float(item.averageCost)
 
             positions.append(BrokerPosition(
                 symbol=contract.symbol,
-                shares=float(pos.position),
-                avg_cost=float(pos.avgCost),
+                shares=shares,
+                avg_cost=avg_cost,
                 market_price=market_price,
                 market_value=market_value,
                 unrealized_pnl=unrealized_pnl,
-                currency=contract.currency,
+                currency="EUR",
             ))
 
         return positions
