@@ -108,7 +108,7 @@ function generateApprovalHTML(decision: Decision): string {
         ${decision.spy_price ? `
         <div class="market-item">
           <span class="market-label">S&P 500</span>
-          <span class="market-value">$${decision.spy_price.toFixed(2)}</span>
+          <span class="market-value">€${decision.spy_price.toFixed(2)}</span>
         </div>
         ` : ''}
         ${decision.drawdown !== undefined ? `

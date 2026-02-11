@@ -28,7 +28,7 @@ logger = structlog.get_logger()
 
 # Try to import ib_insync, but don't fail if not installed
 try:
-    from ib_insync import IB, Stock, MarketOrder, LimitOrder, Contract
+    from ib_insync import IB, Stock, Forex, MarketOrder, LimitOrder, Contract
     HAS_IB_INSYNC = True
 except ImportError:
     HAS_IB_INSYNC = False
@@ -308,6 +308,26 @@ class IBKRBroker(BaseBroker):
         except Exception as e:
             logger.error("get_market_price_failed", symbol=symbol, error=str(e))
             return None
+
+    async def get_eur_usd_rate(self) -> float:
+        """Get EUR/USD exchange rate. Returns how many USD per 1 EUR."""
+        if not self.is_connected:
+            return 1.0
+        try:
+            forex = Forex("EUR", "USD")
+            await self.ib.qualifyContractsAsync(forex)
+            ticker = self.ib.reqMktData(forex)
+            await asyncio.sleep(2)
+            rate = ticker.marketPrice()
+            if not rate or not (rate > 0):
+                await asyncio.sleep(3)
+                rate = ticker.marketPrice()
+            self.ib.cancelMktData(forex)
+            if rate and rate > 0:
+                return float(rate)
+        except Exception as e:
+            logger.warning("get_eur_usd_rate_failed", error=str(e))
+        return 1.0  # Fallback: no conversion
 
     async def place_order(self, order: BrokerOrder) -> OrderResult:
         """Place an order."""
