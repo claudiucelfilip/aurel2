@@ -17,7 +17,8 @@ rsync -a --delete \
   --exclude='data/price_cache/' \
   --exclude='data/archive/' \
   /root/aurel2/src /root/aurel2/scripts /root/aurel2/config \
-  /root/aurel2/docker/Dockerfile /root/aurel2/pyproject.toml \
+  /root/aurel2/docker/Dockerfile /root/aurel2/docker/docker-compose.yml \
+  /root/aurel2/docker/.env.example /root/aurel2/pyproject.toml \
   /opt/aurel2/
 
 # Sync backtest data separately (not --delete, just update)
