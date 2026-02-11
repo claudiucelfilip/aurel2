@@ -9,7 +9,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-pytest.importorskip("ib_insync", reason="ib_insync not installed")
 
 from aurel2.live.journal import TradeJournal
 from aurel2.live.executor import ExecutionResult
@@ -129,53 +128,34 @@ class TestRecordExecution:
         assert entry.account_value_after is None
 
 
-# --- Tests: Daemon execution paths call record_execution with post-trade state ---
+# --- Tests: Daemon execution paths delegate to trade_recorder ---
 
 class TestDaemonExecuteApproved:
-    """Tests that _execute_approved passes post-trade state to journal."""
+    """Tests that _execute_approved delegates to trade_recorder correctly."""
 
     @pytest.fixture
     def mock_daemon(self):
         """Create a mock daemon with required dependencies."""
-        from unittest.mock import MagicMock, AsyncMock
-
         daemon = MagicMock()
         daemon.dry_run = False
 
-        # Mock connection
-        daemon.connection = MagicMock()
-        daemon.connection.is_connected = True
-
-        account_summary = MagicMock()
-        account_summary.total_value = 1005000.0
-        daemon.connection.get_account_summary = AsyncMock(return_value=account_summary)
-
-        # Mock executor
-        daemon.executor = MagicMock()
-        daemon.executor.execute = AsyncMock(return_value=ExecutionResult(
-            success=True,
-            action="buy",
-            symbol="GLD",
-            shares=100,
-            fill_price=450.0,
-        ))
-        daemon.executor.get_current_holding = AsyncMock(return_value="GLD")
-
-        # Mock journal
+        # Mock trade_recorder on checker
         daemon.checker = MagicMock()
-        daemon.checker.journal = MagicMock()
-        daemon.checker.journal.record_execution = MagicMock()
+        daemon.checker.trade_recorder = MagicMock()
+        daemon.checker.trade_recorder.execute_and_record = AsyncMock(
+            return_value=ExecutionResult(
+                success=True, action="buy", symbol="GLD",
+                shares=100, fill_price=450.0,
+            )
+        )
 
-        # Mock pending manager
         daemon.pending_manager = MagicMock()
-
-        # Mock notifier
         daemon.notifier = MagicMock()
 
         return daemon
 
-    def test_execute_approved_passes_account_value(self, mock_daemon):
-        """_execute_approved should pass account_value_after to record_execution."""
+    def test_execute_approved_calls_trade_recorder(self, mock_daemon):
+        """_execute_approved should delegate to trade_recorder.execute_and_record."""
         from aurel2.live.daemon import LiveDaemon
 
         decision = MagicMock()
@@ -188,39 +168,31 @@ class TestDaemonExecuteApproved:
 
         asyncio.run(LiveDaemon._execute_approved(mock_daemon, decision))
 
-        mock_daemon.checker.journal.record_execution.assert_called_once()
-        call_kwargs = mock_daemon.checker.journal.record_execution.call_args
-        assert call_kwargs.kwargs.get("account_value_after") == 1005000.0
-        assert call_kwargs.kwargs.get("current_holding_after") == "GLD"
+        mock_daemon.checker.trade_recorder.execute_and_record.assert_called_once()
+        call_kwargs = mock_daemon.checker.trade_recorder.execute_and_record.call_args
+        assert call_kwargs.kwargs.get("action") == "buy"
+        assert call_kwargs.kwargs.get("symbol") == "GLD"
+        assert call_kwargs.kwargs.get("decision_id") == "j-001"
 
-    def test_execute_approved_none_on_failed_trade(self, mock_daemon):
-        """Post-trade state should be None when execution fails."""
+    def test_execute_approved_skips_on_dry_run(self, mock_daemon):
+        """_execute_approved should skip execution in dry run mode."""
         from aurel2.live.daemon import LiveDaemon
 
-        mock_daemon.executor.execute = AsyncMock(return_value=ExecutionResult(
-            success=False,
-            action="buy",
-            symbol="GLD",
-            message="Order rejected",
-        ))
+        mock_daemon.dry_run = True
 
         decision = MagicMock()
         decision.id = "d-002"
         decision.action = "buy"
         decision.symbol = "GLD"
-        decision.current_holding = None
-        decision.position_size_pct = 1.0
         decision.journal_decision_id = "j-002"
 
         asyncio.run(LiveDaemon._execute_approved(mock_daemon, decision))
 
-        call_kwargs = mock_daemon.checker.journal.record_execution.call_args
-        assert call_kwargs.kwargs.get("account_value_after") is None
-        assert call_kwargs.kwargs.get("current_holding_after") is None
+        mock_daemon.checker.trade_recorder.execute_and_record.assert_not_called()
 
 
 class TestDaemonExecuteTimeout:
-    """Tests that _execute_timeout passes post-trade state to journal."""
+    """Tests that _execute_timeout delegates to trade_recorder correctly."""
 
     @pytest.fixture
     def mock_daemon(self):
@@ -233,23 +205,14 @@ class TestDaemonExecuteTimeout:
         daemon.connection.broker = MagicMock()
         daemon.connection.broker.get_market_price = AsyncMock(return_value=455.0)
 
-        account_summary = MagicMock()
-        account_summary.total_value = 1006000.0
-        daemon.connection.get_account_summary = AsyncMock(return_value=account_summary)
-
-        daemon.executor = MagicMock()
-        daemon.executor.execute = AsyncMock(return_value=ExecutionResult(
-            success=True,
-            action="buy",
-            symbol="EFA",
-            shares=200,
-            fill_price=80.0,
-        ))
-        daemon.executor.get_current_holding = AsyncMock(return_value="EFA")
-
         daemon.checker = MagicMock()
-        daemon.checker.journal = MagicMock()
-        daemon.checker.journal.record_execution = MagicMock()
+        daemon.checker.trade_recorder = MagicMock()
+        daemon.checker.trade_recorder.execute_and_record = AsyncMock(
+            return_value=ExecutionResult(
+                success=True, action="buy", symbol="EFA",
+                shares=200, fill_price=80.0,
+            )
+        )
 
         daemon.pending_manager = MagicMock()
         daemon.pending_manager.validate_decision_still_valid = MagicMock(return_value=(True, ""))
@@ -258,8 +221,8 @@ class TestDaemonExecuteTimeout:
 
         return daemon
 
-    def test_execute_timeout_passes_post_trade_state(self, mock_daemon):
-        """_execute_timeout should pass account_value_after and current_holding_after."""
+    def test_execute_timeout_calls_trade_recorder(self, mock_daemon):
+        """_execute_timeout should delegate to trade_recorder.execute_and_record."""
         from aurel2.live.daemon import LiveDaemon
 
         decision = MagicMock()
@@ -272,13 +235,15 @@ class TestDaemonExecuteTimeout:
 
         asyncio.run(LiveDaemon._execute_timeout(mock_daemon, decision))
 
-        call_kwargs = mock_daemon.checker.journal.record_execution.call_args
-        assert call_kwargs.kwargs.get("account_value_after") == 1006000.0
-        assert call_kwargs.kwargs.get("current_holding_after") == "EFA"
+        mock_daemon.checker.trade_recorder.execute_and_record.assert_called_once()
+        call_kwargs = mock_daemon.checker.trade_recorder.execute_and_record.call_args
+        assert call_kwargs.kwargs.get("action") == "buy"
+        assert call_kwargs.kwargs.get("symbol") == "EFA"
+        assert call_kwargs.kwargs.get("decision_id") == "j-003"
 
 
 class TestCheckerExecuteDecision:
-    """Tests that checker._execute_decision passes post-trade state."""
+    """Tests that checker._execute_decision delegates to trade_recorder."""
 
     @pytest.fixture
     def mock_checker(self):
@@ -286,30 +251,20 @@ class TestCheckerExecuteDecision:
         checker = MagicMock()
         checker.dry_run = False
 
-        checker.connection = MagicMock()
-        account_summary = MagicMock()
-        account_summary.total_value = 1007000.0
-        checker.connection.get_account_summary = AsyncMock(return_value=account_summary)
-
-        checker.executor = MagicMock()
-        checker.executor.execute = AsyncMock(return_value=ExecutionResult(
-            success=True,
-            action="buy",
-            symbol="SPY",
-            shares=50,
-            fill_price=580.0,
-        ))
-        checker.executor.get_current_holding = AsyncMock(return_value="SPY")
-
-        checker.journal = MagicMock()
-        checker.journal.record_execution = MagicMock()
+        checker.trade_recorder = MagicMock()
+        checker.trade_recorder.execute_and_record = AsyncMock(
+            return_value=ExecutionResult(
+                success=True, action="buy", symbol="SPY",
+                shares=50, fill_price=580.0,
+            )
+        )
 
         checker.notifier = MagicMock()
 
         return checker
 
-    def test_execute_decision_passes_post_trade_state(self, mock_checker):
-        """_execute_decision should pass account_value_after and current_holding_after."""
+    def test_execute_decision_calls_trade_recorder(self, mock_checker):
+        """_execute_decision should delegate to trade_recorder.execute_and_record."""
         from aurel2.live.checker import Checker
         from aurel2.agent.orchestrator import AgentDecision, DecisionType, Urgency
         from aurel2.core.models import SignalAction
@@ -330,6 +285,8 @@ class TestCheckerExecuteDecision:
             mock_checker, decision, None, None, 1000000.0, "test-id"
         ))
 
-        call_kwargs = mock_checker.journal.record_execution.call_args
-        assert call_kwargs.kwargs.get("account_value_after") == 1007000.0
-        assert call_kwargs.kwargs.get("current_holding_after") == "SPY"
+        mock_checker.trade_recorder.execute_and_record.assert_called_once()
+        call_kwargs = mock_checker.trade_recorder.execute_and_record.call_args
+        assert call_kwargs.kwargs.get("action") == "buy"
+        assert call_kwargs.kwargs.get("symbol") == "SPY"
+        assert call_kwargs.kwargs.get("decision_id") == "test-id"

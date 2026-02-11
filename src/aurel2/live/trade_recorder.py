@@ -9,7 +9,7 @@ from aurel2.live.journal import TradeJournal
 from aurel2.notifications.ntfy import NtfyNotifier
 
 if TYPE_CHECKING:
-    from aurel2.live.connection import IBKRConnection
+    from aurel2.live.connection import AlpacaConnection
 
 logger = structlog.get_logger()
 
@@ -24,7 +24,7 @@ class TradeRecorder:
     def __init__(
         self,
         executor: Executor,
-        connection: "IBKRConnection",
+        connection: "AlpacaConnection",
         journal: TradeJournal,
         notifier: NtfyNotifier,
     ):

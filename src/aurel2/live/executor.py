@@ -1,4 +1,4 @@
-"""Trade executor - translates decisions into IBKR orders."""
+"""Trade executor - translates decisions into broker orders."""
 
 import os
 from dataclasses import dataclass
@@ -9,7 +9,7 @@ import structlog
 from aurel2.broker.base import BrokerOrder, OrderResult, BrokerPosition
 
 if TYPE_CHECKING:
-    from aurel2.live.connection import IBKRConnection
+    from aurel2.live.connection import AlpacaConnection
 
 logger = structlog.get_logger()
 
@@ -30,7 +30,7 @@ class ExecutionResult:
 
 class Executor:
     """
-    Executes trading decisions via IBKR.
+    Executes trading decisions via broker.
 
     Handles:
     - BUY: Purchase shares of the target symbol
@@ -41,7 +41,7 @@ class Executor:
 
     def __init__(
         self,
-        connection: "IBKRConnection",
+        connection: "AlpacaConnection",
         settlement_headroom_pct: float = 0.02,
         settlement_min_cash_buffer: float = 0.0,
     ):
@@ -67,15 +67,15 @@ class Executor:
         price: float,
         gross_funds: float,
         context: str,
-    ) -> tuple[int, str]:
+    ) -> tuple[float, str]:
         """Apply pre-trade settlement headroom guard and return (shares, note)."""
         if price <= 0:
             return 0, ""
 
-        unguarded_shares = int(gross_funds / price)
+        unguarded_shares = round(gross_funds / price, 6)
         guarded_funds = gross_funds * (1.0 - self.settlement_headroom_pct)
         guarded_funds = max(0.0, guarded_funds - self.settlement_min_cash_buffer)
-        guarded_shares = int(guarded_funds / price)
+        guarded_shares = round(guarded_funds / price, 6)
 
         note = ""
         if guarded_shares < unguarded_shares:
@@ -126,7 +126,7 @@ class Executor:
                 success=False,
                 action=action,
                 symbol=symbol,
-                message="Not connected to IBKR",
+                message="Not connected to broker",
             )
 
         if action == "hold":

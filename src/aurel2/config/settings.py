@@ -34,9 +34,8 @@ class AssetsConfig(BaseModel):
 
 class BrokerConfig(BaseModel):
     """Broker configuration."""
-    type: str = "ibkr"
-    host: str = "127.0.0.1"
-    port: int = 4002  # IB Gateway paper trading (4001 for live)
+    type: str = "alpaca"
+    paper: bool = True
 
 
 class RiskConfig(BaseModel):

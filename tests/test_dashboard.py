@@ -475,14 +475,14 @@ class TestDashboardRoutes:
 
     @pytest.fixture
     def client(self, tmp_data_dir, journal_entries, pending_decisions_data):
-        """Create a test client with mock IBKR data."""
+        """Create a test client with mock broker data."""
         from fastapi.testclient import TestClient
         from aurel2.dashboard.app import app
 
         write_journal(tmp_data_dir, journal_entries)
         write_pending(tmp_data_dir, pending_decisions_data)
 
-        mock_ibkr_data = {
+        mock_broker_data = {
             "connected": True,
             "positions": [],
             "account": {
@@ -495,7 +495,7 @@ class TestDashboardRoutes:
             },
         }
 
-        with patch("aurel2.dashboard.app.get_ibkr_data", return_value=mock_ibkr_data):
+        with patch("aurel2.dashboard.app.get_broker_data", return_value=mock_broker_data):
             yield TestClient(app)
 
     def test_dashboard_returns_200(self, client):
@@ -506,7 +506,7 @@ class TestDashboardRoutes:
     def test_dashboard_contains_total_value(self, client):
         """Dashboard should show account total value."""
         response = client.get("/")
-        assert "€1,005,375" in response.text or "1,005,374" in response.text
+        assert "$1,005,375" in response.text or "1,005,374" in response.text
 
     def test_dashboard_contains_activity_table(self, client):
         """Dashboard should have activity table."""

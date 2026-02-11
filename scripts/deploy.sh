@@ -1,7 +1,7 @@
 #!/bin/bash
 # Deploy aurel2 to production (from /root/aurel2 → /opt/aurel2)
 # Runs tests first, then syncs code and rebuilds Docker containers.
-# NEVER rebuilds ib-gateway — that requires 2FA re-authentication.
+# Rebuilds aurel2 + dashboard containers only.
 
 set -euo pipefail
 

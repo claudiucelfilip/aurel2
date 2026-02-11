@@ -104,7 +104,7 @@ class HealthChecker:
         elif self._is_heartbeat_stale(heartbeat):
             issues.append(f"Heartbeat stale (>{self.stale_threshold.total_seconds() // 60} min)")
         elif not heartbeat.connected:
-            issues.append("IBKR disconnected")
+            issues.append("Broker disconnected")
         elif heartbeat.circuit_breaker_state == "open":
             issues.append("Circuit breaker is OPEN")
 
@@ -244,11 +244,8 @@ class HealthChecker:
             ]
             combined_pattern = "|".join(error_patterns)
 
-            # Patterns to ignore (benign IBKR warnings, deprecation warnings, etc.)
+            # Patterns to ignore (benign warnings, deprecation warnings, etc.)
             ignore_patterns = [
-                r"Error 10089.*market data.*subscription",  # IBKR market data subscription
-                r"Error 300.*Can't find EId",  # IBKR ticker cleanup
-                r"Warning \d+.*farm connection",  # IBKR farm connection status
                 r"DeprecationWarning",
                 r"Pandas4Warning",
                 r"FutureWarning",

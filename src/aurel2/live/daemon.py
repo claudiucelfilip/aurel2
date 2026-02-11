@@ -11,7 +11,7 @@ from typing import Optional
 import pytz
 import structlog
 
-from aurel2.live.connection import IBKRConnection
+from aurel2.live.connection import AlpacaConnection
 from aurel2.live.checker import Checker
 from aurel2.live.executor import Executor
 from aurel2.live.pending import PendingManager, PendingStatus, pending_path_for_mode
@@ -29,11 +29,10 @@ class LiveDaemon:
     Schedule:
     - Daily check at configured time (default 4 PM Romania)
     - Poll for pending approvals every 5 minutes
-    - Heartbeat to IBKR every 10 minutes
 
     Handles:
     - Graceful shutdown on SIGINT/SIGTERM
-    - Automatic reconnection to IBKR
+    - Automatic reconnection to broker
     - Pending decision timeouts
     """
 
@@ -48,8 +47,6 @@ class LiveDaemon:
         use_ai: bool = False,
         ai_model: str = "haiku",
         ai_lookback_years: int = 3,
-        ibkr_host: str = "127.0.0.1",
-        ibkr_port: int | None = None,
     ):
         self.paper = paper
         self.check_time = check_time
@@ -62,7 +59,7 @@ class LiveDaemon:
         self.ai_lookback_years = ai_lookback_years
 
         self.mode = "paper" if paper else "live"
-        self.connection = IBKRConnection(paper=paper, host=ibkr_host, port=ibkr_port)
+        self.connection = AlpacaConnection(paper=paper)
         self.pending_manager = PendingManager(
             pending_file=pending_path_for_mode(self.mode),
         )
@@ -138,11 +135,11 @@ class LiveDaemon:
         # Setup signal handlers
         self._setup_signals()
 
-        # Connect to IBKR
-        connected = await self.connection.connect(launch_gateway_if_needed=True)
+        # Connect to broker
+        connected = await self.connection.connect()
         if not connected:
             logger.error("daemon_connection_failed")
-            print("Failed to connect to IBKR. Exiting.")
+            print("Failed to connect to broker. Exiting.")
             return
 
         # Load pending decisions
@@ -421,7 +418,7 @@ class LiveDaemon:
         if self._heartbeat_task and not self._heartbeat_task.done():
             self._heartbeat_task.cancel()
 
-        # Disconnect from IBKR
+        # Disconnect from broker
         await self.connection.disconnect()
 
         # Send notification
@@ -450,7 +447,7 @@ async def run_single_check(
     print("=" * 60 + "\n")
 
     mode = "paper" if paper else "live"
-    connection = IBKRConnection(paper=paper)
+    connection = AlpacaConnection(paper=paper)
     pending_manager = PendingManager(
         pending_file=pending_path_for_mode(mode),
     )
@@ -464,9 +461,9 @@ async def run_single_check(
 
     try:
         # Connect
-        connected = await connection.connect(launch_gateway_if_needed=True)
+        connected = await connection.connect()
         if not connected:
-            print("Failed to connect to IBKR.")
+            print("Failed to connect to broker.")
             return
 
         # Run check

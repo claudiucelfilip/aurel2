@@ -39,7 +39,7 @@ Your job is to diagnose issues and decide on fixes WITHOUT human intervention.
 
 ## About Aurel2
 Aurel2 is an automated trading system that:
-- Runs as a daemon process connecting to IB Gateway
+- Runs as a daemon process connecting to Alpaca Markets API
 - Executes momentum-based ETF rotation strategies
 - Uses a heartbeat file to signal health
 - Has a circuit breaker that trips on repeated failures
@@ -47,8 +47,8 @@ Aurel2 is an automated trading system that:
 ## Common Issues and Patterns
 
 ### Connection Issues (restart_daemon)
-- IB Gateway not running or unresponsive
-- IBKR API connection dropped
+- Alpaca API unreachable or returning errors
+- Broker API connection dropped
 - Socket errors or timeouts
 - Usually fixed by restarting the daemon
 
@@ -223,7 +223,7 @@ class AIAnalyzer:
         # Heartbeat info
         if health_report.heartbeat:
             lines.append("\n## Heartbeat Info")
-            lines.append(f"Connected to IBKR: {health_report.heartbeat.connected}")
+            lines.append(f"Connected to broker: {health_report.heartbeat.connected}")
             lines.append(f"Circuit breaker: {health_report.heartbeat.circuit_breaker_state}")
             lines.append(f"Pending orders: {health_report.heartbeat.pending_count}")
             lines.append(f"Error count: {health_report.heartbeat.error_count}")

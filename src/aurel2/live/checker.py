@@ -15,7 +15,7 @@ from aurel2.data.providers.yahoo import YahooFinanceProvider
 from aurel2.strategies.dual_momentum import DualMomentumStrategy
 from aurel2.strategies.mean_reversion import MeanReversionStrategy
 from aurel2.strategies.multi_timeframe import MultiTimeframeTrendStrategy
-from aurel2.live.connection import IBKRConnection
+from aurel2.live.connection import AlpacaConnection
 from aurel2.live.executor import Executor, ExecutionResult
 from aurel2.live.journal import TradeJournal, journal_path_for_mode
 from aurel2.live.pending import PendingManager, PendingDecision, DecisionUrgency
@@ -44,7 +44,7 @@ class Checker:
     Runs a single market check cycle.
 
     Steps:
-    1. Sync positions from IBKR
+    1. Sync positions from broker
     2. Fetch market prices
     3. Run all 3 strategies
     4. Orchestrator produces decision
@@ -55,7 +55,7 @@ class Checker:
 
     def __init__(
         self,
-        connection: IBKRConnection,
+        connection: AlpacaConnection,
         pending_manager: PendingManager,
         ntfy_topic: str = "aurel2",
         dry_run: bool = False,
@@ -133,10 +133,10 @@ class Checker:
         if not await self.connection.ensure_connected():
             return CheckResult(
                 success=False,
-                message="Could not connect to IBKR",
+                message="Could not connect to broker",
             )
 
-        # 2. Sync positions from IBKR
+        # 2. Sync positions from broker
         positions = await self.connection.get_positions()
         account_summary = await self.connection.get_account_summary()
 
@@ -173,17 +173,6 @@ class Checker:
 
         # 5. Get market context
         market_context = self._build_market_context(prices)
-
-        # 5b. Convert USD prices to EUR for display
-        if self.connection.is_connected and market_context.get("spy_price"):
-            try:
-                eur_usd = await self.connection.broker.get_eur_usd_rate()
-                if eur_usd > 0:
-                    market_context["spy_price"] = market_context["spy_price"] / eur_usd
-                    if "ma_200" in market_context:
-                        market_context["ma_200"] = market_context["ma_200"] / eur_usd
-            except Exception:
-                pass  # Keep USD values as fallback
 
         # 6. Orchestrator analysis (deterministic)
         decision = self.orchestrator.analyze(
@@ -685,7 +674,7 @@ def _explain_regime_change(old: str, new: str, market_context: dict) -> str:
     drawdown = market_context.get("drawdown", 0)
     ma_200 = market_context.get("ma_200")
 
-    price_note = f" SPY is at €{spy_price:,.0f}." if spy_price else ""
+    price_note = f" SPY is at ${spy_price:,.0f}." if spy_price else ""
     ma_note = ""
     if spy_price and ma_200:
         pct_vs_ma = ((spy_price / ma_200) - 1) * 100

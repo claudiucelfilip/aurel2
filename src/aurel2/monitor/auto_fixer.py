@@ -74,8 +74,6 @@ class AutoFixer:
         # Route to appropriate fix method
         if action == "restart_daemon":
             result = self._restart_daemon(context)
-        elif action == "restart_ib_gateway":
-            result = self._restart_ib_gateway(context)
         elif action == "wait_and_restart":
             result = self._wait_and_restart(context)
         elif action == "kill_daemon":
@@ -135,7 +133,6 @@ class AutoFixer:
             logger.warning("kill_daemon_failed", message=kill_result.message)
 
         time.sleep(2)
-        self._ensure_gateway_running()
         return self._start_daemon()
 
     def _restart_docker_container(self, container_name: str) -> FixResult:
@@ -166,89 +163,6 @@ class AutoFixer:
             action_taken="restart_daemon",
             attempts_remaining=0,
         )
-
-    def _restart_ib_gateway(self, context: dict) -> FixResult:
-        """Restart the IB Gateway Docker container.
-
-        Uses the Docker socket (must be mounted) to restart the ib-gateway
-        container when the gateway has authentication or connectivity issues
-        that daemon restarts can't fix.
-        """
-        logger.info("auto_fixer_restarting_ib_gateway", reason=context.get("reason", ""))
-
-        # Try docker compose restart first (works if docker CLI is available)
-        for cmd in [
-            ["docker", "compose", "-p", "aurel2-trading", "restart", "ib-gateway"],
-            ["docker", "restart", "aurel2-trading-ib-gateway-1"],
-        ]:
-            try:
-                result = subprocess.run(
-                    cmd,
-                    capture_output=True,
-                    text=True,
-                    timeout=120,
-                )
-                if result.returncode == 0:
-                    logger.info("ib_gateway_restarted", cmd=" ".join(cmd))
-                    # Wait for gateway to become healthy
-                    time.sleep(30)
-                    return FixResult(
-                        success=True,
-                        message=f"IB Gateway container restarted successfully",
-                        action_taken="restart_ib_gateway",
-                        attempts_remaining=0,
-                    )
-                else:
-                    logger.warning(
-                        "ib_gateway_restart_cmd_failed",
-                        cmd=" ".join(cmd),
-                        stderr=result.stderr[:200],
-                    )
-            except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-                logger.warning("ib_gateway_restart_cmd_error", cmd=" ".join(cmd), error=str(e))
-                continue
-
-        return FixResult(
-            success=False,
-            message="Failed to restart IB Gateway container (docker not available or socket not mounted)",
-            action_taken="restart_ib_gateway",
-            attempts_remaining=0,
-        )
-
-    def _ensure_gateway_running(self) -> bool:
-        """Check if IB Gateway is running, launch it if not."""
-        # Check if IB Gateway process is running
-        for proc in psutil.process_iter(["pid", "name", "cmdline"]):
-            try:
-                name = proc.info.get("name", "").lower()
-                cmdline = " ".join(proc.info.get("cmdline") or []).lower()
-                if "ib gateway" in name or "ibgateway" in name or "ib gateway" in cmdline:
-                    logger.info("gateway_already_running", pid=proc.info["pid"])
-                    return True
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                continue
-
-        # IB Gateway not running, try to launch it
-        logger.info("auto_fixer_launching_gateway")
-        gateway_paths = [
-            Path("/Applications/IB Gateway 10.19/IB Gateway 10.19.app"),
-            Path("/Applications/IB Gateway/IB Gateway.app"),
-            Path.home() / "Applications" / "IB Gateway" / "IB Gateway.app",
-        ]
-
-        for gateway_path in gateway_paths:
-            if gateway_path.exists():
-                try:
-                    subprocess.Popen(["open", str(gateway_path)])
-                    logger.info("gateway_launched", path=str(gateway_path))
-                    # Give IB Gateway time to start
-                    time.sleep(10)
-                    return True
-                except Exception as e:
-                    logger.warning("gateway_launch_failed", path=str(gateway_path), error=str(e))
-
-        logger.warning("gateway_not_found")
-        return False
 
     def _wait(self, context: dict) -> FixResult:
         """Wait and observe - AI decided not to take action yet.

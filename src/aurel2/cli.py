@@ -194,45 +194,30 @@ def momentum(
         ),
     }
 
-    # UCITS equivalents for actual trading
-    ucits_equivalents = {
+    # US ETFs used for trading
+    etf_details = {
         AssetClass.US_STOCKS: {
-            "symbol": "CSPX",
-            "name": "iShares Core S&P 500 UCITS ETF (Acc)",
-            "isin": "IE00B5BMR087",
-            "exchange": "Xetra (Germany)",
-            "asset_class": AssetClass.US_STOCKS,
+            "symbol": "SPY",
+            "name": "SPDR S&P 500 ETF Trust",
         },
         AssetClass.GLOBAL_STOCKS: {
-            "symbol": "VWRA",
-            "name": "Vanguard FTSE All-World UCITS ETF (Acc)",
-            "isin": "IE00BK5BQT80",
-            "exchange": "Xetra (Germany)",
-            "asset_class": AssetClass.GLOBAL_STOCKS,
+            "symbol": "EFA",
+            "name": "iShares MSCI EAFE ETF",
         },
         AssetClass.BONDS: {
-            "symbol": "AGGH",
-            "name": "iShares Core Global Aggregate Bond UCITS ETF (Acc)",
-            "isin": "IE00BDBRDM35",
-            "exchange": "Xetra (Germany)",
-            "asset_class": AssetClass.BONDS,
+            "symbol": "AGG",
+            "name": "iShares Core US Aggregate Bond ETF",
         },
         AssetClass.CASH: {
             "symbol": "CASH",
             "name": "Hold in broker cash account",
-            "isin": "N/A",
-            "exchange": "N/A",
-            "asset_class": AssetClass.CASH,
         },
     }
 
     # Map symbols to asset classes
     symbol_to_class = {
-        "CSPX": AssetClass.US_STOCKS,
         "SPY": AssetClass.US_STOCKS,
-        "VWRA": AssetClass.GLOBAL_STOCKS,
         "EFA": AssetClass.GLOBAL_STOCKS,
-        "AGGH": AssetClass.BONDS,
         "AGG": AssetClass.BONDS,
     }
 
@@ -259,7 +244,7 @@ def momentum(
     # Find winner
     sorted_scores = sorted(scores.items(), key=lambda x: x[1].momentum_12m, reverse=True)
     winner_class, winner_score = sorted_scores[0]
-    winner_ucits = ucits_equivalents[winner_class]
+    winner_etf = etf_details[winner_class]
 
     # Determine current holding
     current_holding = None
@@ -323,11 +308,9 @@ def momentum(
             typer.echo("\nACTION: STAY IN CASH")
             typer.echo("\nAll assets are underperforming cash. Wait for better conditions.")
         else:
-            typer.echo(f"\nACTION: BUY {winner_ucits['symbol']}")
-            typer.echo(f"\n  Symbol: {winner_ucits['symbol']}")
-            typer.echo(f"  Name:   {winner_ucits['name']}")
-            typer.echo(f"  ISIN:   {winner_ucits['isin']}")
-            typer.echo(f"  Exchange: {winner_ucits['exchange']}")
+            typer.echo(f"\nACTION: BUY {winner_etf['symbol']}")
+            typer.echo(f"\n  Symbol: {winner_etf['symbol']}")
+            typer.echo(f"  Name:   {winner_etf['name']}")
             typer.echo(f"\n  {winner_class.value.replace('_', ' ').title()} has {winner_score.momentum_12m:.2%} momentum")
 
             if portfolio.cash > 0:
@@ -350,7 +333,7 @@ def momentum(
 
             if momentum_diff > switch_threshold:
                 # Should switch
-                typer.echo(f"\nACTION: SELL {current_holding.symbol} -> BUY {winner_ucits['symbol']}")
+                typer.echo(f"\nACTION: SELL {current_holding.symbol} -> BUY {winner_etf['symbol']}")
                 typer.echo(f"\n  Momentum difference: {momentum_diff:.2%} (threshold: {switch_threshold:.0%})")
                 typer.echo(f"  Your holding: {current_score.momentum_12m:.2%}")
                 typer.echo(f"  Winner:       {winner_score.momentum_12m:.2%}")
@@ -381,15 +364,13 @@ def momentum(
                 typer.echo("TO EXECUTE:")
                 typer.echo("-" * 70)
                 typer.echo(f"  1. Sell all {current_holding.shares:.4f} shares of {current_holding.symbol}")
-                typer.echo(f"  2. Buy {winner_ucits['symbol']} ({winner_ucits['name']})")
-                typer.echo(f"     ISIN: {winner_ucits['isin']}")
-                typer.echo(f"     Exchange: {winner_ucits['exchange']}")
+                typer.echo(f"  2. Buy {winner_etf['symbol']} ({winner_etf['name']})")
                 typer.echo(f"  3. Record the sale: aurel2 sell {current_holding.symbol}")
-                typer.echo(f"  4. Record the buy:  aurel2 buy {winner_ucits['symbol']} <shares> <price>")
+                typer.echo(f"  4. Record the buy:  aurel2 buy {winner_etf['symbol']} <shares> <price>")
             else:
                 # Difference not big enough
                 typer.echo(f"\nACTION: HOLD {current_holding.symbol}")
-                typer.echo(f"\n  {winner_ucits['symbol']} is winning, but difference is only {momentum_diff:.2%}")
+                typer.echo(f"\n  {winner_etf['symbol']} is winning, but difference is only {momentum_diff:.2%}")
                 typer.echo(f"  Threshold to switch: {switch_threshold:.0%}")
                 typer.echo(f"  No action needed - keep holding {current_holding.symbol}.")
 
@@ -428,7 +409,7 @@ def buy(
     shares: float = typer.Argument(..., help="Number of shares purchased"),
     price: float = typer.Argument(..., help="Price per share in EUR"),
     entry_date: str = typer.Option(None, "--date", "-d", help="Purchase date (YYYY-MM-DD), defaults to today"),
-    broker: str = typer.Option("tradeville", "--broker", "-b", help="Broker: tradeville, ibkr_eu, ibkr_us"),
+    broker: str = typer.Option("alpaca", "--broker", "-b", help="Broker name"),
     name: str = typer.Option(None, "--name", "-n", help="ETF name (optional)"),
     isin: str = typer.Option(None, "--isin", "-i", help="ISIN code (optional)"),
 ):
@@ -1894,13 +1875,11 @@ def live(
     ai: bool = typer.Option(False, "--ai", help="Enable AI advisor (disabled by default)", envvar="USE_AI"),
     ai_model: str = typer.Option("haiku", "--ai-model", "-m", help="AI model: sonnet, opus, haiku", envvar="AI_MODEL"),
     ai_lookback: int = typer.Option(3, "--ai-lookback", "-l", help="AI failure pattern lookback years (default: 3)", envvar="AI_LOOKBACK_YEARS"),
-    ibkr_host: str = typer.Option("127.0.0.1", "--ibkr-host", help="IBKR Gateway host", envvar="IBKR_HOST"),
-    ibkr_port: int = typer.Option(None, "--ibkr-port", help="IBKR Gateway port (default: 4002 paper, 4001 live)", envvar="IBKR_PORT"),
 ):
     """Run the live trading daemon.
 
     The daemon:
-    1. Connects to IBKR (launches IB Gateway if needed)
+    1. Connects to Alpaca Markets
     2. Runs daily check at the specified time (default 4 PM Romania)
     3. Auto-executes ROUTINE decisions (all strategies agree)
     4. Creates approval requests for NON_ROUTINE/URGENT decisions
@@ -1912,8 +1891,8 @@ def live(
     - Lookback window filters failure patterns to recent years only
 
     Environment Variables:
-        IBKR_HOST, IBKR_PORT, CHECK_TIME, POLL_INTERVAL, NTFY_TOPIC,
-        DRY_RUN, AI_MODEL, AI_LOOKBACK_YEARS
+        APCA_API_KEY_ID, APCA_API_SECRET_KEY, CHECK_TIME, POLL_INTERVAL,
+        NTFY_TOPIC, DRY_RUN, AI_MODEL, AI_LOOKBACK_YEARS
 
     Examples:
         aurel2 live --paper          # Paper trading (default)
@@ -1921,7 +1900,6 @@ def live(
         aurel2 live --dry-run        # Simulate without executing
         aurel2 live --check-time 09:30  # Check at 9:30 AM
         aurel2 live --ai-lookback 5  # Use 5-year lookback window
-        aurel2 live --ibkr-host ib-gateway  # Docker: connect to ib-gateway container
     """
     import asyncio
     import os
@@ -1959,8 +1937,6 @@ def live(
         use_ai=ai,
         ai_model=ai_model,
         ai_lookback_years=ai_lookback,
-        ibkr_host=ibkr_host,
-        ibkr_port=ibkr_port,
     )
 
     try:
@@ -1978,7 +1954,7 @@ def check(
     """Run a single market check (for testing).
 
     This runs the same logic as the daemon but only once:
-    1. Connects to IBKR
+    1. Connects to broker
     2. Syncs positions
     3. Fetches market data
     4. Runs all strategies

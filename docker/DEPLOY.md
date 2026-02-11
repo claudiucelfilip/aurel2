@@ -83,7 +83,7 @@ nano .env  # or use your preferred editor
 ```
 
 **Important .env settings:**
-- `TWS_USERID` and `TWS_PASSWORD`: Your IBKR credentials
+- `APCA_API_KEY_ID` and `APCA_API_SECRET_KEY`: Your Alpaca API credentials
 - `TRADING_MODE=paper`: Start with paper trading!
 - `NTFY_TOPIC`: Your notification topic
 - `AUREL2_SETTLEMENT_HEADROOM_PCT` (optional, default `0.02`): reserve percentage before BUY sizing to reduce settlement-limit rejects
@@ -118,9 +118,6 @@ docker compose logs -f aurel2
 ## Step 5: Verify Deployment
 
 ```bash
-# Check IB Gateway is running
-docker compose logs ib-gateway
-
 # Check Aurel2 daemon
 docker compose logs aurel2
 
@@ -133,13 +130,11 @@ docker compose exec aurel2 cat /root/.aurel2/heartbeat.json
 ### View Logs
 ```bash
 docker compose logs -f aurel2      # Trading daemon
-docker compose logs -f ib-gateway  # IB Gateway
 ```
 
 ### Restart Services
 ```bash
 docker compose restart aurel2      # Restart trading daemon
-docker compose restart ib-gateway  # Restart IB Gateway
 docker compose restart             # Restart all
 ```
 
@@ -197,14 +192,13 @@ docker compose --profile monitoring up -d
 
 ## Troubleshooting
 
-### IB Gateway won't connect
-- Check credentials in `.env`
-- IBKR may require 2FA - check email
-- View logs: `docker compose logs ib-gateway`
-- Try VNC: Set `VNC_SERVER_PASSWORD` in `.env`, restart, connect to `YOUR_IP:5900`
+### Alpaca API connection issues
+- Check credentials in `.env` (`APCA_API_KEY_ID`, `APCA_API_SECRET_KEY`)
+- Verify paper/live mode matches your API keys
+- View logs: `docker compose logs aurel2`
 
 ### Aurel2 daemon not starting
-- Check IB Gateway is healthy: `docker compose ps`
+- Check containers: `docker compose ps`
 - View logs: `docker compose logs aurel2`
 - Check heartbeat: `docker compose exec aurel2 cat /root/.aurel2/heartbeat.json`
 

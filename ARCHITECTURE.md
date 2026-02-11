@@ -30,7 +30,7 @@ Tax-optimized dual momentum trading system with AI-assisted decision making.
 - Employs **DM-primary + calm-hold** orchestration with multi-strategy classification
 - Includes **conservative AI advisor** to guard against known failure patterns
 - Requires **human approval** for non-routine decisions
-- Optimizes for **Romanian tax efficiency** (UCITS ETFs, quarterly rebalancing)
+- Optimizes for **tax efficiency** (quarterly rebalancing)
 
 ### Key Principles
 
@@ -39,7 +39,7 @@ Tax-optimized dual momentum trading system with AI-assisted decision making.
 3. **Multi-strategy classification**: 3 strategies determine decision type (routine vs non-routine), but DM signal drives the actual trade
 4. **Conservative AI**: AI guards against failures, doesn't replace system (disabled by default)
 5. **Human-in-the-loop**: Non-routine decisions require approval
-6. **Tax optimized**: Monthly rebalancing, Irish-domiciled UCITS ETFs
+6. **Tax optimized**: Monthly rebalancing, US ETFs via Alpaca
 7. **Audit trail**: Every decision logged for analysis
 
 ---
@@ -56,15 +56,13 @@ Tax-optimized dual momentum trading system with AI-assisted decision making.
 │                     Ubuntu 24.04 + Docker                        │
 │                                                                  │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │              Docker Compose Network                       │  │
+│  │              Docker Compose                                │  │
 │  │                                                           │  │
-│  │  ┌─────────────────┐      ┌──────────────────────────┐  │  │
-│  │  │  IB Gateway     │      │  Aurel2 Daemon           │  │  │
-│  │  │  (Headless)     │◄─────┤  (live --paper)          │  │  │
-│  │  │                 │      │                          │  │  │
-│  │  │ Port 4004       │      │ Daily check at 16:00     │  │  │
-│  │  │ (paper trading) │      │ Romania time             │  │  │
-│  │  └─────────────────┘      └──────────────────────────┘  │  │
+│  │  ┌──────────────────────────┐                             │  │
+│  │  │  Aurel2 Daemon           │──── Alpaca REST API         │  │
+│  │  │  (live --paper)          │                             │  │
+│  │  │  Daily check at 16:00   │                             │  │
+│  │  └──────────────────────────┘                             │  │
 │  │                                                           │  │
 │  │  ┌─────────────────┐      ┌──────────────────────────┐  │  │
 │  │  │  Dashboard      │      │  Monitor (watchdog)      │  │  │
@@ -84,20 +82,18 @@ Tax-optimized dual momentum trading system with AI-assisted decision making.
 
 | Service | Image | Purpose | Ports |
 |---------|-------|---------|-------|
-| `ib-gateway` | `ghcr.io/gnzsnz/ib-gateway:stable` | Headless IBKR connection | 4003/4004 (internal) |
 | `aurel2` | Built from Dockerfile | Trading daemon | - |
 | `dashboard` | Built from Dockerfile | Web UI (optional) | 8080 |
 
 ### Key Environment Variables (`.env`)
 
 ```bash
-# IBKR Credentials (REQUIRED)
-TWS_USERID=your_username
-TWS_PASSWORD=your_password
+# Alpaca Credentials (REQUIRED)
+APCA_API_KEY_ID=your_api_key
+APCA_API_SECRET_KEY=your_api_secret
 
 # Trading Mode
 TRADING_MODE=paper          # paper or live
-IBKR_PORT=4004              # 4004=paper, 4003=live
 
 # Daemon Settings
 CHECK_TIME=16:00            # Daily check time (Romania timezone)
@@ -130,7 +126,7 @@ docker compose exec aurel2 cat /root/.aurel2/heartbeat.json
 
 For local testing, you can run directly:
 ```bash
-# Requires IB Gateway running locally on port 4002
+# Requires APCA_API_KEY_ID and APCA_API_SECRET_KEY env vars
 python -m aurel2.cli live --paper
 python -m aurel2.cli monitor --paper
 python -m aurel2.cli dashboard
@@ -151,7 +147,7 @@ aurel2/
 │   │   ├── failure_analyzer.py  # Backtest failure analysis
 │   │   └── evaluators.py    # Strategy evaluators
 │   ├── broker/              # Broker integrations
-│   │   └── ibkr.py          # Interactive Brokers
+│   │   └── alpaca.py        # Alpaca Markets
 │   ├── core/                # Domain models
 │   │   ├── models.py        # Signal, Position, Portfolio
 │   │   └── assets.py        # Asset registry
@@ -162,7 +158,7 @@ aurel2/
 │   │   ├── providers/
 │   │   │   ├── yahoo.py     # Yahoo Finance integration
 │   │   │   ├── cache.py     # Disk-cached price provider (Parquet)
-│   │   │   └── ibkr.py      # IBKR historical data provider
+│   │   │   └── (cached prices via Yahoo + Parquet)
 │   │   ├── validation.py    # Price data validation/cleaning
 │   │   └── indicators.py    # Technical indicators
 │   ├── engine/              # Analysis engines
@@ -172,7 +168,7 @@ aurel2/
 │   │   ├── daemon.py        # Main trading loop
 │   │   ├── checker.py       # Single check cycle
 │   │   ├── executor.py      # Order execution
-│   │   ├── connection.py    # IBKR connection
+│   │   ├── connection.py    # Alpaca connection
 │   │   ├── pending.py       # Pending approvals
 │   │   ├── trade_recorder.py # Shared execute→record→notify pipeline
 │   │   └── circuit_breaker.py
@@ -252,21 +248,21 @@ Portfolio:
 
 11 tradeable assets organized by category:
 
-| Category | US ETF | UCITS Equivalent | Description |
-|----------|--------|------------------|-------------|
-| Core Equity | SPY | CSPX (IE00B5BMR087) | S&P 500 |
-| Core Equity | EFA | VWRA (IE00BK5BQT80) | International Developed |
-| Core Equity | EEM | EIMI (IE00BKM4GZ66) | Emerging Markets |
-| Sectors | XLK | - | Technology |
-| Sectors | XLF | - | Financial |
-| Sectors | XLE | - | Energy |
-| Sectors | XLV | - | Healthcare |
-| Fixed Income | AGG | AGGH (IE00BDBRDM35) | Aggregate Bonds |
-| Fixed Income | TLT | - | Long-term Treasury |
-| Alternatives | GLD | - | Gold |
-| Alternatives | DBC | - | Commodities |
+| Category | ETF | Description |
+|----------|-----|-------------|
+| Core Equity | SPY | S&P 500 |
+| Core Equity | EFA | International Developed |
+| Core Equity | EEM | Emerging Markets |
+| Sectors | XLK | Technology |
+| Sectors | XLF | Financial |
+| Sectors | XLE | Energy |
+| Sectors | XLV | Healthcare |
+| Fixed Income | AGG | Aggregate Bonds |
+| Fixed Income | TLT | Long-term Treasury |
+| Alternatives | GLD | Gold |
+| Alternatives | DBC | Commodities |
 
-UCITS ETFs are Irish-domiciled and accumulating for Romanian tax optimization (15% vs 30% withholding).
+All US-listed ETFs traded via Alpaca Markets. Fractional shares supported.
 
 ### Signal Actions
 
@@ -466,29 +462,15 @@ Analyzes backtest results to identify failure patterns:
 
 **File**: `src/aurel2/live/connection.py`
 
-Manages IBKR Gateway connection via `ib_insync`.
-
-**Ports**:
-| Mode | IB Gateway |
-|------|------------|
-| Paper | 4002 |
-| Live | 4001 |
-| Docker | 4003/4004 |
+Manages Alpaca Markets REST API connection.
 
 **Features**:
-- Auto-launch IB Gateway if not running (skipped in Docker mode)
-- Heartbeat to keep connection alive
+- Reads `APCA_API_KEY_ID` / `APCA_API_SECRET_KEY` from environment
+- Paper vs live mode via Alpaca base URL
 - Circuit breaker for failure protection
-- Automatic reconnection with exponential backoff
-- **Client ID conflict auto-recovery**: If the IBKR client ID is already in use
-  (error 326, e.g. stale connection after container restart), automatically picks
-  a new random client ID and retries immediately without counting as a failure
-- **Fatal exit after sustained failure**: After 30 consecutive heartbeat failures
-  (~30 min), exits with code 78 so Docker restarts the container. Prevents the
-  daemon from running indefinitely in a broken state.
-- **Upstream disconnect handling**: Detects when TCP connection to IB Gateway is
-  alive but IBKR upstream is down (error 1100). Waits for automatic restoration
-  (error 1102) instead of attempting reconnection.
+- Automatic reconnection with credential re-validation
+- **Fatal exit after sustained failure**: Exits with code 78 so Docker restarts
+  the container. Prevents the daemon from running indefinitely in a broken state.
 
 ### Circuit Breaker
 
@@ -509,7 +491,7 @@ Prevents cascading failures.
 
 **File**: `src/aurel2/live/executor.py`
 
-Translates decisions into IBKR orders.
+Translates decisions into Alpaca orders.
 
 **Actions**:
 | Action | Implementation |
@@ -573,7 +555,7 @@ container restarts.
 **File**: `src/aurel2/live/checker.py`
 
 Single market check cycle:
-1. Sync positions from IBKR
+1. Sync positions from broker
 2. Fetch market prices (Yahoo Finance)
 3. Run all 3 strategies
 4. Orchestrator produces decision
@@ -641,7 +623,7 @@ Watches daemon health continuously.
 **File**: `src/aurel2/monitor/auto_fixer.py`
 
 Automatically fixes common issues:
-- Connection failures → Reconnect to IBKR
+- Connection failures → Reconnect to broker
 - Circuit breaker open → Reset after timeout
 - Daemon crash → Restart process
 
@@ -653,22 +635,19 @@ Supports dry-run mode for preview.
 
 **Files**: `src/aurel2/dashboard/app.py`, `src/aurel2/dashboard/templates/dashboard.html`
 
-FastAPI application serving a real-time portfolio dashboard. Connects directly to IBKR for live data.
+FastAPI application serving a real-time portfolio dashboard. Connects to Alpaca for live data.
 
 ### Currency
 
-All monetary values are displayed in EUR (the IBKR account base currency):
+All monetary values are displayed in USD (the Alpaca account currency):
 - Dashboard: account summary, positions, charts, trade history
-- Approval endpoint: SPY price converted to EUR
-- Notifications: regime change SPY/MA values in EUR
-- Position values use `ib.portfolio()` which returns EUR-converted amounts
-- SPY price converted via `broker.get_eur_usd_rate()` (live IBKR Forex quote)
+- Notifications: regime change SPY/MA values in USD
 
 ### Account Summary Cards
 
 Two primary cards:
-- **Total Value** — `NetLiquidation` from IBKR (includes unsettled). Shows cash breakdown only when cash != total.
-- **Overall P&L** — Percentage and euro gain/loss since first recorded account value.
+- **Total Value** — Portfolio equity from Alpaca (includes unsettled). Shows cash breakdown only when cash != total.
+- **Overall P&L** — Percentage and dollar gain/loss since first recorded account value.
 
 ### Performance Chart
 
@@ -794,7 +773,7 @@ pipeline as production on each rebalance date.
 
 ```
 ┌─────────────────┐      ┌─────────────────┐
-│  Yahoo Finance  │      │      IBKR       │
+│  Yahoo Finance  │      │     Alpaca      │
 │   (Prices)      │      │  (Positions)    │
 └────────┬────────┘      └────────┬────────┘
          │                        │
@@ -834,7 +813,7 @@ pipeline as production on each rebalance date.
               ▼
      ┌─────────────────┐
      │    Executor     │
-     │  (IBKR Orders)  │
+     │ (Alpaca Orders) │
      └────────┬────────┘
               │
               ▼
@@ -869,9 +848,8 @@ assets:
   cash_rate: 0.0
 
 broker:
-  type: ibkr
-  host: "127.0.0.1"
-  port: 4002  # Paper: 4002, Live: 4001
+  type: alpaca
+  paper: true
 
 risk:
   max_position_pct: 1.0
@@ -930,15 +908,15 @@ logging:
 - Used by backtest CLI for fast repeated runs
 - Falls back to Yahoo Finance on cache miss
 
-### Interactive Brokers (IBKR)
+### Alpaca Markets
 
-**File**: `src/aurel2/broker/ibkr.py`
+**File**: `src/aurel2/broker/alpaca.py`
 
-- Uses `ib_insync` library
-- Executes market and limit orders
+- Uses `alpaca-py` SDK (`TradingClient`, `StockHistoricalDataClient`)
+- Executes market and limit orders with fractional share support
 - Retrieves positions, account summary, P&L
-- Symbol mapping for all 11 tradeable US ETFs (SPY, EFA, EEM, XLK, XLF, XLE,
-  XLV, AGG, TLT, GLD, DBC) plus 3 UCITS equivalents (VWRA, CSPX, AGGH)
+- Standard US tickers — no symbol mapping needed
+- Paper vs live mode via base URL
 
 ### ntfy.sh Notifications
 
@@ -1209,7 +1187,7 @@ aurel2 compare [--start DATE] [--end DATE]
 |-----------|-----------|
 | Language | Python 3.11+ |
 | Config | Pydantic + YAML |
-| Broker | ib_insync |
+| Broker | alpaca-py |
 | Data | yfinance, pandas, numpy |
 | Logging | structlog |
 | CLI | Typer + Rich |
@@ -1238,7 +1216,7 @@ exchange_calendars>=4.5.0
 ```
 
 **Optional**:
-- `broker`: ib_insync>=0.9.86
+- `broker`: alpaca-py>=0.35.0
 - `dashboard`: fastapi, uvicorn, jinja2
 - `dev`: pytest, pytest-cov
 
@@ -1251,7 +1229,7 @@ exchange_calendars>=4.5.0
 | Understand decision logic | `agent/orchestrator.py` |
 | Modify strategies | `strategies/*.py` |
 | Fix daemon issues | `live/daemon.py`, `live/checker.py` |
-| Debug broker connection | `live/connection.py`, `broker/ibkr.py` |
+| Debug broker connection | `live/connection.py`, `broker/alpaca.py` |
 | Add AI capabilities | `agent/advisor.py` |
 | Modify notifications | `notifications/ntfy.py` |
 | Add monitoring | `monitor/*.py` |

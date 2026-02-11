@@ -22,7 +22,7 @@ If these conflict with generic defaults, follow these files for this repo.
 
 - Read `ARCHITECTURE.md` before major architecture or deployment changes.
 - Default troubleshooting target is cloud deployment, not localhost.
-- Avoid rebuilding `ib-gateway` unless explicitly required.
+- Broker is Alpaca Markets (REST API, no gateway process).
 - Never commit secrets such as `.env` credentials.
 
 ## Claude Hook Equivalents In Codex

@@ -1,4 +1,4 @@
-"""FastAPI dashboard application - displays live IBKR positions."""
+"""FastAPI dashboard application - displays live broker positions."""
 
 import os
 import json
@@ -18,9 +18,9 @@ app = FastAPI(title="Aurel2 Dashboard")
 templates_dir = Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=str(templates_dir))
 
-# IBKR connection settings from environment
-IBKR_HOST = os.environ.get("IBKR_HOST", "127.0.0.1")
-IBKR_PORT = int(os.environ.get("IBKR_PORT", "4002"))
+# Alpaca connection settings from environment
+APCA_API_KEY = os.environ.get("APCA_API_KEY_ID", "")
+APCA_API_SECRET = os.environ.get("APCA_API_SECRET_KEY", "")
 
 # Data directory
 DATA_DIR = Path(os.environ.get("AUREL2_DATA_DIR", str(Path.home() / ".aurel2")))
@@ -32,7 +32,7 @@ MODE_DATA_DIR = Path(f"data/{TRADING_MODE}")
 # Snapshots are mode-partitioned so paper/live don't mix
 SNAPSHOTS_FILE = MODE_DATA_DIR / "snapshots.json"
 
-# Thread pool for running blocking IBKR calls
+# Thread pool for running blocking broker calls
 executor = ThreadPoolExecutor(max_workers=2)
 
 
@@ -211,42 +211,33 @@ def get_heartbeat() -> dict | None:
     return None
 
 
-def _sync_get_ibkr_data() -> dict:
-    """Fetch positions and account data directly from IBKR (runs in its own event loop)."""
+def _sync_get_broker_data() -> dict:
+    """Fetch positions and account data from Alpaca (runs in its own event loop)."""
 
     async def _fetch():
-        from aurel2.broker.ibkr import IBKRBroker
-        import random
+        from aurel2.broker.alpaca import AlpacaBroker
 
-        # Retry up to 3 times with different client IDs
-        last_error = None
-        for attempt in range(3):
-            try:
-                client_id = 990 + random.randint(0, 9)
-                broker = IBKRBroker(host=IBKR_HOST, port=IBKR_PORT, client_id=client_id)
-                connected = await broker.connect()
+        if not APCA_API_KEY or not APCA_API_SECRET:
+            return {"connected": False, "error": "Alpaca API credentials not configured"}
 
-                if connected:
-                    break
-                last_error = "Could not connect to IBKR"
-            except Exception as e:
-                last_error = str(e)
-
-            # Wait before retry
-            if attempt < 2:
-                await asyncio.sleep(2)
-        else:
-            return {"connected": False, "error": last_error or "Connection failed after 3 attempts"}
+        broker = AlpacaBroker(
+            api_key=APCA_API_KEY,
+            api_secret=APCA_API_SECRET,
+            paper=(TRADING_MODE == "paper"),
+        )
 
         try:
+            connected = await broker.connect()
+            if not connected:
+                return {"connected": False, "error": "Could not connect to Alpaca"}
+
             positions = await broker.get_positions()
             account = await broker.get_account_summary()
 
-            # Use IBKR-provided position data directly
             positions_data = []
             for p in positions:
                 if p.shares == 0:
-                    continue  # Skip closed positions still reported by IBKR
+                    continue
                 pnl_pct = ((p.market_price / p.avg_cost) - 1) * 100 if p.avg_cost else 0
                 positions_data.append({
                     "symbol": p.symbol,
@@ -296,21 +287,21 @@ def _sync_get_ibkr_data() -> dict:
         return {"connected": False, "error": str(e)}
 
 
-async def get_ibkr_data() -> dict:
-    """Async wrapper that runs IBKR fetch in a separate thread."""
+async def get_broker_data() -> dict:
+    """Async wrapper that runs broker fetch in a separate thread."""
     loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(executor, _sync_get_ibkr_data)
+    return await loop.run_in_executor(executor, _sync_get_broker_data)
 
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request, period: str = "1m", page: int = 1):
-    """Main dashboard view - shows live IBKR positions."""
+    """Main dashboard view - shows live broker positions."""
     if period not in PERIOD_DAYS:
         period = "1m"
     if page < 1:
         page = 1
 
-    data = await get_ibkr_data()
+    data = await get_broker_data()
     heartbeat = get_heartbeat()
     snapshots = load_snapshots()
     pending_decisions = load_pending_decisions()
@@ -344,8 +335,8 @@ async def dashboard(request: Request, period: str = "1m", page: int = 1):
 
 @app.get("/api/positions")
 async def api_positions():
-    """API endpoint for live IBKR positions."""
-    return await get_ibkr_data()
+    """API endpoint for live broker positions."""
+    return await get_broker_data()
 
 
 @app.get("/api/snapshots")
@@ -460,7 +451,7 @@ async def api_chart(period: str = "1m"):
     """API endpoint for chart data."""
     if period not in PERIOD_DAYS:
         period = "1m"
-    data = await get_ibkr_data()
+    data = await get_broker_data()
     positions = data.get("positions", [])
     account = data.get("account")
     return get_comparison_chart_data(positions, account, period=period) if account else {}

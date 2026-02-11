@@ -197,43 +197,30 @@
             </nav>
         </header>
 
-        <!-- IBKR Connection -->
+        <!-- Alpaca Connection -->
         <div class="card">
             <div class="card-header">
-                <div class="card-title">Interactive Brokers (IBKR)</div>
-                <span class="status status-disconnected" id="ibkr-status">Disconnected</span>
+                <div class="card-title">Alpaca Markets</div>
+                <span class="status status-disconnected" id="broker-status">Disconnected</span>
             </div>
 
             <div class="info-box">
                 <h4>Full Trading Automation</h4>
-                <p>IBKR allows automated order execution through their API.</p>
+                <p>Alpaca provides commission-free trading with fractional share support via REST API.</p>
                 <div class="broker-features">
                     <div class="feature feature-yes">✓ Auto-execute trades</div>
                     <div class="feature feature-yes">✓ Portfolio sync</div>
                     <div class="feature feature-yes">✓ Live prices</div>
-                </div>
-            </div>
-
-            <div class="grid-2">
-                <div class="form-group">
-                    <label>Host</label>
-                    <input type="text" id="ibkr-host" value="127.0.0.1" placeholder="127.0.0.1">
-                </div>
-                <div class="form-group">
-                    <label>Port</label>
-                    <input type="number" id="ibkr-port" value="4002" placeholder="4002 (paper) / 4001 (live)">
+                    <div class="feature feature-yes">✓ Fractional shares</div>
                 </div>
             </div>
 
             <div class="info-box">
-                <h4>Requirements</h4>
-                <p>1. Install IB Gateway</p>
-                <p>2. Enable API connections in settings</p>
-                <p>3. Ports: 4002 = Paper, 4001 = Live</p>
-                <p>4. Install: <code>pip install ib_insync</code></p>
+                <h4>Configuration</h4>
+                <p>Set these environment variables:</p>
+                <p><code>APCA_API_KEY_ID</code> - Your Alpaca API key</p>
+                <p><code>APCA_API_SECRET_KEY</code> - Your Alpaca API secret</p>
             </div>
-
-            <button onclick="connectIBKR()">Connect to IBKR</button>
         </div>
 
         <!-- Tax Settings -->
@@ -244,14 +231,14 @@
 
             <div class="info-box">
                 <h4>Romanian Capital Gains Tax</h4>
-                <p>Via IBKR (foreign broker):</p>
+                <p>Via Alpaca (foreign broker):</p>
                 <p>• Any holding period: <strong>16%</strong> on net annual gains</p>
             </div>
 
             <div class="form-group">
-                <label>Preferred Broker for Recommendations</label>
+                <label>Preferred Broker</label>
                 <select id="preferred-broker">
-                    <option value="ibkr">IBKR (16% tax, can offset losses)</option>
+                    <option value="alpaca">Alpaca Markets (16% tax, can offset losses)</option>
                 </select>
             </div>
 
@@ -264,13 +251,6 @@
     </div>
 
     <script>
-        async function connectIBKR() {
-            const host = document.getElementById('ibkr-host').value;
-            const port = document.getElementById('ibkr-port').value;
-
-            alert(`IBKR Connection:\n\nTo connect to IBKR:\n1. Start IB Gateway\n2. Enable API at ${host}:${port}\n3. The dashboard will auto-sync when connected\n\nNote: Connection feature coming soon.`);
-        }
-
         function saveSettings() {
             const broker = document.getElementById('preferred-broker').value;
             localStorage.setItem('preferred-broker', broker);

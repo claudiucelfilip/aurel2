@@ -25,7 +25,7 @@ dev = [
     "pytest-cov>=4.0.0",
 ]
 broker = [
-    "ib_insync>=0.9.86",
+    "alpaca-py>=0.35.0",
     "tzdata>=2024.1",
 ]
 dashboard = [
