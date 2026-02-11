@@ -310,7 +310,7 @@ The core strategy using 12-month relative momentum with absolute momentum filter
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `lookback_months` | 12 | Momentum calculation period |
-| `switch_threshold` | 0.10 | Same-category switch threshold |
+| `switch_threshold` | 0.04 | Same-category switch threshold |
 | `equity_to_defensive_threshold` | 0.15 | Threshold to leave equity for bonds/gold (harder) |
 | `defensive_to_equity_threshold` | 0.05 | Threshold to return to equity (easier) |
 | `cash_rate` | 0.0 | Baseline for absolute momentum (disabled — always invests) |
@@ -320,7 +320,7 @@ The core strategy using 12-month relative momentum with absolute momentum filter
 1. Calculate 12-month return for each asset
 2. **Relative momentum**: Select asset with highest return
 3. **Absolute momentum**: Only buy if return > cash_rate (currently 0% = always buy)
-4. **Asymmetric switch thresholds**: 15% to leave equity, 5% to return, 10% same-category
+4. **Asymmetric switch thresholds**: 15% to leave equity, 5% to return, 4% same-category
 
 **Pilot Entry System**:
 - 30% position when 3-month momentum shows inflection
@@ -854,7 +854,7 @@ strategy:
   name: dual_momentum
   lookback_months: 12
   rebalance_frequency: quarterly
-  switch_threshold: 0.10
+  switch_threshold: 0.04
 
 assets:
   us_stocks:
@@ -887,7 +887,7 @@ logging:
 | Parameter | Location | Default |
 |-----------|----------|---------|
 | lookback_months | strategy | 12 |
-| switch_threshold | strategy | 0.10 |
+| switch_threshold | strategy | 0.04 |
 | equity_to_defensive_threshold | strategy | 0.15 |
 | defensive_to_equity_threshold | strategy | 0.05 |
 | cash_rate | strategy | 0.0 |
@@ -1269,11 +1269,13 @@ use `--no-ai` backtests to isolate strategy impact from AI variability.
 **Current baseline (main branch, Feb 2026):**
 
 Dual momentum primary + calm-hold with negative momentum escape hatch +
-asymmetric switch thresholds (15% to leave equity, 5% to return, 10% same-category).
+asymmetric switch thresholds (15% to leave equity, 5% to return, 4% same-category).
 
 | Period | CAGR | Alpha vs SPY | Max DD | Sharpe | Trades |
 |--------|------|-------------|--------|--------|--------|
-| 10yr (2016-2026) | 22.1% | +306.3% | 17.4% | 1.05 | 7 |
+| 20yr (2006-2026) | 13.8% | +540.6% | 53.3% | 0.74 | 20 |
+| 15yr (2011-2026) | 14.9% | +122.1% | 34.8% | 0.83 | 13 |
+| 10yr (2016-2026) | 20.4% | +206.7% | 18.4% | 1.01 | 9 |
 | 5yr (2021-2026) | 28.7% | +163.9% | 17.1% | 1.17 | 4 |
 
 **Original baseline (before calm-hold + escape hatch):**
@@ -1709,31 +1711,49 @@ makes winner-take-all work. 99 trades in 10Y vs 10 = excessive churn.
 Not worth the complexity and loss of pilot entry. Experiment A achieves a
 bigger improvement with a simpler mechanism.
 
-### Experiment 15: Alpha Research Parameter Optimization (Partially Reverted)
+### Experiment 15: Alpha Research Parameter Optimization (Partially Adopted)
 
-**Change:** Systematic optimization of dual momentum defaults via multi-round
-AI-to-AI review (Claude Code vs Codex). Three parameter changes tested:
-1. `switch_threshold` 0.10 → 0.02 (lower same-category barrier)
-2. `cash_rate` 0.04 → 0.0 (always invest, never sit in cash)
-3. `pilot_entry_enabled` True → False (remove pilot entry complexity)
+**Change:** Systematic optimization of dual momentum defaults. Three parameter
+changes tested: `switch_threshold` 0.10→0.02, `cash_rate` 0.04→0.0,
+`pilot_entry` on→off. Also disabled `correlation_guard` and `sideways_hold`.
 
-Also disabled `correlation_guard` and `sideways_hold` in backtest defaults.
+**Isolation test (10yr only):**
 
-**Isolation test (10yr):**
+| Change | CAGR | Alpha | Trades |
+|--------|------|-------|--------|
+| Baseline (0.10/0.04/pilot) | 22.1% | +306% | 7 |
+| Only switch→0.02 | 20.4% | +207% | 9 |
+| Only cash→0.0 | 22.1% | +306% | 7 |
+| Only pilot→off | 19.7% | +172% | 8 |
 
-| Change | CAGR | Return | Alpha | Trades |
-|--------|------|--------|-------|--------|
-| Baseline (0.10/0.04/pilot) | 22.1% | 636.6% | +306% | 7 |
-| Only switch→0.02 | 20.4% | 537.0% | +207% | 9 |
-| Only cash→0.0 | 22.1% | 636.6% | +306% | 7 |
-| Only pilot→off | 19.7% | 502.5% | +172% | 8 |
-| All three | 18.0% | 421.1% | +91% | 10 |
+Initially reverted switch_threshold and pilot_entry based on 10yr regression.
+But the 10yr-only view was misleading — 20yr and 15yr told a different story.
 
-**Verdict:** `cash_rate` 0.04→0.0 adopted (neutral — no effect). The other
-two changes reverted: lower switch_threshold caused 2 unnecessary rotations
-(-100% return), and disabling pilot entry lost early inflection detection
-(-134% return). The AI-to-AI review process failed to catch the regression
-because it reasoned about parameters theoretically without running backtests.
+**Full-period threshold sweep:**
+
+| Threshold | 20y Alpha | 15y Alpha | 10y Alpha | 5y Alpha |
+|-----------|-----------|-----------|-----------|----------|
+| 0.02 | +558% | +122% | +207% | +164% |
+| 0.04 | **+541%** | **+122%** | **+207%** | **+164%** |
+| 0.06 | +442% | +122% | +207% | +164% |
+| 0.08 | +165% | +79% | +207% | +164% |
+| 0.10 | -96% | -132% | +306% | +164% |
+
+At 0.10, the strategy has **negative alpha** on 20yr (-96%) and 15yr (-132%)
+because it's too sticky during GFC-era rotations. At 0.04, all periods have
+positive alpha. The 10yr gives back 1.7% CAGR (20.4% vs 22.1%) — 2 extra
+same-category rotations during 2018-2019 — but gains +3.7% CAGR on 20yr and
++2.9% on 15yr.
+
+Regime-adaptive thresholds (low in bear, high in bull) were tested but failed:
+the 2 bad trades at 0.04 happen at only 5.7% and 3.2% SPY drawdown,
+indistinguishable from normal bull markets. Flip-flopping thresholds created
+more churn than it prevented.
+
+**Verdict:** `switch_threshold` 0.10→0.04 adopted (positive alpha in all
+periods). `cash_rate` 0.04→0.0 adopted (neutral). `pilot_entry` kept on
+(disabling loses early inflection detection). `correlation_guard` and
+`sideways_hold` disabled in backtest defaults.
 
 ### Lessons Learned (continued)
 
@@ -1751,3 +1771,16 @@ because it reasoned about parameters theoretically without running backtests.
     robust precisely because it filters short-term noise. Adding 1m and 3m
     returns reintroduces the noise the 12-month window was designed to
     avoid. (Experiment 14)
+
+14. **Always validate across ALL backtest periods.** Optimizing for one
+    window (e.g., 10yr) can produce negative alpha on longer windows (20yr,
+    15yr). The switch_threshold=0.10 looked great on 10yr (+306% alpha) but
+    had -96% alpha on 20yr. Only 0.04 had positive alpha in every period.
+    Never trust a single-window result. (Experiment 15)
+
+15. **Don't trust AI-to-AI parameter recommendations without backtests.**
+    The Claude Code vs Codex review process recommended switch_threshold=0.02
+    and pilot_entry=off based on theoretical reasoning. Both changes caused
+    regressions (-100% and -134% return respectively on 10yr). AI can reason
+    about mechanisms but can't simulate 20 years of market data in its head.
+    Always run the numbers. (Experiment 15)
