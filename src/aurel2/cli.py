@@ -79,10 +79,9 @@ def backtest(
     from aurel2.core.assets import ASSET_REGISTRY, get_all_yahoo_symbols
     assets = ASSET_REGISTRY
 
-    # Fetch price data (with disk cache for repeated backtests)
+    # Fetch price data directly from Yahoo Finance
     typer.echo("\nFetching historical data...")
-    from aurel2.data.providers.cache import CachedPriceProvider
-    provider = CachedPriceProvider()
+    provider = YahooFinanceProvider()
     symbols = [a.yahoo_symbol for a in assets.values() if a.yahoo_symbol]
 
     prices = provider.get_multi_prices(symbols, start_date, end_date)
@@ -1901,7 +1900,7 @@ def live(
     """Run the live trading daemon.
 
     The daemon:
-    1. Connects to IBKR (launches TWS if needed)
+    1. Connects to IBKR (launches IB Gateway if needed)
     2. Runs daily check at the specified time (default 4 PM Romania)
     3. Auto-executes ROUTINE decisions (all strategies agree)
     4. Creates approval requests for NON_ROUTINE/URGENT decisions
@@ -2588,6 +2587,76 @@ def model_eval(
 
     if save:
         save_results(result)
+
+
+@app.command()
+def reset_data(
+    mode: str = typer.Argument(..., help="Trading mode to reset: paper or live"),
+):
+    """Archive and reset data for a trading mode.
+
+    Moves trade_journal, pending_decisions, and session_progress
+    to data/archive/{timestamp}/ and starts fresh.
+
+    Examples:
+        aurel2 reset-data paper    # Reset paper trading data
+        aurel2 reset-data live     # Reset live trading data (with confirmation)
+    """
+    import shutil
+    from datetime import datetime as dt
+
+    console = Console()
+
+    if mode not in ("paper", "live"):
+        console.print(f"[red]Invalid mode: {mode}. Use 'paper' or 'live'.[/red]")
+        raise typer.Exit(1)
+
+    mode_dir = Path(f"data/{mode}")
+
+    if mode == "live":
+        console.print("[bold red]WARNING: This will archive LIVE trading data![/bold red]")
+        confirm = typer.confirm("Are you sure?")
+        if not confirm:
+            console.print("Aborted.")
+            raise typer.Exit(0)
+
+    # Archive existing data
+    timestamp = dt.now().strftime("%Y%m%d-%H%M%S")
+    archive_dir = Path(f"data/archive/{mode}-{timestamp}")
+
+    files_to_archive = [
+        "trade_journal.json",
+        "pending_decisions.json",
+        "session_progress.json",
+        "snapshots.json",
+    ]
+
+    archived = []
+    for filename in files_to_archive:
+        src = mode_dir / filename
+        if src.exists():
+            archive_dir.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(src), str(archive_dir / filename))
+            archived.append(filename)
+
+    # Also check legacy flat paths
+    for filename in files_to_archive:
+        src = Path(f"data/{filename}")
+        if src.exists():
+            archive_dir.mkdir(parents=True, exist_ok=True)
+            shutil.move(str(src), str(archive_dir / f"legacy-{filename}"))
+            archived.append(f"legacy {filename}")
+
+    if archived:
+        console.print(f"[green]Archived {len(archived)} files to {archive_dir}/[/green]")
+        for f in archived:
+            console.print(f"  - {f}")
+    else:
+        console.print("[yellow]No data files found to archive.[/yellow]")
+
+    # Ensure clean mode directory exists
+    mode_dir.mkdir(parents=True, exist_ok=True)
+    console.print(f"\n[green]Data reset complete for '{mode}' mode.[/green]")
 
 
 @app.command()

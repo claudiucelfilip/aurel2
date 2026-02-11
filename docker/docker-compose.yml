@@ -6,8 +6,8 @@ services:
     image: ghcr.io/gnzsnz/ib-gateway:stable
     restart: unless-stopped
     environment:
-      TWS_USERID: ${TWS_USERID}
-      TWS_PASSWORD: ${TWS_PASSWORD}
+      TWS_USERID: ${TWS_USERID:-}
+      TWS_PASSWORD: ${TWS_PASSWORD:-}
       TRADING_MODE: ${TRADING_MODE:-paper}
       READ_ONLY_API: ${READ_ONLY_API:-no}
       VNC_SERVER_PASSWORD: ${VNC_SERVER_PASSWORD:-}

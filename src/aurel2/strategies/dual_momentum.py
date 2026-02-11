@@ -31,11 +31,11 @@ class DualMomentumStrategy:
         self,
         assets: dict[AssetClass, Asset],
         lookback_months: int = 12,
-        switch_threshold: float = 0.02,
+        switch_threshold: float = 0.10,
         equity_to_defensive_threshold: float = 0.15,
         defensive_to_equity_threshold: float = 0.05,
         cash_rate: float = 0.0,
-        pilot_entry_enabled: bool = False,
+        pilot_entry_enabled: bool = True,
         pilot_lookback_months: int = 3,
         pilot_position_size: float = 0.30,
     ):

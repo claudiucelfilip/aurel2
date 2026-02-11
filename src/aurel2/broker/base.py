@@ -49,6 +49,10 @@ class AccountSummary:
     cash_balance: float
     buying_power: float
     currency: str = "EUR"
+    unrealized_pnl: float = 0.0
+    realized_pnl: float = 0.0
+    gross_position_value: float = 0.0
+    accrued_cash: float = 0.0
 
 
 class BaseBroker(ABC):

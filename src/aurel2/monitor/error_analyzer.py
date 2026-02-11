@@ -53,7 +53,7 @@ ERROR_PATTERNS = {
         r"cannot connect",
         r"connection refused",
         r"socket.*error",
-        r"TWS.*not.*running",
+        r"gateway.*not.*running",
     ],
     ErrorCategory.CIRCUIT_BREAKER: [
         r"circuit_breaker_opened",
@@ -217,7 +217,7 @@ class ErrorAnalyzer:
         details_parts = []
 
         if category == ErrorCategory.CONNECTION:
-            details_parts.append("IBKR connection issue - may need to restart daemon or check TWS")
+            details_parts.append("IBKR connection issue - may need to restart daemon or check IB Gateway")
 
         if category == ErrorCategory.CIRCUIT_BREAKER:
             details_parts.append("Circuit breaker tripped due to repeated failures")

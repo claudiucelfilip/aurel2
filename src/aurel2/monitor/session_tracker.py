@@ -14,6 +14,11 @@ SESSION_FILE = Path("data/session_progress.json")
 MAX_DAYS = 90  # 3 months of history
 
 
+def session_path_for_mode(mode: str = "paper") -> Path:
+    """Return session progress path for the given trading mode."""
+    return Path(f"data/{mode}/session_progress.json")
+
+
 @dataclass
 class DailySession:
     """Daily session metrics."""

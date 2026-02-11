@@ -9,6 +9,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+pytest.importorskip("ib_insync", reason="ib_insync not installed")
+
 from aurel2.live.journal import TradeJournal
 from aurel2.live.executor import ExecutionResult
 

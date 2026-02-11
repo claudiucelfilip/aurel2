@@ -14,7 +14,7 @@ import structlog
 from aurel2.live.connection import IBKRConnection
 from aurel2.live.checker import Checker
 from aurel2.live.executor import Executor
-from aurel2.live.pending import PendingManager, PendingStatus
+from aurel2.live.pending import PendingManager, PendingStatus, pending_path_for_mode
 from aurel2.notifications.ntfy import NtfyNotifier
 
 logger = structlog.get_logger()
@@ -61,8 +61,11 @@ class LiveDaemon:
         self.ai_model = ai_model
         self.ai_lookback_years = ai_lookback_years
 
+        self.mode = "paper" if paper else "live"
         self.connection = IBKRConnection(paper=paper, host=ibkr_host, port=ibkr_port)
-        self.pending_manager = PendingManager()
+        self.pending_manager = PendingManager(
+            pending_file=pending_path_for_mode(self.mode),
+        )
         self.checker = Checker(
             connection=self.connection,
             pending_manager=self.pending_manager,
@@ -71,6 +74,7 @@ class LiveDaemon:
             use_ai_advisor=use_ai,
             ai_model=ai_model,
             ai_lookback_years=ai_lookback_years,
+            mode=self.mode,
         )
         self.executor = Executor(self.connection)
         self.notifier = NtfyNotifier(topic=ntfy_topic)
@@ -135,7 +139,7 @@ class LiveDaemon:
         self._setup_signals()
 
         # Connect to IBKR
-        connected = await self.connection.connect(launch_tws_if_needed=True)
+        connected = await self.connection.connect(launch_gateway_if_needed=True)
         if not connected:
             logger.error("daemon_connection_failed")
             print("Failed to connect to IBKR. Exiting.")
@@ -263,98 +267,17 @@ class LiveDaemon:
         return now >= scheduled
 
     @staticmethod
-    def _is_market_holiday(date) -> bool:
-        """Check if a date is a US market holiday (NYSE/NASDAQ closed).
+    def _is_market_holiday(check_date) -> bool:
+        """Check if a date is a US market holiday (NYSE closed).
 
-        Covers fixed-date and rule-based holidays. Updated annually.
+        Uses the exchange_calendars library for authoritative NYSE schedule.
         """
-        from datetime import date as date_cls
+        import pandas as pd
+        import exchange_calendars as xcals
 
-        year = date.year
-        month = date.month
-        day = date.day
-
-        # New Year's Day - Jan 1 (observed Fri if Sat, Mon if Sun)
-        nyd = date_cls(year, 1, 1)
-        if nyd.weekday() == 5:
-            nyd = date_cls(year - 1, 12, 31)
-        elif nyd.weekday() == 6:
-            nyd = date_cls(year, 1, 2)
-        if date == nyd:
-            return True
-
-        # MLK Day - 3rd Monday of January
-        if month == 1 and date.weekday() == 0 and 15 <= day <= 21:
-            return True
-
-        # Presidents' Day - 3rd Monday of February
-        if month == 2 and date.weekday() == 0 and 15 <= day <= 21:
-            return True
-
-        # Good Friday - 2 days before Easter Sunday
-        easter = LiveDaemon._easter_date(year)
-        good_friday = easter - timedelta(days=2)
-        if date == good_friday:
-            return True
-
-        # Memorial Day - Last Monday of May
-        if month == 5 and date.weekday() == 0 and day >= 25:
-            return True
-
-        # Juneteenth - June 19 (observed Fri if Sat, Mon if Sun)
-        juneteenth = date_cls(year, 6, 19)
-        if juneteenth.weekday() == 5:
-            juneteenth = date_cls(year, 6, 18)
-        elif juneteenth.weekday() == 6:
-            juneteenth = date_cls(year, 6, 20)
-        if date == juneteenth:
-            return True
-
-        # Independence Day - July 4 (observed Fri if Sat, Mon if Sun)
-        july4 = date_cls(year, 7, 4)
-        if july4.weekday() == 5:
-            july4 = date_cls(year, 7, 3)
-        elif july4.weekday() == 6:
-            july4 = date_cls(year, 7, 5)
-        if date == july4:
-            return True
-
-        # Labor Day - 1st Monday of September
-        if month == 9 and date.weekday() == 0 and day <= 7:
-            return True
-
-        # Thanksgiving - 4th Thursday of November
-        if month == 11 and date.weekday() == 3 and 22 <= day <= 28:
-            return True
-
-        # Christmas - Dec 25 (observed Fri if Sat, Mon if Sun)
-        xmas = date_cls(year, 12, 25)
-        if xmas.weekday() == 5:
-            xmas = date_cls(year, 12, 24)
-        elif xmas.weekday() == 6:
-            xmas = date_cls(year, 12, 26)
-        if date == xmas:
-            return True
-
-        return False
-
-    @staticmethod
-    def _easter_date(year: int):
-        """Compute Easter Sunday using the Anonymous Gregorian algorithm."""
-        from datetime import date as date_cls
-
-        a = year % 19
-        b, c = divmod(year, 100)
-        d, e = divmod(b, 4)
-        f = (b + 8) // 25
-        g = (b - f + 1) // 3
-        h = (19 * a + b - d - g + 15) % 30
-        i, k = divmod(c, 4)
-        l = (32 + 2 * e + 2 * i - h - k) % 7
-        m = (a + 11 * h + 22 * l) // 451
-        month = (h + l - 7 * m + 114) // 31
-        day = ((h + l - 7 * m + 114) % 31) + 1
-        return date_cls(year, month, day)
+        nyse = xcals.get_calendar("XNYS")
+        ts = pd.Timestamp(check_date)
+        return not nyse.is_session(ts)
 
     async def _poll_pending(self) -> None:
         """Poll for pending decision status changes and timeouts."""
@@ -394,56 +317,16 @@ class LiveDaemon:
             self.pending_manager.mark_executed(decision.id)
             return
 
-        result = await self.executor.execute(
+        journal_id = decision.journal_decision_id or decision.id
+        await self.checker.trade_recorder.execute_and_record(
             action=decision.action,
             symbol=decision.symbol,
+            decision_id=journal_id,
             current_holding=decision.current_holding,
             position_size_pct=decision.position_size_pct,
+            notify_title="Aurel2: Trade Executed",
+            notify_context="Approved decision executed",
         )
-
-        # Get post-trade state for journal
-        account_after = None
-        holding_after = None
-        if result.success:
-            try:
-                summary = await self.connection.get_account_summary()
-                if summary:
-                    account_after = summary.total_value
-                holding_after = await self.executor.get_current_holding()
-            except Exception:
-                pass
-
-        # Record execution in trade journal (use linked journal ID if available)
-        journal_id = decision.journal_decision_id or decision.id
-        self.checker.journal.record_execution(
-            decision_id=journal_id,
-            success=result.success,
-            shares=result.shares,
-            fill_price=result.fill_price,
-            error=result.message if not result.success else None,
-            account_value_after=account_after,
-            current_holding_after=holding_after,
-        )
-
-        if result.success:
-            self.notifier.send(
-                message=(
-                    f"Approved decision executed\n\n"
-                    f"Action: {decision.action.upper()} {decision.symbol or ''}\n"
-                    f"Position size: {decision.position_size_pct:.0%}\n"
-                    f"Shares: {result.shares:.2f} @ ${result.fill_price:.2f}"
-                ),
-                title="Aurel2: Trade Executed",
-                tags=["white_check_mark", "chart_with_upwards_trend"],
-                priority="default",
-            )
-        else:
-            self.notifier.send(
-                message=f"Execution failed: {result.message}",
-                title="Aurel2: Execution Failed",
-                tags=["x", "warning"],
-                priority="high",
-            )
 
         self.pending_manager.mark_executed(decision.id)
 
@@ -502,57 +385,17 @@ class LiveDaemon:
             self.pending_manager.mark_executed(decision.id)
             return
 
-        result = await self.executor.execute(
+        journal_id = decision.journal_decision_id or decision.id
+        await self.checker.trade_recorder.execute_and_record(
             action=decision.action,
             symbol=decision.symbol,
+            decision_id=journal_id,
             current_holding=decision.current_holding,
             position_size_pct=decision.position_size_pct,
+            notify_title="Aurel2: Auto-Executed (Timeout)",
+            notify_context="Timed-out decision auto-executed",
+            notify_tags_success=["alarm_clock", "chart_with_upwards_trend"],
         )
-
-        # Get post-trade state for journal
-        account_after = None
-        holding_after = None
-        if result.success:
-            try:
-                summary = await self.connection.get_account_summary()
-                if summary:
-                    account_after = summary.total_value
-                holding_after = await self.executor.get_current_holding()
-            except Exception:
-                pass
-
-        # Record execution in trade journal (use linked journal ID if available)
-        journal_id = decision.journal_decision_id or decision.id
-        self.checker.journal.record_execution(
-            decision_id=journal_id,
-            success=result.success,
-            shares=result.shares,
-            fill_price=result.fill_price,
-            error=result.message if not result.success else None,
-            account_value_after=account_after,
-            current_holding_after=holding_after,
-        )
-
-        if result.success:
-            self.notifier.send(
-                message=(
-                    f"Timed-out decision auto-executed\n\n"
-                    f"Action: {decision.action.upper()} {decision.symbol or ''}\n"
-                    f"Position size: {decision.position_size_pct:.0%}\n"
-                    f"Shares: {result.shares:.2f} @ ${result.fill_price:.2f}\n"
-                    f"Note: Executed after 1-hour timeout"
-                ),
-                title="Aurel2: Auto-Executed (Timeout)",
-                tags=["alarm_clock", "chart_with_upwards_trend"],
-                priority="default",
-            )
-        else:
-            self.notifier.send(
-                message=f"Auto-execution failed: {result.message}",
-                title="Aurel2: Execution Failed",
-                tags=["x", "warning"],
-                priority="high",
-            )
 
         self.pending_manager.mark_executed(decision.id)
 
@@ -606,18 +449,22 @@ async def run_single_check(
     print(f"Dry run: {dry_run}")
     print("=" * 60 + "\n")
 
+    mode = "paper" if paper else "live"
     connection = IBKRConnection(paper=paper)
-    pending_manager = PendingManager()
+    pending_manager = PendingManager(
+        pending_file=pending_path_for_mode(mode),
+    )
     checker = Checker(
         connection=connection,
         pending_manager=pending_manager,
         ntfy_topic=ntfy_topic,
         dry_run=dry_run,
+        mode=mode,
     )
 
     try:
         # Connect
-        connected = await connection.connect(launch_tws_if_needed=True)
+        connected = await connection.connect(launch_gateway_if_needed=True)
         if not connected:
             print("Failed to connect to IBKR.")
             return

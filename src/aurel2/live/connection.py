@@ -16,23 +16,6 @@ from aurel2.broker.base import AccountSummary, BrokerPosition
 
 logger = structlog.get_logger()
 
-# Default TWS paths by platform
-TWS_PATHS = {
-    "Darwin": [
-        "~/Applications/Trader Workstation/Trader Workstation.app",
-        "/Applications/Trader Workstation 10.19/Trader Workstation 10.19.app",
-        "/Applications/Trader Workstation/Trader Workstation.app",
-        "~/Applications/Trader Workstation 10.19/Trader Workstation 10.19.app",
-    ],
-    "Linux": [
-        "~/Jts/tws.sh",
-        "~/IBJts/tws.sh",
-    ],
-    "Windows": [
-        r"C:\Jts\tws.exe",
-    ],
-}
-
 # Default IB Gateway paths
 GATEWAY_PATHS = {
     "Darwin": [
@@ -54,7 +37,7 @@ class IBKRConnection:
     Manages IBKR connection lifecycle.
 
     Handles:
-    - Connecting to IB Gateway (preferred) or TWS
+    - Connecting to IB Gateway
     - Launching IB Gateway if not running
     - Reconnecting on disconnect
     - Heartbeat to keep connection alive
@@ -72,6 +55,8 @@ class IBKRConnection:
         # Can be overridden (e.g., Docker uses 4004/4003 inside container)
         self.port = port if port is not None else (4002 if paper else 4001)
         self.host = host
+        # Auto-detect Docker: if host is "ib-gateway", we're in Docker
+        self.docker_mode = (host == "ib-gateway")
         # Use random client ID if not specified to avoid conflicts
         if client_id is None:
             import random
@@ -93,12 +78,12 @@ class IBKRConnection:
         logger.info("ibkr_connectivity_restored_resetting_circuit_breaker")
         self.circuit_breaker.record_success()
 
-    async def connect(self, launch_tws_if_needed: bool = True, max_retries: int = 3) -> bool:
+    async def connect(self, launch_gateway_if_needed: bool = True, max_retries: int = 3) -> bool:
         """
         Connect to IBKR.
 
-        If connection fails and launch_tws_if_needed is True, attempts to launch TWS
-        and waits for user to log in.
+        If connection fails and launch_gateway_if_needed is True, attempts to launch
+        IB Gateway and waits for user to log in.
 
         Returns True if connected successfully.
         """
@@ -154,8 +139,8 @@ class IBKRConnection:
             if attempt < max_retries - 1:
                 await asyncio.sleep(10)
 
-        # Connection failed - try to launch IB Gateway
-        if launch_tws_if_needed:
+        # Connection failed - try to launch IB Gateway (skip in Docker mode)
+        if launch_gateway_if_needed and not self.docker_mode:
             logger.info("ibkr_launching_gateway")
             launched = self._launch_gateway()
 
@@ -190,7 +175,7 @@ class IBKRConnection:
             return True
 
         logger.info("ibkr_reconnecting")
-        return await self.connect(launch_tws_if_needed=False, max_retries=3)
+        return await self.connect(launch_gateway_if_needed=False, max_retries=3)
 
     async def get_account_summary(self) -> Optional[AccountSummary]:
         """Get account summary from IBKR."""
@@ -372,7 +357,7 @@ class IBKRConnection:
                         reconnect_attempts += 1
                         logger.info("ibkr_heartbeat_reconnecting", attempt=reconnect_attempts)
 
-                        connected = await self.connect(launch_tws_if_needed=False, max_retries=1)
+                        connected = await self.connect(launch_gateway_if_needed=False, max_retries=1)
                         if connected:
                             logger.info("ibkr_heartbeat_reconnected")
                             reconnect_attempts = 0

@@ -58,9 +58,9 @@ class TestMultiTimeframeTrendStrategy:
     def test_default_parameters(self):
         """Strategy should have correct default parameters."""
         strategy = MultiTimeframeTrendStrategy()
-        assert strategy.lookback_months == [3, 6, 12]
-        assert strategy.weights == [0.4, 0.35, 0.25]
-        assert strategy.switch_threshold == 0.05
+        assert strategy.lookback_months == [1, 3, 6, 12]
+        assert strategy.weights == [0.30, 0.30, 0.25, 0.15]
+        assert strategy.switch_threshold == 0.03
         assert strategy.target_assets == [
             AssetClass.US_STOCKS,
             AssetClass.INTL_DEVELOPED,

@@ -112,12 +112,10 @@ AI_LOOKBACK_YEARS=3
 ### Deployment Commands
 
 ```bash
-# Deploy to server
-rsync -avz --exclude='.git' --exclude='data/' \
-  . root@YOUR_SERVER:/opt/aurel2/
+# Deploy (runs tests, syncs code, rebuilds containers):
+./scripts/deploy.sh
 
-# Start services
-ssh root@YOUR_SERVER
+# Or manually:
 cd /opt/aurel2/docker
 docker compose up -d
 
@@ -126,16 +124,13 @@ docker compose logs -f aurel2
 
 # Check health
 docker compose exec aurel2 cat /root/.aurel2/heartbeat.json
-
-# Restart after code changes
-docker compose build aurel2 && docker compose up -d aurel2
 ```
 
 ### Local Development (Testing Only)
 
 For local testing, you can run directly:
 ```bash
-# Requires IB Gateway/TWS running locally on port 4002
+# Requires IB Gateway running locally on port 4002
 python -m aurel2.cli live --paper
 python -m aurel2.cli monitor --paper
 python -m aurel2.cli dashboard
@@ -156,8 +151,7 @@ aurel2/
 │   │   ├── failure_analyzer.py  # Backtest failure analysis
 │   │   └── evaluators.py    # Strategy evaluators
 │   ├── broker/              # Broker integrations
-│   │   ├── ibkr.py          # Interactive Brokers
-│   │   └── tradeville.py    # TradeVille (future)
+│   │   └── ibkr.py          # Interactive Brokers
 │   ├── core/                # Domain models
 │   │   ├── models.py        # Signal, Position, Portfolio
 │   │   └── assets.py        # Asset registry
@@ -180,6 +174,7 @@ aurel2/
 │   │   ├── executor.py      # Order execution
 │   │   ├── connection.py    # IBKR connection
 │   │   ├── pending.py       # Pending approvals
+│   │   ├── trade_recorder.py # Shared execute→record→notify pipeline
 │   │   └── circuit_breaker.py
 │   ├── monitor/             # Health monitoring
 │   │   ├── daemon_monitor.py # Daemon watcher
@@ -197,21 +192,22 @@ aurel2/
 │   │   ├── base.py          # Strategy interface
 │   │   ├── dual_momentum.py # Primary strategy
 │   │   ├── mean_reversion.py
-│   │   ├── multi_timeframe.py
-│   │   └── adaptive_momentum.py
+│   │   └── multi_timeframe.py
 │   ├── utils/               # Utilities
 │   │   └── logging.py       # Structured logging
 │   └── cli.py               # CLI entry point
 ├── config/                  # YAML configuration
 │   └── default.yaml
 ├── data/                    # Persistent data files
-│   ├── trade_journal.json   # Audit trail
-│   ├── pending_decisions.json
-│   ├── failure_learnings.json
-│   ├── session_progress.json
-│   ├── backtest_results.json
-│   ├── backtest_comparison.json  # Pre-computed 5Y/10Y backtest for dashboard
-│   └── ai_eval_cache/       # AI evaluation cache
+│   ├── paper/               # Paper trading data (mode-partitioned)
+│   │   ├── trade_journal.json
+│   │   ├── pending_decisions.json
+│   │   └── session_progress.json
+│   ├── live/                # Live trading data (mode-partitioned)
+│   ├── archive/             # Archived data from resets
+│   ├── failure_learnings.json  # Shared across modes
+│   ├── backtest_comparison.json  # Pre-computed backtest for dashboard
+│   └── price_cache/         # Cached price data (Parquet)
 ├── tests/                   # pytest test suite
 ├── docker/                  # Docker deployment
 │   ├── Dockerfile
@@ -314,14 +310,17 @@ The core strategy using 12-month relative momentum with absolute momentum filter
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `lookback_months` | 12 | Momentum calculation period |
-| `switch_threshold` | 0.10 | Same-category switch threshold (asymmetric: 15% to leave equity, 5% to return) |
-| `cash_rate` | 0.04 | Baseline for absolute momentum |
+| `switch_threshold` | 0.10 | Same-category switch threshold |
+| `equity_to_defensive_threshold` | 0.15 | Threshold to leave equity for bonds/gold (harder) |
+| `defensive_to_equity_threshold` | 0.05 | Threshold to return to equity (easier) |
+| `cash_rate` | 0.0 | Baseline for absolute momentum (disabled — always invests) |
+| `pilot_entry_enabled` | True | Pilot entry system |
 
 **Logic**:
 1. Calculate 12-month return for each asset
 2. **Relative momentum**: Select asset with highest return
-3. **Absolute momentum**: Only buy if return > cash_rate
-4. **Switch threshold**: Avoid excessive trading
+3. **Absolute momentum**: Only buy if return > cash_rate (currently 0% = always buy)
+4. **Asymmetric switch thresholds**: 15% to leave equity, 5% to return, 10% same-category
 
 **Pilot Entry System**:
 - 30% position when 3-month momentum shows inflection
@@ -373,21 +372,6 @@ Blends momentum from multiple timeframes for faster reaction.
 3. Lower switch threshold for faster adaptation
 
 **Confidence**: Based on agreement across timeframes.
-
-### 4. Adaptive Momentum
-
-**File**: `src/aurel2/strategies/adaptive_momentum.py`
-
-Dynamically adjusts lookback period based on market conditions.
-
-**Parameters**:
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `min_lookback` | 3 | Minimum lookback months |
-| `max_lookback` | 12 | Maximum lookback months |
-| `volatility_window` | 20 | Days for volatility calc |
-
-**Logic**: Shorter lookback in high volatility, longer in low volatility.
 
 ---
 
@@ -485,14 +469,14 @@ Analyzes backtest results to identify failure patterns:
 Manages IBKR Gateway connection via `ib_insync`.
 
 **Ports**:
-| Mode | IB Gateway | TWS |
-|------|------------|-----|
-| Paper | 4002 | 7497 |
-| Live | 4001 | 7496 |
-| Docker | 4003/4004 | - |
+| Mode | IB Gateway |
+|------|------------|
+| Paper | 4002 |
+| Live | 4001 |
+| Docker | 4003/4004 |
 
 **Features**:
-- Auto-launch IB Gateway if not running
+- Auto-launch IB Gateway if not running (skipped in Docker mode)
 - Heartbeat to keep connection alive
 - Circuit breaker for failure protection
 - Automatic reconnection with exponential backoff
@@ -547,7 +531,7 @@ Translates decisions into IBKR orders.
 
 Manages decisions awaiting human approval.
 
-**Storage**: `data/pending_decisions.json`
+**Storage**: `data/{mode}/pending_decisions.json` (paper or live)
 
 **Status Flow**:
 ```
@@ -605,14 +589,6 @@ Single market check cycle:
 ### Daemon Monitor
 
 **File**: `src/aurel2/monitor/daemon_monitor.py`
-
-> **TODO: Docker-compatible monitor.** The current monitor uses `psutil` to
-> find/kill processes and hardcodes macOS IB Gateway paths — it only works
-> locally. To run in Docker, it needs refactoring to use the Docker API
-> (or socket mount) to inspect/restart the `aurel2` container. Currently
-> Docker's `restart: unless-stopped` policy handles crash recovery, but
-> there's no ntfy notification on failures or proactive restart on prolonged
-> disconnection (only crash restarts).
 
 Watches daemon health continuously.
 
@@ -679,11 +655,20 @@ Supports dry-run mode for preview.
 
 FastAPI application serving a real-time portfolio dashboard. Connects directly to IBKR for live data.
 
+### Currency
+
+All monetary values are displayed in EUR (the IBKR account base currency):
+- Dashboard: account summary, positions, charts, trade history
+- Approval endpoint: SPY price converted to EUR
+- Notifications: regime change SPY/MA values in EUR
+- Position values use `ib.portfolio()` which returns EUR-converted amounts
+- SPY price converted via `broker.get_eur_usd_rate()` (live IBKR Forex quote)
+
 ### Account Summary Cards
 
 Two primary cards:
 - **Total Value** — `NetLiquidation` from IBKR (includes unsettled). Shows cash breakdown only when cash != total.
-- **Overall P&L** — Percentage and dollar gain/loss since first recorded account value.
+- **Overall P&L** — Percentage and euro gain/loss since first recorded account value.
 
 ### Performance Chart
 
@@ -742,11 +727,13 @@ This runs the production `BacktestEngine` (DM-primary + calm-hold via orchestrat
 
 ### Post-Trade State Recording
 
-All three execution paths (`daemon._execute_approved`, `daemon._execute_timeout`, `checker._execute_decision`) capture post-trade state:
-- `account_value_after` — from `connection.get_account_summary()`
-- `current_holding_after` — from `executor.get_current_holding()`
+All execution paths use a shared `TradeRecorder` (`live/trade_recorder.py`) that handles:
+1. Execute via broker
+2. Capture post-trade state (`account_value_after`, `current_holding_after`)
+3. Record in `TradeJournal`
+4. Send notification
 
-These are passed to `journal.record_execution()` and persisted for audit/dashboard display.
+This eliminates duplication between daemon and checker execution paths.
 
 ---
 
@@ -879,7 +866,7 @@ assets:
   bonds:
     symbol: AGG
     yahoo_symbol: AGG
-  cash_rate: 0.04
+  cash_rate: 0.0
 
 broker:
   type: ibkr
@@ -901,6 +888,10 @@ logging:
 |-----------|----------|---------|
 | lookback_months | strategy | 12 |
 | switch_threshold | strategy | 0.10 |
+| equity_to_defensive_threshold | strategy | 0.15 |
+| defensive_to_equity_threshold | strategy | 0.05 |
+| cash_rate | strategy | 0.0 |
+| pilot_entry_enabled | strategy | False |
 | rebalance_frequency | strategy | quarterly |
 
 **Risk Parameters**:
@@ -1112,6 +1103,10 @@ Pre-computed backtest results for the dashboard chart. Generated by `python -m a
 
 Committed to git so it deploys with rsync. Re-generate periodically to update with latest prices.
 
+**Dashboard reads backtest data via bind mount** (`/opt/aurel2/data:/app/host-data:ro`)
+so updating `data/backtest_comparison.json` in the repo and deploying automatically
+updates the dashboard without needing to rebuild containers or copy into volumes.
+
 ### ai_eval_cache/
 
 Caches AI evaluations to avoid re-evaluation:
@@ -1190,6 +1185,9 @@ aurel2 eval_agent [--start DATE] [--end DATE]
 # Get AI advice
 aurel2 advise [--date DATE]
 
+# Reset data for a trading mode (archives old data)
+aurel2 reset-data paper
+
 # Web dashboard
 aurel2 dashboard
 
@@ -1236,6 +1234,7 @@ typer>=0.9.0
 rich>=13.0.0
 httpx>=0.27.0
 psutil>=5.9.0
+exchange_calendars>=4.5.0
 ```
 
 **Optional**:
@@ -1272,10 +1271,10 @@ use `--no-ai` backtests to isolate strategy impact from AI variability.
 Dual momentum primary + calm-hold with negative momentum escape hatch +
 asymmetric switch thresholds (15% to leave equity, 5% to return, 10% same-category).
 
-| Period | Return | Alpha vs SPY | CAGR | Max DD | Sharpe | Trades |
-|--------|--------|-------------|------|--------|--------|--------|
-| 10yr (2016-2026) | 636.60% | +299.98% | 22.12% | 17.38% | 1.05 | 7 |
-| 5yr (2021-2026) | 252.76% | +163.10% | 28.70% | 17.07% | 1.17 | 4 |
+| Period | CAGR | Alpha vs SPY | Max DD | Sharpe | Trades |
+|--------|------|-------------|--------|--------|--------|
+| 10yr (2016-2026) | 22.1% | +306.3% | 17.4% | 1.05 | 7 |
+| 5yr (2021-2026) | 28.7% | +163.9% | 17.1% | 1.17 | 4 |
 
 **Original baseline (before calm-hold + escape hatch):**
 
@@ -1709,6 +1708,32 @@ makes winner-take-all work. 99 trades in 10Y vs 10 = excessive churn.
 5Y performance (+109% vs +163%). The shorter timeframes (1m, 3m) add noise.
 Not worth the complexity and loss of pilot entry. Experiment A achieves a
 bigger improvement with a simpler mechanism.
+
+### Experiment 15: Alpha Research Parameter Optimization (Partially Reverted)
+
+**Change:** Systematic optimization of dual momentum defaults via multi-round
+AI-to-AI review (Claude Code vs Codex). Three parameter changes tested:
+1. `switch_threshold` 0.10 → 0.02 (lower same-category barrier)
+2. `cash_rate` 0.04 → 0.0 (always invest, never sit in cash)
+3. `pilot_entry_enabled` True → False (remove pilot entry complexity)
+
+Also disabled `correlation_guard` and `sideways_hold` in backtest defaults.
+
+**Isolation test (10yr):**
+
+| Change | CAGR | Return | Alpha | Trades |
+|--------|------|--------|-------|--------|
+| Baseline (0.10/0.04/pilot) | 22.1% | 636.6% | +306% | 7 |
+| Only switch→0.02 | 20.4% | 537.0% | +207% | 9 |
+| Only cash→0.0 | 22.1% | 636.6% | +306% | 7 |
+| Only pilot→off | 19.7% | 502.5% | +172% | 8 |
+| All three | 18.0% | 421.1% | +91% | 10 |
+
+**Verdict:** `cash_rate` 0.04→0.0 adopted (neutral — no effect). The other
+two changes reverted: lower switch_threshold caused 2 unnecessary rotations
+(-100% return), and disabling pilot entry lost early inflection detection
+(-134% return). The AI-to-AI review process failed to catch the regression
+because it reasoned about parameters theoretically without running backtests.
 
 ### Lessons Learned (continued)
 
