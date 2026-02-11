@@ -31,7 +31,7 @@ class DualMomentumStrategy:
         self,
         assets: dict[AssetClass, Asset],
         lookback_months: int = 12,
-        switch_threshold: float = 0.10,
+        switch_threshold: float = 0.04,
         equity_to_defensive_threshold: float = 0.15,
         defensive_to_equity_threshold: float = 0.05,
         cash_rate: float = 0.0,
