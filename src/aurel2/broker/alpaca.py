@@ -20,6 +20,7 @@ try:
     from alpaca.trading.requests import (
         MarketOrderRequest,
         LimitOrderRequest,
+        GetPortfolioHistoryRequest,
     )
     from alpaca.trading.enums import OrderSide, TimeInForce, QueryOrderStatus
     from alpaca.data.historical import StockHistoricalDataClient
@@ -115,6 +116,45 @@ class AlpacaBroker(BaseBroker):
             realized_pnl=float(getattr(account, 'realized_pl', 0) or 0),
             gross_position_value=float(account.long_market_value or 0),
         )
+
+    async def get_portfolio_history(self, period: str = "1M") -> dict:
+        """Get portfolio equity history from Alpaca.
+
+        Args:
+            period: Duration string like 1W, 1M, 6M, 1A, 5A.
+
+        Returns:
+            dict with 'dates' (list[str]), 'equity' (list[float]),
+            'profit_loss' (list[float]), 'profit_loss_pct' (list[float]).
+        """
+        if not self.is_connected:
+            raise ConnectionError("Not connected to Alpaca")
+
+        from datetime import datetime, timezone
+
+        request = GetPortfolioHistoryRequest(
+            period=period,
+            timeframe="1D",
+        )
+        loop = asyncio.get_event_loop()
+        history = await loop.run_in_executor(
+            None, self._client.get_portfolio_history, request
+        )
+
+        dates = [
+            datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d")
+            for ts in history.timestamp
+        ]
+        return {
+            "dates": dates,
+            "equity": [round(v, 2) for v in history.equity],
+            "profit_loss": [round(v, 2) for v in history.profit_loss],
+            "profit_loss_pct": [
+                round(v * 100, 2) if v is not None else 0
+                for v in history.profit_loss_pct
+            ],
+            "base_value": round(history.base_value, 2) if history.base_value else 0,
+        }
 
     async def get_positions(self) -> list[BrokerPosition]:
         """Get all current positions."""

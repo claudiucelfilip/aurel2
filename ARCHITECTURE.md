@@ -655,18 +655,15 @@ All monetary values are displayed in USD (the Alpaca account currency):
 
 ### Account Summary Cards
 
-Two primary cards:
-- **Total Value** — Portfolio equity from Alpaca (includes unsettled). Shows cash breakdown only when cash != total.
-- **Overall P&L** — Percentage and dollar gain/loss since first recorded account value.
+Two cards:
+- **Net Liquidation** — Portfolio equity from Alpaca. Shows cash breakdown only when cash != total.
+- **P&L** — Unrealized profit/loss in dollars and percentage, summed from position-level Alpaca data.
 
 ### Performance Chart
 
-Chart.js line chart with three datasets:
-- **Portfolio** (blue, filled) — Actual trading performance
-- **SPY** (gray, dashed) — Buy-and-hold benchmark
-- **Position** (orange, dashed) — Buy-and-hold of current position
+Chart.js line chart showing portfolio equity over time. Data sourced directly from Alpaca's Portfolio History API (`get_portfolio_history`) — no local snapshots needed.
 
-Period toggle: 1W, 1M, 6M, 1Y, 5Y.
+Period toggle: 1W, 1M, 6M, 1Y, 5Y (maps to Alpaca period strings 1W, 1M, 6M, 1A, 5A with 1D timeframe).
 
 ### Activity Log
 

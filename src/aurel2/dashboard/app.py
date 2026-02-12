@@ -29,48 +29,8 @@ DATA_DIR = Path(os.environ.get("AUREL2_DATA_DIR", str(Path.home() / ".aurel2")))
 TRADING_MODE = os.environ.get("TRADING_MODE", "paper")
 MODE_DATA_DIR = Path(f"data/{TRADING_MODE}")
 
-# Snapshots stored on persistent volume so they survive container rebuilds
-SNAPSHOTS_FILE = DATA_DIR / TRADING_MODE / "snapshots.json"
-
 # Thread pool for running blocking broker calls
 executor = ThreadPoolExecutor(max_workers=2)
-
-
-def load_snapshots() -> list[dict]:
-    """Load historical portfolio snapshots."""
-    if SNAPSHOTS_FILE.exists():
-        try:
-            return json.loads(SNAPSHOTS_FILE.read_text())
-        except Exception:
-            return []
-    return []
-
-
-def save_snapshot(total_value: float, cash: float, positions_value: float):
-    """Save today's snapshot (one per day)."""
-    snapshots = load_snapshots()
-    today = date.today().isoformat()
-
-    # Update or add today's snapshot
-    for snap in snapshots:
-        if snap["date"] == today:
-            snap["total_value"] = total_value
-            snap["cash"] = cash
-            snap["positions_value"] = positions_value
-            break
-    else:
-        snapshots.append({
-            "date": today,
-            "total_value": total_value,
-            "cash": cash,
-            "positions_value": positions_value,
-        })
-
-    # Keep last 365 days
-    snapshots = sorted(snapshots, key=lambda x: x["date"])[-365:]
-
-    SNAPSHOTS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    SNAPSHOTS_FILE.write_text(json.dumps(snapshots, indent=2))
 
 
 def load_pending_decisions() -> list[dict]:
@@ -261,14 +221,6 @@ def _sync_get_broker_data() -> dict:
                 "gross_position_value": account.gross_position_value if account else 0,
             } if account else None
 
-            # Save daily snapshot
-            if account_data:
-                save_snapshot(
-                    account_data["total_value"],
-                    account_data["cash_balance"],
-                    account_data["gross_position_value"],
-                )
-
             return {
                 "connected": True,
                 "positions": positions_data,
@@ -306,14 +258,12 @@ async def dashboard(request: Request, period: str = "1m", page: int = 1):
 
     data = await get_broker_data()
     heartbeat = get_heartbeat()
-    snapshots = load_snapshots()
     pending_decisions = load_pending_decisions()
     trade_history = load_trade_history(page=page)
 
-    # Get comparison chart data
-    positions = data.get("positions", [])
-    account = data.get("account")
-    chart_data = get_comparison_chart_data(positions, account, period=period) if account else None
+    # Get chart data from Alpaca portfolio history
+    history = await get_portfolio_history(period)
+    chart_data = build_chart_data(history)
 
     # Add first trade date info for display
     first_trade_date = get_first_trade_date()
@@ -323,10 +273,9 @@ async def dashboard(request: Request, period: str = "1m", page: int = 1):
         "today": date.today(),
         "connected": data.get("connected", False),
         "error": data.get("error"),
-        "positions": positions,
+        "positions": data.get("positions", []),
         "account": data.get("account"),
         "heartbeat": heartbeat,
-        "snapshots": snapshots,
         "chart_data": chart_data,
         "first_trade_date": first_trade_date,
         "pending_decisions": pending_decisions,
@@ -341,11 +290,6 @@ async def api_positions():
     """API endpoint for live broker positions."""
     return await get_broker_data()
 
-
-@app.get("/api/snapshots")
-async def api_snapshots():
-    """API endpoint for historical snapshots."""
-    return load_snapshots()
 
 
 def get_first_trade_date() -> date | None:
@@ -373,79 +317,66 @@ PERIOD_DAYS = {
     "5y": 1825,
 }
 
+# Map dashboard period to Alpaca period string
+ALPACA_PERIOD = {
+    "1w": "1W",
+    "1m": "1M",
+    "6m": "6M",
+    "1y": "1A",
+    "5y": "5A",
+}
 
-def get_comparison_chart_data(positions: list[dict], account: dict, period: str = "1m") -> dict:
-    """Get chart data using local snapshots + current account data.
 
-    Deliberately avoids external market-data calls so dashboard remains responsive
-    and deterministic even when network access is unavailable.
-    """
-    if not account:
-        return {"dates": [], "portfolio": [], "spy": [], "position": []}
+def _sync_get_portfolio_history(period: str) -> dict | None:
+    """Fetch portfolio history from Alpaca (runs in its own event loop)."""
 
-    current_total = account.get("total_value", 0)
-    current_cash = account.get("cash_balance", 0)
+    async def _fetch():
+        from aurel2.broker.alpaca import AlpacaBroker
 
-    # Determine chart start date from period
-    days = PERIOD_DAYS.get(period, 30)
-    start_date = date.today() - timedelta(days=days)
+        if not APCA_API_KEY or not APCA_API_SECRET:
+            return None
 
-    # For shorter periods, clamp to first trade date if we have one
-    first_trade = get_first_trade_date()
-    if first_trade and start_date < first_trade - timedelta(days=3):
-        # For long periods, start a few days before first trade
-        pass  # keep the requested start_date
-    elif first_trade:
-        # For short periods, allow going back before first trade to show cash period
-        start_date = min(start_date, first_trade - timedelta(days=3))
-
-    end_date = date.today()
-
-    # Calculate starting capital (cost basis of positions + current cash)
-    starting_capital = current_cash
-    for p in positions:
-        starting_capital += p["shares"] * p["avg_cost"]
-
-    snapshots = load_snapshots()
-    filtered = []
-    for snap in snapshots:
+        broker = AlpacaBroker(
+            api_key=APCA_API_KEY,
+            api_secret=APCA_API_SECRET,
+            paper=(TRADING_MODE == "paper"),
+        )
         try:
-            snap_date = date.fromisoformat(snap["date"])
-        except Exception:
-            continue
-        if start_date <= snap_date <= end_date:
-            filtered.append((snap_date, float(snap.get("total_value", 0))))
+            connected = await broker.connect()
+            if not connected:
+                return None
+            alpaca_period = ALPACA_PERIOD.get(period, "1M")
+            return await broker.get_portfolio_history(period=alpaca_period)
+        finally:
+            await broker.disconnect()
 
-    filtered.sort(key=lambda x: x[0])
+    try:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            return loop.run_until_complete(asyncio.wait_for(_fetch(), timeout=15))
+        finally:
+            loop.close()
+    except Exception:
+        return None
 
-    # Calculate values from local snapshots only
-    dates = []
-    portfolio_values = []
-    for snap_date, total_value in filtered:
-        dates.append(snap_date.isoformat())
-        portfolio_values.append(round(total_value, 0))
 
-    # Ensure there is always at least one point
-    if not dates:
-        dates = [end_date.isoformat()]
-        portfolio_values = [round(current_total, 0)]
+async def get_portfolio_history(period: str) -> dict | None:
+    """Async wrapper for portfolio history fetch."""
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(executor, _sync_get_portfolio_history, period)
 
-    # Anchor latest point to live account value
-    if dates[-1] == end_date.isoformat():
-        portfolio_values[-1] = round(current_total, 0)
-    else:
-        dates.append(end_date.isoformat())
-        portfolio_values.append(round(current_total, 0))
+
+def build_chart_data(history: dict | None) -> dict | None:
+    """Convert Alpaca portfolio history to chart data format."""
+    if not history or not history.get("dates"):
+        return None
 
     return {
-        "dates": dates,
-        "portfolio": portfolio_values,  # snapshot-based equity curve
-        "spy": [],  # Disabled: dashboard no longer fetches Yahoo
-        "position": [],  # Disabled: dashboard no longer fetches Yahoo
-        "position_symbol": None,
-        "starting_value": round(starting_capital, 0),
-        "current_value": round(current_total, 0),
-        "first_trade_date": first_trade.isoformat() if first_trade else None,
+        "dates": history["dates"],
+        "portfolio": history["equity"],
+        "starting_value": history["base_value"],
+        "current_value": history["equity"][-1] if history["equity"] else 0,
     }
 
 
@@ -454,10 +385,8 @@ async def api_chart(period: str = "1m"):
     """API endpoint for chart data."""
     if period not in PERIOD_DAYS:
         period = "1m"
-    data = await get_broker_data()
-    positions = data.get("positions", [])
-    account = data.get("account")
-    return get_comparison_chart_data(positions, account, period=period) if account else {}
+    history = await get_portfolio_history(period)
+    return build_chart_data(history) or {}
 
 
 BACKTEST_COMPARISON_FILE = Path("/app/host-data/backtest_comparison.json")
@@ -486,7 +415,7 @@ async def api_status():
     """API endpoint for daemon status."""
     return {
         "heartbeat": get_heartbeat(),
-        "snapshots_count": len(load_snapshots()),
+        "trading_mode": TRADING_MODE,
     }
 
 

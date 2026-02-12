@@ -568,4 +568,4 @@ class TestDashboardRoutes:
         assert response.status_code == 200
         data = response.json()
         assert "heartbeat" in data
-        assert "snapshots_count" in data
+        assert "trading_mode" in data
