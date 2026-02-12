@@ -62,7 +62,15 @@
       "Bash(xargs:*)",
       "Bash(log show:*)",
       "Bash(claude setup-token:*)",
-      "Bash(claude help:*)"
+      "Bash(claude help:*)",
+      "Bash(PYTHONPATH=/root/aurel2/src python3:*)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:www.codecademy.com)",
+      "WebFetch(domain:formulae.brew.sh)",
+      "Bash(bash:*)",
+      "Bash(export PATH=\"$HOME/.local/bin:$PATH\")",
+      "Bash(agent:*)",
+      "Bash(/root/.local/bin/agent:*)"
     ]
   }
 }

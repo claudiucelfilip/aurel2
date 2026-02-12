@@ -11,6 +11,18 @@
           }
         ]
       }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/push-on-end.sh",
+            "timeout": 15
+          }
+        ]
+      }
     ]
   }
 }
