@@ -29,8 +29,8 @@ DATA_DIR = Path(os.environ.get("AUREL2_DATA_DIR", str(Path.home() / ".aurel2")))
 TRADING_MODE = os.environ.get("TRADING_MODE", "paper")
 MODE_DATA_DIR = Path(f"data/{TRADING_MODE}")
 
-# Snapshots are mode-partitioned so paper/live don't mix
-SNAPSHOTS_FILE = MODE_DATA_DIR / "snapshots.json"
+# Snapshots stored on persistent volume so they survive container rebuilds
+SNAPSHOTS_FILE = DATA_DIR / TRADING_MODE / "snapshots.json"
 
 # Thread pool for running blocking broker calls
 executor = ThreadPoolExecutor(max_workers=2)
