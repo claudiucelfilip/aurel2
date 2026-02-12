@@ -14,6 +14,11 @@ logger = structlog.get_logger()
 DEFAULT_JOURNAL_PATH = "data/trade_journal.json"
 
 
+def journal_path_for_mode(mode: str = "paper") -> str:
+    """Return journal path for the given trading mode."""
+    return f"data/{mode}/trade_journal.json"
+
+
 @dataclass
 class JournalEntry:
     """A single entry in the trade journal."""

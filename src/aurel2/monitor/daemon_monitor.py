@@ -35,7 +35,7 @@ class DaemonMonitor:
     CONSECUTIVE_UNHEALTHY_THRESHOLD = 3
     CONSECUTIVE_DISCONNECTED_THRESHOLD = 5  # 5 minutes of disconnection triggers restart
     MAX_RESTARTS_PER_HOUR = 3
-    DAEMON_RESTARTS_BEFORE_GATEWAY_RESTART = 2  # After 2 failed daemon restarts, restart IB Gateway
+    MAX_DAEMON_RESTARTS_WITHOUT_RECOVERY = 3
 
     def __init__(
         self,
@@ -167,7 +167,7 @@ class DaemonMonitor:
 
         # Update session with account value if available
         if report.heartbeat:
-            # We'd get account value from IBKR - for now just track connection
+            # We'd get account value from broker - for now just track connection
             pass
 
     def _can_restart(self) -> tuple[bool, str]:
@@ -188,7 +188,7 @@ class DaemonMonitor:
         self.session_tracker.record_restart()
 
     async def _handle_persistent_disconnection(self, report: HealthReport) -> None:
-        """Handle persistent IBKR disconnection by restarting daemon or IB Gateway."""
+        """Handle persistent broker disconnection by restarting daemon."""
         logger.warning(
             "persistent_disconnection_detected",
             consecutive_checks=self._consecutive_disconnected,
@@ -204,7 +204,6 @@ class DaemonMonitor:
             logger.warning("restart_blocked", reason=reason)
             print(f"  Cannot restart: {reason}")
 
-            # Escalate since we can't fix it
             self.notifier.send(
                 message=(
                     f"Daemon has been disconnected for {self._consecutive_disconnected} minutes.\n\n"
@@ -218,15 +217,25 @@ class DaemonMonitor:
             )
             return
 
-        # Escalate to IB Gateway restart if daemon restarts haven't helped
-        if self._daemon_restarts_without_recovery >= self.DAEMON_RESTARTS_BEFORE_GATEWAY_RESTART:
-            await self._restart_ib_gateway(report)
+        # Escalate if too many restarts haven't helped
+        if self._daemon_restarts_without_recovery >= self.MAX_DAEMON_RESTARTS_WITHOUT_RECOVERY:
+            self.notifier.send(
+                message=(
+                    f"Daemon restarted {self._daemon_restarts_without_recovery}x without recovery.\n\n"
+                    "Check Alpaca API credentials and service status.\n"
+                    "Manual intervention required."
+                ),
+                title="Aurel2: Restart Exhausted",
+                tags=["x", "warning"],
+                priority="urgent",
+                category="restart_exhausted",
+            )
             return
 
         # Attempt daemon restart
         print(f"  Attempting automatic daemon restart...")
 
-        result = self.auto_fixer.fix("restart_daemon", {"reason": "persistent IBKR disconnection"})
+        result = self.auto_fixer.fix("restart_daemon", {"reason": "persistent broker disconnection"})
 
         if result.success:
             self._record_restart()
@@ -243,7 +252,7 @@ class DaemonMonitor:
                 message=(
                     f"Daemon automatically restarted due to persistent disconnection.\n\n"
                     f"Result: {result.message}\n"
-                    f"Restarts without recovery: {self._daemon_restarts_without_recovery}/{self.DAEMON_RESTARTS_BEFORE_GATEWAY_RESTART}\n"
+                    f"Restarts without recovery: {self._daemon_restarts_without_recovery}/{self.MAX_DAEMON_RESTARTS_WITHOUT_RECOVERY}\n"
                     f"Restarts this hour: {len(self._restarts_this_hour)}/{self.MAX_RESTARTS_PER_HOUR}"
                 ),
                 title="Aurel2: Auto-Restart (Disconnection)",
@@ -264,54 +273,6 @@ class DaemonMonitor:
                 tags=["x", "warning"],
                 priority="high",
                 category="restart_failed",
-            )
-
-    async def _restart_ib_gateway(self, report: HealthReport) -> None:
-        """Restart IB Gateway container when daemon restarts haven't fixed disconnection."""
-        logger.warning(
-            "escalating_to_gateway_restart",
-            daemon_restarts_without_recovery=self._daemon_restarts_without_recovery,
-        )
-
-        print(f"  Daemon restarts haven't fixed disconnection. Restarting IB Gateway...")
-
-        result = self.auto_fixer.fix(
-            "restart_ib_gateway",
-            {"reason": f"Daemon restarted {self._daemon_restarts_without_recovery}x without recovery"},
-        )
-
-        if result.success:
-            self._record_restart()
-            self._daemon_restarts_without_recovery = 0
-            self._consecutive_disconnected = 0
-
-            logger.info("ib_gateway_restarted_for_disconnection", message=result.message)
-
-            self.notifier.send(
-                message=(
-                    f"IB Gateway container restarted due to persistent disconnection.\n\n"
-                    f"Daemon was restarted {self.DAEMON_RESTARTS_BEFORE_GATEWAY_RESTART}x without recovery.\n"
-                    f"Result: {result.message}"
-                ),
-                title="Aurel2: IB Gateway Restarted",
-                tags=["arrows_counterclockwise", "satellite"],
-                priority="high",
-                category="gateway_restart",
-            )
-        else:
-            logger.error("ib_gateway_restart_failed", message=result.message)
-
-            self.notifier.send(
-                message=(
-                    f"Failed to restart IB Gateway container.\n\n"
-                    f"Error: {result.message}\n\n"
-                    "Manual intervention required:\n"
-                    "ssh root@SERVER && cd /opt/aurel2/docker && docker compose restart ib-gateway"
-                ),
-                title="Aurel2: Gateway Restart Failed",
-                tags=["x", "warning"],
-                priority="urgent",
-                category="gateway_restart_failed",
             )
 
     async def _handle_healthy(self, report: HealthReport) -> None:

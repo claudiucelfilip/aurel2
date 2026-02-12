@@ -22,7 +22,7 @@ class ErrorSeverity(Enum):
 class ErrorCategory(Enum):
     """Categories of errors for classification."""
 
-    CONNECTION = "connection"  # IBKR connection issues
+    CONNECTION = "connection"  # Broker connection issues
     CIRCUIT_BREAKER = "circuit_breaker"  # Circuit breaker tripped
     PRICE_FETCH = "price_fetch"  # Failed to get market data
     DAEMON_CRASH = "daemon_crash"  # Process not running
@@ -48,12 +48,13 @@ class AnalyzedError:
 ERROR_PATTERNS = {
     ErrorCategory.CONNECTION: [
         r"connection.*failed",
-        r"ibkr.*disconnect",
+        r"broker.*disconnect",
+        r"alpaca.*disconnect",
         r"connect_blocked",
         r"cannot connect",
         r"connection refused",
         r"socket.*error",
-        r"TWS.*not.*running",
+        r"api.*error",
     ],
     ErrorCategory.CIRCUIT_BREAKER: [
         r"circuit_breaker_opened",
@@ -217,7 +218,7 @@ class ErrorAnalyzer:
         details_parts = []
 
         if category == ErrorCategory.CONNECTION:
-            details_parts.append("IBKR connection issue - may need to restart daemon or check TWS")
+            details_parts.append("Broker connection issue - may need to restart daemon or check API credentials")
 
         if category == ErrorCategory.CIRCUIT_BREAKER:
             details_parts.append("Circuit breaker tripped due to repeated failures")

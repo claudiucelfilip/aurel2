@@ -47,8 +47,8 @@ class TestMeanReversionStrategy:
     def test_default_parameters(self):
         """Strategy should have correct default parameters."""
         strategy = MeanReversionStrategy()
-        assert strategy.rsi_oversold == 30
-        assert strategy.rsi_overbought == 70
+        assert strategy.rsi_oversold == 25
+        assert strategy.rsi_overbought == 75
         assert strategy.rsi_period == 14
         assert strategy.drawdown_threshold == 0.10
         assert strategy.target_assets == [

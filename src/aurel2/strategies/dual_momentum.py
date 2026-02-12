@@ -31,8 +31,10 @@ class DualMomentumStrategy:
         self,
         assets: dict[AssetClass, Asset],
         lookback_months: int = 12,
-        switch_threshold: float = 0.10,
-        cash_rate: float = 0.04,
+        switch_threshold: float = 0.04,
+        equity_to_defensive_threshold: float = 0.15,
+        defensive_to_equity_threshold: float = 0.05,
+        cash_rate: float = 0.0,
         pilot_entry_enabled: bool = True,
         pilot_lookback_months: int = 3,
         pilot_position_size: float = 0.30,
@@ -40,6 +42,8 @@ class DualMomentumStrategy:
         self.assets = assets
         self.lookback_months = lookback_months
         self.switch_threshold = switch_threshold
+        self.equity_to_defensive_threshold = equity_to_defensive_threshold
+        self.defensive_to_equity_threshold = defensive_to_equity_threshold
         self.cash_rate = cash_rate
         self.current_holding: AssetClass | None = None
         # Pilot entry settings
@@ -231,9 +235,9 @@ class DualMomentumStrategy:
             winner_is_equity = winner_score.asset.category == AssetCategory.EQUITY
 
             if current_is_equity and not winner_is_equity:
-                effective_threshold = 0.15  # Hard to leave equity
+                effective_threshold = self.equity_to_defensive_threshold  # Hard to leave equity
             elif not current_is_equity and winner_is_equity:
-                effective_threshold = 0.05  # Easy to return to equity
+                effective_threshold = self.defensive_to_equity_threshold  # Easy to return to equity
             else:
                 effective_threshold = self.switch_threshold  # Same-category default
 

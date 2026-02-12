@@ -152,8 +152,8 @@ class BacktestEngine:
         ai_model: str = "haiku",
         amnesia: bool = False,
         dca_amount: float = 0.0,
-        correlation_guard: bool = True,
-        sideways_hold: bool = True,
+        correlation_guard: bool = False,
+        sideways_hold: bool = False,
     ):
         self.dual_momentum = DualMomentumStrategy(assets=ASSET_REGISTRY)
         self.mean_reversion = MeanReversionStrategy()
@@ -743,7 +743,7 @@ class BacktestEngine:
 
 
 def generate_comparison_json(output_path: str = "data/backtest_comparison.json"):
-    """Run 5y and 10y backtests and save results for the dashboard.
+    """Run 5y, 10y, 15y, and 20y backtests and save results for the dashboard.
 
     Usage:
         python -m aurel2.engine.backtest
@@ -757,11 +757,11 @@ def generate_comparison_json(output_path: str = "data/backtest_comparison.json")
     capital = 10000
     provider = YahooFinanceProvider()
 
-    # Fetch prices once (10y covers both periods)
+    # Fetch prices once (20y covers all periods)
     symbols = get_all_yahoo_symbols()
     if "SPY" not in symbols:
         symbols.append("SPY")
-    extended_start = end_date - timedelta(days=10 * 365 + 600)
+    extended_start = end_date - timedelta(days=20 * 365 + 600)
 
     print(f"Fetching prices for {len(symbols)} symbols...")
     prices = provider.get_multi_prices(symbols, extended_start, end_date + timedelta(days=5))
@@ -772,8 +772,16 @@ def generate_comparison_json(output_path: str = "data/backtest_comparison.json")
     print(f"Total: {len(prices)} price records\n")
 
     results = {}
-    for label, years in [("10y", 10), ("5y", 5)]:
-        start_date = end_date - timedelta(days=years * 365)
+    periods = [
+        ("20y", timedelta(days=20 * 365)),
+        ("15y", timedelta(days=15 * 365)),
+        ("10y", timedelta(days=10 * 365)),
+        ("5y", timedelta(days=5 * 365)),
+        ("1y", timedelta(days=365)),
+        ("3m", timedelta(days=90)),
+    ]
+    for label, delta in periods:
+        start_date = end_date - delta
         print(f"Running {label} backtest ({start_date} -> {end_date})...")
 
         engine = BacktestEngine(initial_capital=capital, use_ai=False)

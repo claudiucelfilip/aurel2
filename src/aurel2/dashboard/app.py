@@ -1,4 +1,4 @@
-"""FastAPI dashboard application - displays live IBKR positions."""
+"""FastAPI dashboard application - displays live broker positions."""
 
 import os
 import json
@@ -12,23 +12,27 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-import yfinance as yf
-
 app = FastAPI(title="Aurel2 Dashboard")
 
 # Templates
 templates_dir = Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=str(templates_dir))
 
-# IBKR connection settings from environment
-IBKR_HOST = os.environ.get("IBKR_HOST", "127.0.0.1")
-IBKR_PORT = int(os.environ.get("IBKR_PORT", "4002"))
+# Alpaca connection settings from environment
+APCA_API_KEY = os.environ.get("APCA_API_KEY_ID", "")
+APCA_API_SECRET = os.environ.get("APCA_API_SECRET_KEY", "")
 
 # Data directory
 DATA_DIR = Path(os.environ.get("AUREL2_DATA_DIR", str(Path.home() / ".aurel2")))
-SNAPSHOTS_FILE = DATA_DIR / "snapshots.json"
 
-# Thread pool for running blocking IBKR calls
+# Trading mode for data partitioning (paper/live)
+TRADING_MODE = os.environ.get("TRADING_MODE", "paper")
+MODE_DATA_DIR = Path(f"data/{TRADING_MODE}")
+
+# Snapshots are mode-partitioned so paper/live don't mix
+SNAPSHOTS_FILE = MODE_DATA_DIR / "snapshots.json"
+
+# Thread pool for running blocking broker calls
 executor = ThreadPoolExecutor(max_workers=2)
 
 
@@ -71,10 +75,7 @@ def save_snapshot(total_value: float, cash: float, positions_value: float):
 
 def load_pending_decisions() -> list[dict]:
     """Load pending decisions awaiting approval."""
-    pending_file = DATA_DIR / "pending_decisions.json"
-    if not pending_file.exists():
-        # Fall back to project data dir
-        pending_file = Path("data/pending_decisions.json")
+    pending_file = MODE_DATA_DIR / "pending_decisions.json"
 
     if pending_file.exists():
         try:
@@ -102,15 +103,11 @@ def load_pending_decisions() -> list[dict]:
 
 def load_trade_history(page: int = 1, per_page: int = 10) -> dict:
     """Load trade journal and compute summary stats with pagination."""
-    journal_file = DATA_DIR / "trade_journal.json"
-    if not journal_file.exists():
-        journal_file = Path("data/trade_journal.json")
+    journal_file = MODE_DATA_DIR / "trade_journal.json"
 
     # Load pending decisions for status cross-reference
     pending_statuses = {}
-    pending_file = DATA_DIR / "pending_decisions.json"
-    if not pending_file.exists():
-        pending_file = Path("data/pending_decisions.json")
+    pending_file = MODE_DATA_DIR / "pending_decisions.json"
     if pending_file.exists():
         try:
             pdata = json.loads(pending_file.read_text())
@@ -127,8 +124,6 @@ def load_trade_history(page: int = 1, per_page: int = 10) -> dict:
         "total_decisions": 0,
         "executed_trades": 0,
         "all_decisions": [],
-        "first_account_value": None,
-        "latest_account_value": None,
         "page": page,
         "per_page": per_page,
         "total_pages": 1,
@@ -139,14 +134,6 @@ def load_trade_history(page: int = 1, per_page: int = 10) -> dict:
             entries = json.loads(journal_file.read_text())
             result["total_decisions"] = len(entries)
             result["executed_trades"] = sum(1 for e in entries if e.get("executed"))
-
-            # Get first and latest account values for overall P&L
-            for entry in entries:
-                val = entry.get("account_value_before")
-                if val and val > 0:
-                    if result["first_account_value"] is None:
-                        result["first_account_value"] = val
-                    result["latest_account_value"] = val
 
             # All non-hold decisions, newest first
             all_sorted = sorted(
@@ -224,78 +211,59 @@ def get_heartbeat() -> dict | None:
     return None
 
 
-def _sync_get_ibkr_data() -> dict:
-    """Fetch positions and account data directly from IBKR (runs in its own event loop)."""
+def _sync_get_broker_data() -> dict:
+    """Fetch positions and account data from Alpaca (runs in its own event loop)."""
 
     async def _fetch():
-        from aurel2.broker.ibkr import IBKRBroker
-        import random
+        from aurel2.broker.alpaca import AlpacaBroker
 
-        # Retry up to 3 times with different client IDs
-        last_error = None
-        for attempt in range(3):
-            try:
-                client_id = 990 + random.randint(0, 9)
-                broker = IBKRBroker(host=IBKR_HOST, port=IBKR_PORT, client_id=client_id)
-                connected = await broker.connect()
+        if not APCA_API_KEY or not APCA_API_SECRET:
+            return {"connected": False, "error": "Alpaca API credentials not configured"}
 
-                if connected:
-                    break
-                last_error = "Could not connect to IBKR"
-            except Exception as e:
-                last_error = str(e)
-
-            # Wait before retry
-            if attempt < 2:
-                await asyncio.sleep(2)
-        else:
-            return {"connected": False, "error": last_error or "Connection failed after 3 attempts"}
+        broker = AlpacaBroker(
+            api_key=APCA_API_KEY,
+            api_secret=APCA_API_SECRET,
+            paper=(TRADING_MODE == "paper"),
+        )
 
         try:
+            connected = await broker.connect()
+            if not connected:
+                return {"connected": False, "error": "Could not connect to Alpaca"}
+
             positions = await broker.get_positions()
             account = await broker.get_account_summary()
 
-            # Get live prices from Yahoo for accurate P&L
             positions_data = []
             for p in positions:
-                # Get current price from Yahoo Finance for accurate P&L
-                try:
-                    ticker = yf.Ticker(p.symbol)
-                    current_price = ticker.info.get("regularMarketPrice") or ticker.info.get("previousClose") or p.market_price
-                except Exception:
-                    current_price = p.market_price
-
-                market_value = p.shares * current_price
-                cost_basis = p.shares * p.avg_cost
-                unrealized_pnl = market_value - cost_basis
-                pnl_pct = ((current_price / p.avg_cost) - 1) * 100 if p.avg_cost else 0
-
+                if p.shares == 0:
+                    continue
+                pnl_pct = ((p.market_price / p.avg_cost) - 1) * 100 if p.avg_cost else 0
                 positions_data.append({
                     "symbol": p.symbol,
                     "shares": p.shares,
                     "avg_cost": p.avg_cost,
-                    "market_price": current_price,
-                    "market_value": market_value,
-                    "unrealized_pnl": unrealized_pnl,
+                    "market_price": p.market_price,
+                    "market_value": p.market_value,
+                    "unrealized_pnl": p.unrealized_pnl,
                     "pnl_pct": pnl_pct,
                 })
-
-            # Filter out 0-share positions (closed positions still reported by IBKR)
-            positions_data = [p for p in positions_data if p["shares"] != 0]
 
             account_data = {
                 "total_value": account.total_value if account else 0,
                 "cash_balance": account.cash_balance if account else 0,
                 "buying_power": account.buying_power if account else 0,
+                "unrealized_pnl": account.unrealized_pnl if account else 0,
+                "realized_pnl": account.realized_pnl if account else 0,
+                "gross_position_value": account.gross_position_value if account else 0,
             } if account else None
 
             # Save daily snapshot
             if account_data:
-                positions_value = sum(p["market_value"] for p in positions_data)
                 save_snapshot(
                     account_data["total_value"],
                     account_data["cash_balance"],
-                    positions_value,
+                    account_data["gross_position_value"],
                 )
 
             return {
@@ -319,21 +287,21 @@ def _sync_get_ibkr_data() -> dict:
         return {"connected": False, "error": str(e)}
 
 
-async def get_ibkr_data() -> dict:
-    """Async wrapper that runs IBKR fetch in a separate thread."""
+async def get_broker_data() -> dict:
+    """Async wrapper that runs broker fetch in a separate thread."""
     loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(executor, _sync_get_ibkr_data)
+    return await loop.run_in_executor(executor, _sync_get_broker_data)
 
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request, period: str = "1m", page: int = 1):
-    """Main dashboard view - shows live IBKR positions."""
+    """Main dashboard view - shows live broker positions."""
     if period not in PERIOD_DAYS:
         period = "1m"
     if page < 1:
         page = 1
 
-    data = await get_ibkr_data()
+    data = await get_broker_data()
     heartbeat = get_heartbeat()
     snapshots = load_snapshots()
     pending_decisions = load_pending_decisions()
@@ -346,15 +314,6 @@ async def dashboard(request: Request, period: str = "1m", page: int = 1):
 
     # Add first trade date info for display
     first_trade_date = get_first_trade_date()
-
-    # Calculate overall gain/loss
-    overall_gain = None
-    overall_gain_pct = None
-    if account and trade_history["first_account_value"]:
-        starting = trade_history["first_account_value"]
-        current = account["total_value"]
-        overall_gain = current - starting
-        overall_gain_pct = ((current / starting) - 1) * 100 if starting else 0
 
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
@@ -369,8 +328,6 @@ async def dashboard(request: Request, period: str = "1m", page: int = 1):
         "first_trade_date": first_trade_date,
         "pending_decisions": pending_decisions,
         "trade_history": trade_history,
-        "overall_gain": overall_gain,
-        "overall_gain_pct": overall_gain_pct,
         "period": period,
         "page": page,
     })
@@ -378,8 +335,8 @@ async def dashboard(request: Request, period: str = "1m", page: int = 1):
 
 @app.get("/api/positions")
 async def api_positions():
-    """API endpoint for live IBKR positions."""
-    return await get_ibkr_data()
+    """API endpoint for live broker positions."""
+    return await get_broker_data()
 
 
 @app.get("/api/snapshots")
@@ -390,10 +347,7 @@ async def api_snapshots():
 
 def get_first_trade_date() -> date | None:
     """Get the date of the first executed trade from the journal."""
-    journal_file = DATA_DIR / "trade_journal.json"
-    if not journal_file.exists():
-        # Fall back to data directory in project
-        journal_file = Path("data/trade_journal.json")
+    journal_file = MODE_DATA_DIR / "trade_journal.json"
 
     if journal_file.exists():
         try:
@@ -418,13 +372,10 @@ PERIOD_DAYS = {
 
 
 def get_comparison_chart_data(positions: list[dict], account: dict, period: str = "1m") -> dict:
-    """Get chart data showing actual portfolio value vs benchmarks.
+    """Get chart data using local snapshots + current account data.
 
-    Shows:
-    - Flat cash period before first trade
-    - Actual portfolio performance after trade
-    - SPY benchmark (what if we'd bought SPY instead)
-    - Position benchmark (e.g., GLD - buy and hold from start)
+    Deliberately avoids external market-data calls so dashboard remains responsive
+    and deterministic even when network access is unavailable.
     """
     if not account:
         return {"dates": [], "portfolio": [], "spy": [], "position": []}
@@ -452,102 +403,43 @@ def get_comparison_chart_data(positions: list[dict], account: dict, period: str 
     for p in positions:
         starting_capital += p["shares"] * p["avg_cost"]
 
-    # Get SPY data for benchmark
-    try:
-        spy = yf.Ticker("SPY")
-        spy_hist = spy.history(start=start_date.isoformat(), end=end_date.isoformat())
-        if spy_hist.empty:
-            return {"dates": [], "portfolio": [], "spy": [], "position": []}
-    except Exception:
-        return {"dates": [], "portfolio": [], "spy": [], "position": []}
-
-    # Get historical prices for current positions
-    position_hist = {}
-    main_position_symbol = None
-    for p in positions:
-        symbol = p["symbol"]
-        if main_position_symbol is None:
-            main_position_symbol = symbol  # Use first/largest position for benchmark
+    snapshots = load_snapshots()
+    filtered = []
+    for snap in snapshots:
         try:
-            ticker = yf.Ticker(symbol)
-            hist = ticker.history(start=start_date.isoformat(), end=end_date.isoformat())
-            if not hist.empty:
-                position_hist[symbol] = {
-                    "prices": hist["Close"],
-                    "shares": p["shares"],
-                    "avg_cost": p["avg_cost"],
-                }
+            snap_date = date.fromisoformat(snap["date"])
         except Exception:
-            pass
+            continue
+        if start_date <= snap_date <= end_date:
+            filtered.append((snap_date, float(snap.get("total_value", 0))))
 
-    # Calculate values for each day
+    filtered.sort(key=lambda x: x[0])
+
+    # Calculate values from local snapshots only
     dates = []
     portfolio_values = []
-    spy_values = []
-    position_values = []  # Buy-and-hold the main position from day 1
+    for snap_date, total_value in filtered:
+        dates.append(snap_date.isoformat())
+        portfolio_values.append(round(total_value, 0))
 
-    spy_start = float(spy_hist["Close"].iloc[0])
+    # Ensure there is always at least one point
+    if not dates:
+        dates = [end_date.isoformat()]
+        portfolio_values = [round(current_total, 0)]
 
-    # Get position start price for buy-and-hold benchmark
-    position_start = None
-    if main_position_symbol and main_position_symbol in position_hist:
-        pos_prices = position_hist[main_position_symbol]["prices"]
-        if len(pos_prices) > 0:
-            position_start = float(pos_prices.iloc[0])
-
-    for idx, row in spy_hist.iterrows():
-        current_date = idx.date() if hasattr(idx, 'date') else idx
-        date_str = idx.strftime("%Y-%m-%d")
-        dates.append(date_str)
-
-        # Before first trade: portfolio is all cash
-        if first_trade and current_date < first_trade:
-            portfolio_val = starting_capital
-        else:
-            # After first trade: calculate actual portfolio value
-            portfolio_val = current_cash
-            for symbol, data in position_hist.items():
-                prices = data["prices"]
-                shares = data["shares"]
-
-                if idx in prices.index:
-                    price = float(prices[idx])
-                else:
-                    earlier = prices[prices.index <= idx]
-                    price = float(earlier.iloc[-1]) if len(earlier) > 0 else data["avg_cost"]
-
-                portfolio_val += shares * price
-
-        portfolio_values.append(round(portfolio_val, 0))
-
-        # SPY benchmark: what if we had invested starting_capital in SPY from day 1
-        spy_price = float(row["Close"])
-        spy_val = (spy_price / spy_start) * starting_capital
-        spy_values.append(round(spy_val, 0))
-
-        # Position benchmark: what if we had bought the main position from day 1
-        if position_start and main_position_symbol in position_hist:
-            pos_prices = position_hist[main_position_symbol]["prices"]
-            if idx in pos_prices.index:
-                pos_price = float(pos_prices[idx])
-            else:
-                earlier = pos_prices[pos_prices.index <= idx]
-                pos_price = float(earlier.iloc[-1]) if len(earlier) > 0 else position_start
-            pos_val = (pos_price / position_start) * starting_capital
-            position_values.append(round(pos_val, 0))
-        else:
-            position_values.append(round(starting_capital, 0))
-
-    # Anchor the last portfolio point to the real IBKR account value
-    if portfolio_values and current_total > 0:
+    # Anchor latest point to live account value
+    if dates[-1] == end_date.isoformat():
         portfolio_values[-1] = round(current_total, 0)
+    else:
+        dates.append(end_date.isoformat())
+        portfolio_values.append(round(current_total, 0))
 
     return {
         "dates": dates,
-        "portfolio": portfolio_values,
-        "spy": spy_values,
-        "position": position_values,
-        "position_symbol": main_position_symbol,
+        "portfolio": portfolio_values,  # snapshot-based equity curve
+        "spy": [],  # Disabled: dashboard no longer fetches Yahoo
+        "position": [],  # Disabled: dashboard no longer fetches Yahoo
+        "position_symbol": None,
         "starting_value": round(starting_capital, 0),
         "current_value": round(current_total, 0),
         "first_trade_date": first_trade.isoformat() if first_trade else None,
@@ -559,24 +451,25 @@ async def api_chart(period: str = "1m"):
     """API endpoint for chart data."""
     if period not in PERIOD_DAYS:
         period = "1m"
-    data = await get_ibkr_data()
+    data = await get_broker_data()
     positions = data.get("positions", [])
     account = data.get("account")
     return get_comparison_chart_data(positions, account, period=period) if account else {}
 
 
-BACKTEST_COMPARISON_FILE = DATA_DIR / "backtest_comparison.json"
-BACKTEST_COMPARISON_FILE_ALT = Path("data/backtest_comparison.json")
+BACKTEST_COMPARISON_FILE = Path("/app/host-data/backtest_comparison.json")
+BACKTEST_COMPARISON_FILE_FALLBACK = Path("data/backtest_comparison.json")
 
 
 @app.get("/api/backtest-comparison")
 async def api_backtest_comparison():
-    """Return pre-computed 5y and 10y backtest results.
+    """Return pre-computed backtest results.
 
-    Reads from data/backtest_comparison.json, generated by:
-        python -m aurel2.engine.backtest
+    In Docker: reads from bind-mounted /app/host-data/ (single source of truth).
+    Locally: falls back to data/backtest_comparison.json.
+    Generated by: python -m aurel2.engine.backtest
     """
-    for path in [BACKTEST_COMPARISON_FILE, BACKTEST_COMPARISON_FILE_ALT]:
+    for path in [BACKTEST_COMPARISON_FILE, BACKTEST_COMPARISON_FILE_FALLBACK]:
         if path.exists():
             try:
                 return json.loads(path.read_text())

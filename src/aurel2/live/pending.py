@@ -16,6 +16,11 @@ logger = structlog.get_logger()
 DEFAULT_PENDING_FILE = "data/pending_decisions.json"
 
 
+def pending_path_for_mode(mode: str = "paper") -> str:
+    """Return pending decisions path for the given trading mode."""
+    return f"data/{mode}/pending_decisions.json"
+
+
 class PendingStatus(str, Enum):
     PENDING = "pending"
     APPROVED = "approved"

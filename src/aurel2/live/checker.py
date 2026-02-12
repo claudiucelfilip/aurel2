@@ -15,10 +15,11 @@ from aurel2.data.providers.yahoo import YahooFinanceProvider
 from aurel2.strategies.dual_momentum import DualMomentumStrategy
 from aurel2.strategies.mean_reversion import MeanReversionStrategy
 from aurel2.strategies.multi_timeframe import MultiTimeframeTrendStrategy
-from aurel2.live.connection import IBKRConnection
+from aurel2.live.connection import AlpacaConnection
 from aurel2.live.executor import Executor, ExecutionResult
-from aurel2.live.journal import TradeJournal
+from aurel2.live.journal import TradeJournal, journal_path_for_mode
 from aurel2.live.pending import PendingManager, PendingDecision, DecisionUrgency
+from aurel2.live.trade_recorder import TradeRecorder
 from aurel2.notifications.ntfy import NtfyNotifier
 
 logger = structlog.get_logger()
@@ -43,7 +44,7 @@ class Checker:
     Runs a single market check cycle.
 
     Steps:
-    1. Sync positions from IBKR
+    1. Sync positions from broker
     2. Fetch market prices
     3. Run all 3 strategies
     4. Orchestrator produces decision
@@ -54,7 +55,7 @@ class Checker:
 
     def __init__(
         self,
-        connection: IBKRConnection,
+        connection: AlpacaConnection,
         pending_manager: PendingManager,
         ntfy_topic: str = "aurel2",
         dry_run: bool = False,
@@ -62,6 +63,7 @@ class Checker:
         failure_learnings_file: str = "data/failure_learnings.json",
         ai_model: str = "haiku",
         ai_lookback_years: int = 3,
+        mode: str = "paper",
     ):
         self.connection = connection
         self.pending_manager = pending_manager
@@ -90,7 +92,15 @@ class Checker:
             )
 
         # Initialize trade journal for audit trail
-        self.journal = TradeJournal()
+        self.journal = TradeJournal(filepath=journal_path_for_mode(mode))
+
+        # Shared execution pipeline
+        self.trade_recorder = TradeRecorder(
+            executor=self.executor,
+            connection=self.connection,
+            journal=self.journal,
+            notifier=self.notifier,
+        )
 
     async def run(self, previous_regime: str | None = None) -> CheckResult:
         """Run a single check cycle.
@@ -123,10 +133,10 @@ class Checker:
         if not await self.connection.ensure_connected():
             return CheckResult(
                 success=False,
-                message="Could not connect to IBKR",
+                message="Could not connect to broker",
             )
 
-        # 2. Sync positions from IBKR
+        # 2. Sync positions from broker
         positions = await self.connection.get_positions()
         account_summary = await self.connection.get_account_summary()
 
@@ -321,12 +331,20 @@ class Checker:
 
         if decision.action.value == "hold":
             # No action needed, but notify
-            hold_msg = f"HOLD {current_holding or 'cash'}"
+            regime_str = market_context.get("regime", "unknown").upper()
+            acct_str = f"Account: ${account_value:,.0f}\n" if account_value else ""
+            signals_str = " / ".join(
+                f"{name.replace('_', ' ').title()}: {sig.get('action', '?').upper()}"
+                for name, sig in signals.items() if "error" not in sig
+            )
 
             self.notifier.send(
                 message=(
-                    f"{hold_msg}\n"
-                    f"Confidence: {decision.confidence:.0%}"
+                    f"HOLD {current_holding or 'cash'}\n"
+                    f"{acct_str}"
+                    f"Regime: {regime_str}\n"
+                    f"Signals: {signals_str}\n\n"
+                    f"{decision.reasoning}"
                 ),
                 title=f"Aurel2: HOLD {current_holding or 'cash'}",
                 tags=["white_check_mark"],
@@ -510,58 +528,16 @@ class Checker:
             asset=decision.asset_symbol,
         )
 
-        result = await self.executor.execute(
+        result = await self.trade_recorder.execute_and_record(
             action=decision.action.value,
             symbol=decision.asset_symbol,
+            decision_id=decision_id,
             current_holding=current_holding,
             position_size_pct=decision.position_size_pct,
+            notify_title=f"Aurel2: {decision.action.value.upper()} {decision.asset_symbol or ''}",
+            notify_context=f"Auto-executed: {decision.action.value.upper()} {decision.asset_symbol or ''}",
+            notify_priority="low",
         )
-
-        # Get post-trade state for journal
-        account_after = None
-        holding_after = None
-        if result.success:
-            try:
-                summary = await self.connection.get_account_summary()
-                if summary:
-                    account_after = summary.total_value
-                holding_after = await self.executor.get_current_holding()
-            except Exception:
-                pass
-
-        # Record execution result in journal
-        self.journal.record_execution(
-            decision_id=decision_id,
-            success=result.success,
-            shares=result.shares,
-            fill_price=result.fill_price,
-            error=result.message if not result.success else None,
-            account_value_after=account_after,
-            current_holding_after=holding_after,
-        )
-
-        # Send notification
-        if result.success:
-            self.notifier.send(
-                message=(
-                    f"Auto-executed: {decision.action.value.upper()} {decision.asset_symbol or ''}\n\n"
-                    f"Shares: {result.shares:.2f} @ ${result.fill_price:.2f}\n"
-                    f"Reasoning: {decision.reasoning[:150]}"
-                ),
-                title=f"Aurel2: {decision.action.value.upper()} {decision.asset_symbol or ''}",
-                tags=["white_check_mark", "chart_with_upwards_trend"],
-                priority="low",
-            )
-        else:
-            self.notifier.send(
-                message=(
-                    f"Execution FAILED: {decision.action.value.upper()} {decision.asset_symbol or ''}\n\n"
-                    f"Error: {result.message}"
-                ),
-                title="Aurel2: Execution Failed",
-                tags=["x", "warning"],
-                priority="high",
-            )
 
         return CheckResult(
             success=result.success,
@@ -643,13 +619,28 @@ class Checker:
 
         timeout_mins = pending.timeout_seconds() // 60
 
+        # Build strategy signals summary
+        signals_str = " / ".join(
+            f"{s['name']}: {s['action']}" for s in strategy_context
+        )
+        # Price and account info
+        price_str = f"Price: ${original_price:,.2f}\n" if original_price else ""
+        acct_str = f"Account: ${account_value:,.0f}\n" if account_value else ""
+        holding_str = f"Current: {current_holding}\n" if current_holding else "Current: cash\n"
+        regime_str = market_context.get("regime", "unknown").upper()
+
         self.notifier.send(
             message=(
-                f"Approval Required ({urgency.value.upper()})\n\n"
-                f"Action: {decision.action.value.upper()} {decision.asset_symbol or ''}\n"
-                f"Confidence: {decision.confidence:.0%}\n"
-                f"Timeout: {timeout_mins} minutes\n\n"
-                f"Reasoning: {decision.reasoning[:150]}...\n\n"
+                f"{decision.action.value.upper()} {decision.asset_symbol or ''}\n"
+                f"{price_str}"
+                f"{acct_str}"
+                f"{holding_str}"
+                f"Regime: {regime_str}\n"
+                f"Signals: {signals_str}\n"
+                f"Confidence: {decision.confidence:.0%} | "
+                f"Position: {decision.position_size_pct:.0%}\n"
+                f"Timeout: {timeout_mins}min\n\n"
+                f"{decision.reasoning}\n\n"
                 f"Approve/Reject: {pending.approval_url}"
             ),
             title=f"Aurel2: {decision.action.value.upper()} {decision.asset_symbol or ''}",

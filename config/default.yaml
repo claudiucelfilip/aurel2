@@ -24,15 +24,9 @@ assets:
     yahoo_symbol: AGG
   cash_rate: 0.04
 
-# UCITS equivalents for live trading (Irish-domiciled, accumulating):
-# us_stocks: CSPX (IE00B5BMR087) on Xetra
-# global_stocks: VWRA (IE00BK5BQT80) on Xetra
-# bonds: AGGH (IE00BDBRDM35) on Xetra
-
 broker:
-  type: ibkr
-  host: "127.0.0.1"
-  port: 4002  # IB Gateway paper trading (4001 for live)
+  type: alpaca
+  paper: true
 
 risk:
   max_position_pct: 1.0

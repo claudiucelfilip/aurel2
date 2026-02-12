@@ -27,7 +27,7 @@ from rich.table import Table
 
 from aurel2.core.assets import ASSET_REGISTRY
 from aurel2.core.models import AssetClass, SignalAction
-from aurel2.data.providers.cache import CachedPriceProvider
+from aurel2.data.providers.yahoo import YahooFinanceProvider
 from aurel2.strategies.enhanced_momentum import (
     EnhancedMomentumStrategy,
     ASSET_SYMBOL_MAP,
@@ -36,8 +36,8 @@ from aurel2.strategies.enhanced_momentum import (
 
 
 def fetch_prices(console: Console, start: date, end: date) -> pd.DataFrame:
-    """Fetch all required price data using CachedPriceProvider (Yahoo + Parquet cache)."""
-    provider = CachedPriceProvider()
+    """Fetch all required price data directly from Yahoo Finance."""
+    provider = YahooFinanceProvider()
 
     # Need extra days for 12-month lookback + 200-day SMA
     extended_start = start - timedelta(days=600)

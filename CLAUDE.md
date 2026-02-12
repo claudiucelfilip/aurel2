@@ -11,6 +11,7 @@
 - **Production runs on a VPS** (Hetzner CX22), NOT locally
 - Services run as **Docker containers** via `docker-compose`
 - Local execution is for **development/testing only**
+- **NEVER run aurel2 processes directly on the host** — only via Docker containers. No `python -m aurel2.cli ...` outside of Docker. All instances must be managed through `docker compose`.
 
 ### Deployment Location
 
@@ -25,20 +26,20 @@ Dashboard: http://46.225.75.110:8080
 
 **IMPORTANT: Always check cloud first, not localhost!**
 
+**CRITICAL: All `docker compose` commands MUST be run from `/opt/aurel2/docker/`** — NEVER from `/root/aurel2/docker/`. The `.env` file with Alpaca credentials only exists at `/opt/aurel2/docker/.env`. Running compose from the wrong directory will recreate containers without credentials.
+
 ### When User Says "Services Are Down"
 
 1. **Check if they mean cloud or local** - production is cloud
-2. **For cloud issues**: SSH to server, check `docker compose ps`
+2. **For cloud issues**: `cd /opt/aurel2/docker && docker compose ps`
 3. **For local testing**: Check processes with `ps aux | grep aurel2`
 
 ## Key Files by Task
 
 ### Debugging Connection Issues
-- `src/aurel2/live/connection.py` - IBKR connection management
-- `src/aurel2/broker/ibkr.py` - Broker implementation, error handling (`ClientIdConflictError`)
+- `src/aurel2/live/connection.py` - Alpaca connection management
+- `src/aurel2/broker/alpaca.py` - Alpaca broker implementation
 - `src/aurel2/live/circuit_breaker.py` - Failure protection
-- **Client ID conflicts** (error 326) are handled automatically — the connection
-  manager picks a new random ID and retries. No manual restart needed.
 
 ### Modifying Trading Logic
 - `src/aurel2/agent/orchestrator.py` - Central decision engine
@@ -82,14 +83,15 @@ docker compose exec aurel2 cat /root/.aurel2/heartbeat.json
 
 ### Deploy Code Changes
 ```bash
-# From local machine
-rsync -avz --exclude='.git' --exclude='data/' . root@SERVER:/opt/aurel2/
-ssh root@SERVER "cd /opt/aurel2/docker && docker compose build aurel2 && docker compose up -d aurel2"
+# Since Claude runs ON the VPS, deploy locally (no SSH needed):
+./scripts/deploy.sh
+# This runs tests, syncs to /opt/aurel2/, and rebuilds aurel2 + dashboard containers
+# NEVER use docker compose from /root/aurel2/docker/ — it lacks the .env with Alpaca credentials
 ```
 
 ### Local Testing
 ```bash
-# Requires IB Gateway/TWS on localhost:4002
+# Requires APCA_API_KEY_ID and APCA_API_SECRET_KEY env vars
 python -m aurel2.cli live --paper
 python -m aurel2.cli monitor --paper
 python -m aurel2.cli dashboard
@@ -101,8 +103,8 @@ python -m aurel2.cli dashboard
 ┌─────────────────────────────────────────┐
 │           CLOUD VPS (Docker)            │
 │                                         │
-│  IB Gateway ◄─── Aurel2 Daemon          │
-│  (headless)      (live --paper)         │
+│  Alpaca API ◄─── Aurel2 Daemon          │
+│  (REST)          (live --paper)         │
 │                       │                 │
 │                       ▼                 │
 │              Monitor (watchdog)         │
@@ -116,12 +118,17 @@ python -m aurel2.cli dashboard
 
 ## Data Files
 
+Data is partitioned by trading mode (`paper`/`live`):
+
 | File | Purpose |
 |------|---------|
-| `data/trade_journal.json` | Audit trail of all trades |
-| `data/pending_decisions.json` | Decisions awaiting approval |
-| `data/failure_learnings.json` | Historical failures for AI |
-| `/tmp/aurel2-heartbeat.json` | Daemon health status |
+| `data/{mode}/trade_journal.json` | Audit trail of all trades |
+| `data/{mode}/pending_decisions.json` | Decisions awaiting approval |
+| `data/{mode}/session_progress.json` | Session tracking |
+| `data/failure_learnings.json` | Historical failures for AI (shared) |
+| `data/backtest_comparison.json` | Backtest results (shared) |
+| `~/.aurel2/heartbeat.json` | Daemon health status |
+| `data/archive/` | Archived data from resets |
 
 ## Decision Flow
 
@@ -164,8 +171,8 @@ The advisor (`src/aurel2/agent/advisor.py`) has built-in guardrails:
 
 ## Don't Forget
 
-- **IBKR_HOST in Docker is `ib-gateway`**, not `127.0.0.1`
-- **Paper trading port is 4004** (not 4002 like local)
+- **Broker is Alpaca Markets** — REST API, no gateway process needed
+- **Credentials**: `APCA_API_KEY_ID` / `APCA_API_SECRET_KEY` env vars
 - **Check `docker/DEPLOY.md`** for full deployment guide
-- **Never commit `.env`** - contains IBKR credentials
+- **Never commit `.env`** - contains Alpaca credentials
 - **Claude CLI needs writable `~/.claude` mount** in Docker

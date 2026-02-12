@@ -16,7 +16,7 @@ class Holding:
     shares: float
     entry_price: float
     entry_date: date
-    broker: str  # "tradeville", "ibkr_eu", "ibkr_us"
+    broker: str  # "alpaca", "tradeville", etc.
     isin: Optional[str] = None
 
     @property
@@ -48,7 +48,7 @@ class Holding:
             else:
                 return 0.03  # 3%
         else:
-            # Foreign broker (IBKR, etc.)
+            # Foreign broker (Alpaca, etc.)
             return 0.16  # 16%
 
     def to_dict(self) -> dict:
