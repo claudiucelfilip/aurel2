@@ -136,6 +136,7 @@ class AlpacaBroker(BaseBroker):
                 market_price=float(pos.current_price),
                 market_value=float(pos.market_value),
                 unrealized_pnl=float(pos.unrealized_pl or 0),
+                unrealized_pnl_pct=float(pos.unrealized_plpc or 0) * 100,
                 currency="USD",
             ))
 

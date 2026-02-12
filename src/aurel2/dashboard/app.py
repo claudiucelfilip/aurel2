@@ -238,7 +238,6 @@ def _sync_get_broker_data() -> dict:
             for p in positions:
                 if p.shares == 0:
                     continue
-                pnl_pct = ((p.market_price / p.avg_cost) - 1) * 100 if p.avg_cost else 0
                 positions_data.append({
                     "symbol": p.symbol,
                     "shares": p.shares,
@@ -246,15 +245,19 @@ def _sync_get_broker_data() -> dict:
                     "market_price": p.market_price,
                     "market_value": p.market_value,
                     "unrealized_pnl": p.unrealized_pnl,
-                    "pnl_pct": pnl_pct,
+                    "pnl_pct": p.unrealized_pnl_pct,
                 })
+
+            total_pnl = sum(p["unrealized_pnl"] for p in positions_data)
+            total_cost = sum(p["market_value"] - p["unrealized_pnl"] for p in positions_data)
+            total_pnl_pct = (total_pnl / total_cost * 100) if total_cost else 0
 
             account_data = {
                 "total_value": account.total_value if account else 0,
                 "cash_balance": account.cash_balance if account else 0,
                 "buying_power": account.buying_power if account else 0,
-                "unrealized_pnl": account.unrealized_pnl if account else 0,
-                "realized_pnl": account.realized_pnl if account else 0,
+                "unrealized_pnl": total_pnl,
+                "unrealized_pnl_pct": total_pnl_pct,
                 "gross_position_value": account.gross_position_value if account else 0,
             } if account else None
 

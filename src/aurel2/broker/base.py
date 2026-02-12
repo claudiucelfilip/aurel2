@@ -18,6 +18,7 @@ class BrokerPosition:
     market_price: float
     market_value: float
     unrealized_pnl: float
+    unrealized_pnl_pct: float = 0.0
     currency: str = "USD"
 
 

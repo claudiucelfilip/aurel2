@@ -328,7 +328,8 @@
             </div>
             <div class="card">
                 <div class="stat-value {% if account.unrealized_pnl >= 0 %}positive{% elif account.unrealized_pnl < 0 %}negative{% endif %}">
-                    ${{ "{:+,.0f}".format(account.unrealized_pnl) }}
+                    ${{ "{:+,.2f}".format(account.unrealized_pnl) }}
+                    <span style="font-size: 0.8rem; opacity: 0.8;">({{ "{:+.2f}".format(account.unrealized_pnl_pct) }}%)</span>
                 </div>
                 <div class="stat-label">P&L</div>
             </div>

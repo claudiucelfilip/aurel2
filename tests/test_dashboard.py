@@ -490,7 +490,7 @@ class TestDashboardRoutes:
                 "cash_balance": 1004826.0,
                 "buying_power": 2000000.0,
                 "unrealized_pnl": 0.0,
-                "realized_pnl": 0.0,
+                "unrealized_pnl_pct": 0.0,
                 "gross_position_value": 0.0,
             },
         }
