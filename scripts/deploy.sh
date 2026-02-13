@@ -8,6 +8,15 @@ set -euo pipefail
 echo "=== Running tests ==="
 python3 -m pytest tests/ -x -q --tb=short
 
+# Check if dashboard needs a full rebuild (deps or Dockerfile changed)
+REBUILD_DASHBOARD=false
+if ! diff -q /root/aurel2/pyproject.toml /opt/aurel2/pyproject.toml >/dev/null 2>&1; then
+    REBUILD_DASHBOARD=true
+fi
+if ! diff -q /root/aurel2/docker/Dockerfile /opt/aurel2/docker/Dockerfile >/dev/null 2>&1; then
+    REBUILD_DASHBOARD=true
+fi
+
 echo ""
 echo "=== Syncing source code to /opt/aurel2/ ==="
 rsync -a --delete \
@@ -24,10 +33,17 @@ rsync -a --delete \
 # Sync backtest data separately (not --delete, just update)
 cp /root/aurel2/data/backtest_comparison.json /opt/aurel2/data/ 2>/dev/null || true
 
-echo "=== Building + restarting containers (aurel2 + dashboard) ==="
 cd /opt/aurel2/docker
-docker compose build aurel2 dashboard
-docker compose up -d aurel2 dashboard
+if [ "$REBUILD_DASHBOARD" = true ]; then
+    echo "=== Building + restarting containers (aurel2 + dashboard) ==="
+    docker compose build aurel2 dashboard
+    docker compose up -d aurel2 dashboard
+else
+    echo "=== Building + restarting aurel2 container ==="
+    docker compose build aurel2
+    docker compose up -d aurel2
+    echo "Dashboard: source bind-mounted, auto-reloading (no rebuild needed)"
+fi
 
 echo ""
 echo "=== Deploy complete ==="
