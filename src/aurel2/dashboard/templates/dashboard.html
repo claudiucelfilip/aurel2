@@ -227,30 +227,21 @@
             border: 1px solid var(--red);
         }
 
-        .period-toggle {
-            display: flex;
-            gap: 4px;
-        }
-
-        .period-toggle a {
-            padding: 3px 10px;
+        .period-select {
+            padding: 4px 8px;
             border-radius: 4px;
             font-size: 0.75rem;
             font-weight: 500;
-            text-decoration: none;
-            color: var(--text-muted);
+            color: var(--text);
+            background: var(--card-bg);
             border: 1px solid var(--border);
+            cursor: pointer;
+            outline: none;
         }
 
-        .period-toggle a.active {
-            color: var(--text);
-            background: var(--border);
+        .period-select:hover,
+        .period-select:focus {
             border-color: var(--accent);
-        }
-
-        .period-toggle a:hover {
-            color: var(--text);
-            border-color: var(--text-muted);
         }
 
         .status-badge {
@@ -354,14 +345,14 @@
                     </span>
                     {% endif %}
                 </div>
-                <div class="period-toggle">
-                    <a href="?period=1d" {% if period == '1d' %}class="active"{% endif %}>1D</a>
-                    <a href="?period=1w" {% if period == '1w' %}class="active"{% endif %}>1W</a>
-                    <a href="?period=1m" {% if period == '1m' %}class="active"{% endif %}>1M</a>
-                    <a href="?period=6m" {% if period == '6m' %}class="active"{% endif %}>6M</a>
-                    <a href="?period=1y" {% if period == '1y' %}class="active"{% endif %}>1Y</a>
-                    <a href="?period=5y" {% if period == '5y' %}class="active"{% endif %}>5Y</a>
-                </div>
+                <select class="period-select" onchange="window.location='?period='+this.value">
+                    <option value="1d" {% if period == '1d' %}selected{% endif %}>1D</option>
+                    <option value="1w" {% if period == '1w' %}selected{% endif %}>1W</option>
+                    <option value="1m" {% if period == '1m' %}selected{% endif %}>1M</option>
+                    <option value="6m" {% if period == '6m' %}selected{% endif %}>6M</option>
+                    <option value="1y" {% if period == '1y' %}selected{% endif %}>1Y</option>
+                    <option value="5y" {% if period == '5y' %}selected{% endif %}>5Y</option>
+                </select>
             </div>
             {% if chart_data and chart_data.dates %}
             <div class="chart-container">
@@ -389,14 +380,14 @@
                 <div class="card-title" style="margin-bottom: 0;">Strategy Backtest vs SPY</div>
                 <div style="display: flex; align-items: center; gap: 16px;">
                     <div id="backtest-metrics" style="display: flex; gap: 12px; font-size: 0.75rem; color: var(--text-muted);"></div>
-                    <div class="period-toggle" id="backtest-toggle">
-                        <a href="#" data-period="20y">20Y</a>
-                        <a href="#" data-period="15y">15Y</a>
-                        <a href="#" data-period="10y" class="active">10Y</a>
-                        <a href="#" data-period="5y">5Y</a>
-                        <a href="#" data-period="1y">1Y</a>
-                        <a href="#" data-period="3m">3M</a>
-                    </div>
+                    <select class="period-select" id="backtest-toggle" onchange="if(backtestData) showBacktestPeriod(this.value)">
+                        <option value="20y">20Y</option>
+                        <option value="15y">15Y</option>
+                        <option value="10y" selected>10Y</option>
+                        <option value="5y">5Y</option>
+                        <option value="1y">1Y</option>
+                        <option value="3m">3M</option>
+                    </select>
                 </div>
             </div>
             <div class="chart-container" style="position: relative;">
@@ -431,7 +422,7 @@
                         <td>${{ "{:,.2f}".format(p.market_price) }}</td>
                         <td>${{ "{:,.0f}".format(p.market_value) }}</td>
                         <td class="{% if p.unrealized_pnl >= 0 %}positive{% else %}negative{% endif %}">
-                            ${{ "{:,.0f}".format(p.unrealized_pnl) }}
+                            {{ "{:+,.0f}".format(p.unrealized_pnl).replace("+", "+$").replace("-", "-$") }}
                             <span style="font-size: 0.8rem; opacity: 0.8;">({{ "{:+.2f}".format(p.pnl_pct) }}%)</span>
                         </td>
                     </tr>
@@ -621,15 +612,6 @@
             .catch(() => {
                 document.getElementById('backtest-loading').textContent = 'Failed to load';
             });
-
-        document.getElementById('backtest-toggle').addEventListener('click', function(e) {
-            e.preventDefault();
-            const link = e.target.closest('a[data-period]');
-            if (!link || !backtestData) return;
-            this.querySelectorAll('a').forEach(a => a.classList.remove('active'));
-            link.classList.add('active');
-            showBacktestPeriod(link.dataset.period);
-        });
 
         function showBacktestPeriod(period) {
             const data = backtestData[period];

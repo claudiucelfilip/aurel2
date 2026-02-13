@@ -216,7 +216,6 @@ docker compose --profile monitoring up -d
 1. **Never commit `.env`** - it contains credentials
 2. **Use SSH keys**, not passwords
 3. **Consider a firewall**: Only allow SSH (22) and optionally dashboard port
-4. **VNC should be localhost only** - use SSH tunnel if needed
 
 ```bash
 # Basic firewall setup
