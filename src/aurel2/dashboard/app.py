@@ -265,6 +265,14 @@ async def dashboard(request: Request, period: str = "1m", page: int = 1):
     history = await get_portfolio_history(period)
     chart_data = build_chart_data(history, period=period)
 
+    # Override current value with live account equity (more accurate than end-of-day)
+    account = data.get("account")
+    if chart_data and account:
+        chart_data["current_value"] = account["total_value"]
+        # Also update last chart point to match live value
+        if chart_data["portfolio"]:
+            chart_data["portfolio"][-1] = account["total_value"]
+
     # Add first trade date info for display
     first_trade_date = get_first_trade_date()
 
