@@ -373,7 +373,7 @@
                 {% set gain = chart_data.current_value - chart_data.starting_value %}
                 {% set gain_pct = ((chart_data.current_value / chart_data.starting_value) - 1) * 100 if chart_data.starting_value else 0 %}
                 <span class="{% if gain >= 0 %}positive{% else %}negative{% endif %}">
-                    {{ "{:+,.0f}".format(gain) }} ({{ "{:+.1f}".format(gain_pct) }}%)
+                    {{ "{:+,.2f}".format(gain).replace("+", "+$").replace("-", "-$") }} ({{ "{:+.1f}".format(gain_pct) }}%)
                 </span>
             </div>
             {% else %}

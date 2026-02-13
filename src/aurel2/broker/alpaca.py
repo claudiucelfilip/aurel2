@@ -117,11 +117,12 @@ class AlpacaBroker(BaseBroker):
             gross_position_value=float(account.long_market_value or 0),
         )
 
-    async def get_portfolio_history(self, period: str = "1M") -> dict:
+    async def get_portfolio_history(self, period: str = "1M", timeframe: str = "1D") -> dict:
         """Get portfolio equity history from Alpaca.
 
         Args:
-            period: Duration string like 1W, 1M, 6M, 1A, 5A.
+            period: Duration string like 1D, 1W, 1M, 6M, 1A, 5A.
+            timeframe: Resolution — '15Min' for intraday, '1D' for daily.
 
         Returns:
             dict with 'dates' (list[str]), 'equity' (list[float]),
@@ -134,15 +135,18 @@ class AlpacaBroker(BaseBroker):
 
         request = GetPortfolioHistoryRequest(
             period=period,
-            timeframe="1D",
+            timeframe=timeframe,
+            extended_hours=True,
         )
         loop = asyncio.get_event_loop()
         history = await loop.run_in_executor(
             None, self._client.get_portfolio_history, request
         )
 
+        # Format timestamps based on timeframe
+        fmt = "%Y-%m-%d %H:%M" if timeframe != "1D" else "%Y-%m-%d"
         dates = [
-            datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d")
+            datetime.fromtimestamp(ts, tz=timezone.utc).strftime(fmt)
             for ts in history.timestamp
         ]
         return {

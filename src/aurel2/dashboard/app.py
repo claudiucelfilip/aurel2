@@ -326,14 +326,14 @@ PERIOD_DAYS = {
     "5y": 1825,
 }
 
-# Map dashboard period to Alpaca period string
+# Map dashboard period to Alpaca (period, timeframe)
 ALPACA_PERIOD = {
-    "1d": "1W",  # Alpaca minimum is 1W for daily timeframe; we filter to 1 day
-    "1w": "1W",
-    "1m": "1M",
-    "6m": "6M",
-    "1y": "1A",
-    "5y": "5A",
+    "1d": ("1D", "15Min"),
+    "1w": ("1W", "15Min"),
+    "1m": ("1M", "1D"),
+    "6m": ("6M", "1D"),
+    "1y": ("1A", "1D"),
+    "5y": ("5A", "1D"),
 }
 
 
@@ -355,8 +355,8 @@ def _sync_get_portfolio_history(period: str) -> dict | None:
             connected = await broker.connect()
             if not connected:
                 return None
-            alpaca_period = ALPACA_PERIOD.get(period, "1M")
-            return await broker.get_portfolio_history(period=alpaca_period)
+            alpaca_period, alpaca_tf = ALPACA_PERIOD.get(period, ("1M", "1D"))
+            return await broker.get_portfolio_history(period=alpaca_period, timeframe=alpaca_tf)
         finally:
             await broker.disconnect()
 
@@ -381,7 +381,6 @@ def build_chart_data(history: dict | None, period: str = "1m") -> dict | None:
     """Convert Alpaca portfolio history to chart data format.
 
     Filters out zero-equity entries (days before account was funded).
-    For 1D period, only returns today's data point.
     """
     if not history or not history.get("dates"):
         return None
@@ -396,17 +395,6 @@ def build_chart_data(history: dict | None, period: str = "1m") -> dict | None:
 
     if not dates:
         return None
-
-    # For 1D, only show today
-    if period == "1d":
-        today = date.today().isoformat()
-        day_dates = [d for d, e in zip(dates, equity) if d == today]
-        day_equity = [e for d, e in zip(dates, equity) if d == today]
-        if not day_dates:
-            # Fall back to last available point
-            day_dates = dates[-1:]
-            day_equity = equity[-1:]
-        dates, equity = day_dates, day_equity
 
     return {
         "dates": dates,
