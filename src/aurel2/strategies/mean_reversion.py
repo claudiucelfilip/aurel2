@@ -93,8 +93,13 @@ class MeanReversionStrategy(BaseStrategy):
         # Use SPY as the primary symbol for RSI calculation
         symbol = "SPY"
 
+        # Filter prices to point-in-time (only data available on calc_date)
+        prices_pit = prices.copy()
+        prices_pit["date"] = pd.to_datetime(prices_pit["date"])
+        prices_pit = prices_pit[prices_pit["date"] <= pd.Timestamp(calc_date)]
+
         # Calculate RSI
-        rsi = calculate_rsi(prices, symbol, period=self.rsi_period)
+        rsi = calculate_rsi(prices_pit, symbol, period=self.rsi_period)
 
         # Handle insufficient data
         if rsi is None:
