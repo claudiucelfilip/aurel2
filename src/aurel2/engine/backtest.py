@@ -154,6 +154,10 @@ class BacktestEngine:
         dca_amount: float = 0.0,
         correlation_guard: bool = False,
         sideways_hold: bool = False,
+        trend_filter_enabled: bool = False,
+        trend_filter_symbol: str = "SPY",
+        trend_filter_period: int = 200,
+        trend_filter_safe_asset: str = "AGG",
     ):
         self.dual_momentum = DualMomentumStrategy(assets=ASSET_REGISTRY)
         self.mean_reversion = MeanReversionStrategy()
@@ -171,6 +175,10 @@ class BacktestEngine:
         self.initial_capital = initial_capital
         self.transaction_cost_pct = transaction_cost_pct
         self.dca_amount = dca_amount
+        self.trend_filter_enabled = trend_filter_enabled
+        self.trend_filter_symbol = trend_filter_symbol
+        self.trend_filter_period = trend_filter_period
+        self.trend_filter_safe_asset = trend_filter_safe_asset
 
         # Tradeable symbols for AI override validation
         self._tradeable_symbols = {
@@ -418,6 +426,48 @@ class BacktestEngine:
                 position_size=f"{decision.position_size_pct:.0%}",
                 regime=decision.regime.value if decision.regime else None,
             )
+
+            # ================================================================
+            # Step 3.5: SMA-200 Trend Filter (optional)
+            # When SPY is below its 200-day SMA, override to safe asset
+            # ================================================================
+            if self.trend_filter_enabled:
+                spy_price = market_context.get("spy_price")
+                ma_200 = market_context.get("ma_200")
+                if spy_price is not None and ma_200 is not None:
+                    below_sma = spy_price < ma_200
+                    logger.info(
+                        "trend_filter_check",
+                        date=str(rebal_date),
+                        symbol=self.trend_filter_symbol,
+                        price=round(spy_price, 2),
+                        sma_200=round(ma_200, 2),
+                        below_sma=below_sma,
+                    )
+                    if below_sma:
+                        # Force to safe asset
+                        safe_symbol = self.trend_filter_safe_asset
+                        if decision.asset_symbol != safe_symbol:
+                            logger.info(
+                                "trend_filter_override",
+                                date=str(rebal_date),
+                                original_asset=decision.asset_symbol,
+                                safe_asset=safe_symbol,
+                            )
+                            decision = AgentDecision(
+                                decision_type=DecisionType.NON_ROUTINE,
+                                action=SignalAction.BUY,
+                                asset_symbol=safe_symbol,
+                                reasoning=f"Trend filter: SPY ({spy_price:.2f}) below SMA-200 ({ma_200:.2f}). Moving to {safe_symbol}.",
+                                confidence=0.95,
+                                strategy_signals=signals,
+                                requires_approval=False,
+                                timeout_hours=1.0,
+                                urgency=decision.urgency,
+                                market_context=market_context,
+                                position_size_pct=1.0,
+                                regime=decision.regime,
+                            )
 
             # ================================================================
             # Step 4: AI Advisor review (mirrors checker step 7)
