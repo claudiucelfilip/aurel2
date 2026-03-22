@@ -24,7 +24,8 @@ try:
     )
     from alpaca.trading.enums import OrderSide, TimeInForce, QueryOrderStatus
     from alpaca.data.historical import StockHistoricalDataClient
-    from alpaca.data.requests import StockLatestTradeRequest
+    from alpaca.data.requests import StockLatestTradeRequest, StockBarsRequest
+    from alpaca.data.timeframe import TimeFrame
     HAS_ALPACA = True
 except ImportError:
     HAS_ALPACA = False
@@ -320,3 +321,48 @@ class AlpacaBroker(BaseBroker):
         except Exception as e:
             logger.error("get_market_price_failed", symbol=symbol, error=str(e))
             return None
+
+    async def get_price_history(self, symbol: str, period: str = "1M", timeframe: str = "1D") -> dict:
+        """Get historical bars for a symbol from Alpaca market data.
+
+        Args:
+            symbol: Ticker symbol (e.g. SPY)
+            period: Duration string like 1D, 1W, 1M, 6M, 1A, 5A.
+            timeframe: Resolution — '15Min' for intraday, '1D' for daily.
+
+        Returns:
+            dict with 'dates' and 'close'.
+        """
+        if not self._data_client:
+            return {"dates": [], "close": []}
+
+        from datetime import datetime, timezone, timedelta
+
+        tf = TimeFrame.Day if timeframe == "1D" else TimeFrame.Minute
+        delta_map = {
+            "1D": timedelta(days=1),
+            "1W": timedelta(days=7),
+            "1M": timedelta(days=30),
+            "6M": timedelta(days=180),
+            "1A": timedelta(days=365),
+            "5A": timedelta(days=365 * 5),
+        }
+        end_dt = datetime.now(timezone.utc)
+        start_dt = end_dt - delta_map.get(period, timedelta(days=30))
+
+        request = StockBarsRequest(
+            symbol_or_symbols=symbol.upper(),
+            timeframe=tf,
+            start=start_dt,
+            end=end_dt,
+            feed="iex",
+        )
+
+        loop = asyncio.get_event_loop()
+        bars = await loop.run_in_executor(None, self._data_client.get_stock_bars, request)
+        rows = bars.data.get(symbol.upper(), []) if hasattr(bars, "data") else []
+
+        fmt = "%Y-%m-%d %H:%M" if timeframe != "1D" else "%Y-%m-%d"
+        dates = [b.timestamp.astimezone(timezone.utc).strftime(fmt) for b in rows]
+        close = [float(b.close) for b in rows]
+        return {"dates": dates, "close": close}

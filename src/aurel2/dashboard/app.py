@@ -356,7 +356,16 @@ def _sync_get_portfolio_history(period: str) -> dict | None:
             if not connected:
                 return None
             alpaca_period, alpaca_tf = ALPACA_PERIOD.get(period, ("1M", "1D"))
-            return await broker.get_portfolio_history(period=alpaca_period, timeframe=alpaca_tf)
+            portfolio = await broker.get_portfolio_history(period=alpaca_period, timeframe=alpaca_tf)
+            try:
+                # Use daily SPY bars for stable benchmark overlay across all dashboard periods
+                spy = await broker.get_price_history("SPY", period=alpaca_period, timeframe="1D")
+                portfolio["spy_dates"] = spy.get("dates", [])
+                portfolio["spy_close"] = spy.get("close", [])
+            except Exception:
+                portfolio["spy_dates"] = []
+                portfolio["spy_close"] = []
+            return portfolio
         finally:
             await broker.disconnect()
 
@@ -407,13 +416,51 @@ def load_spy_closes() -> dict[str, float]:
     return {}
 
 
+def fetch_spy_closes_yfinance(start_day: str, end_day: str) -> dict[str, float]:
+    """Fetch SPY daily close prices from Yahoo Finance as fallback."""
+    try:
+        import yfinance as yf
+
+        hist = yf.download(
+            "SPY",
+            start=start_day,
+            end=end_day,
+            interval="1d",
+            auto_adjust=True,
+            progress=False,
+        )
+        if hist is None or len(hist) == 0 or "Close" not in hist.columns:
+            return {}
+
+        closes: dict[str, float] = {}
+        for idx, row in hist.iterrows():
+            d = idx.strftime("%Y-%m-%d") if hasattr(idx, "strftime") else str(idx)[:10]
+            closes[d] = float(row["Close"])
+        return closes
+    except Exception:
+        return {}
+
+
 def build_spy_benchmark(dates: list[str], starting_value: float) -> list[float | None]:
     """Build SPY benchmark series aligned to portfolio dates.
 
     Benchmark is normalized to portfolio starting value.
     """
+    if not dates or starting_value <= 0:
+        return []
+
     spy_closes = load_spy_closes()
-    if not spy_closes or not dates or starting_value <= 0:
+
+    requested_days = sorted({d[:10] for d in dates})
+    if requested_days:
+        missing_days = [d for d in requested_days if d not in spy_closes]
+        if missing_days:
+            # Pull recent missing dates from Yahoo Finance as fallback
+            yf_closes = fetch_spy_closes_yfinance(requested_days[0], requested_days[-1])
+            if yf_closes:
+                spy_closes.update(yf_closes)
+
+    if not spy_closes:
         return []
 
     aligned_closes: list[float | None] = []
@@ -458,7 +505,28 @@ def build_chart_data(history: dict | None, period: str = "1m") -> dict | None:
         return None
 
     starting_value = equity[0] if equity else 0
-    spy_benchmark = build_spy_benchmark(dates, starting_value)
+
+    # Prefer SPY bars from Alpaca for exact period/timeframe alignment
+    spy_benchmark: list[float | None] = []
+    spy_dates = history.get("spy_dates", []) if isinstance(history, dict) else []
+    spy_close = history.get("spy_close", []) if isinstance(history, dict) else []
+    if spy_dates and spy_close:
+        spy_map = {d[:10]: c for d, c in zip(spy_dates, spy_close)}
+        aligned = [spy_map.get(d[:10]) for d in dates]
+        base_close = next((v for v in aligned if v is not None and v > 0), None)
+        if base_close:
+            last = starting_value
+            for close in aligned:
+                if close is None:
+                    spy_benchmark.append(last)
+                else:
+                    val = starting_value * (close / base_close)
+                    last = val
+                    spy_benchmark.append(round(val, 2))
+
+    # Fallback to local cache if Alpaca SPY bars unavailable
+    if not spy_benchmark:
+        spy_benchmark = build_spy_benchmark(dates, starting_value)
 
     return {
         "dates": dates,
