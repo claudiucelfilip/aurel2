@@ -377,6 +377,67 @@ async def get_portfolio_history(period: str) -> dict | None:
     return await loop.run_in_executor(executor, _sync_get_portfolio_history, period)
 
 
+def load_spy_closes() -> dict[str, float]:
+    """Load SPY close prices from local price cache.
+
+    Returns mapping: YYYY-MM-DD -> close.
+    """
+    candidate_paths = [
+        Path("/app/host-data/price_cache/SPY.parquet"),
+        Path("data/price_cache/SPY.parquet"),
+    ]
+
+    for path in candidate_paths:
+        if not path.exists():
+            continue
+        try:
+            import pandas as pd
+
+            df = pd.read_parquet(path)
+            if "date" not in df.columns or "close" not in df.columns:
+                continue
+            return {
+                str(row["date"])[:10]: float(row["close"])
+                for _, row in df.iterrows()
+                if row.get("close") is not None
+            }
+        except Exception:
+            continue
+
+    return {}
+
+
+def build_spy_benchmark(dates: list[str], starting_value: float) -> list[float | None]:
+    """Build SPY benchmark series aligned to portfolio dates.
+
+    Benchmark is normalized to portfolio starting value.
+    """
+    spy_closes = load_spy_closes()
+    if not spy_closes or not dates or starting_value <= 0:
+        return []
+
+    aligned_closes: list[float | None] = []
+    for d in dates:
+        day = d[:10]  # handles both YYYY-MM-DD and YYYY-MM-DD HH:MM
+        aligned_closes.append(spy_closes.get(day))
+
+    base_close = next((v for v in aligned_closes if v is not None and v > 0), None)
+    if not base_close:
+        return []
+
+    benchmark: list[float | None] = []
+    last = starting_value
+    for close in aligned_closes:
+        if close is None:
+            benchmark.append(last)
+            continue
+        val = starting_value * (close / base_close)
+        last = val
+        benchmark.append(round(val, 2))
+
+    return benchmark
+
+
 def build_chart_data(history: dict | None, period: str = "1m") -> dict | None:
     """Convert Alpaca portfolio history to chart data format.
 
@@ -396,11 +457,17 @@ def build_chart_data(history: dict | None, period: str = "1m") -> dict | None:
     if not dates:
         return None
 
+    starting_value = equity[0] if equity else 0
+    spy_benchmark = build_spy_benchmark(dates, starting_value)
+
     return {
         "dates": dates,
         "portfolio": equity,
-        "starting_value": equity[0] if equity else 0,
+        "spy_benchmark": spy_benchmark,
+        "starting_value": starting_value,
         "current_value": equity[-1] if equity else 0,
+        "requested_days": PERIOD_DAYS.get(period, 30),
+        "available_points": len(dates),
     }
 
 

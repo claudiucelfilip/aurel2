@@ -441,6 +441,30 @@ class TestLoadPendingDecisions:
 
 # --- Unit Tests: get_heartbeat ---
 
+class TestBuildChartData:
+    """Tests for chart series generation."""
+
+    def test_build_chart_data_adds_spy_benchmark(self):
+        """Chart data should include normalized SPY benchmark when available."""
+        from aurel2.dashboard.app import build_chart_data
+
+        history = {
+            "dates": ["2026-03-01", "2026-03-02", "2026-03-03"],
+            "equity": [100.0, 105.0, 103.0],
+        }
+
+        with patch("aurel2.dashboard.app.load_spy_closes", return_value={
+            "2026-03-01": 500.0,
+            "2026-03-02": 510.0,
+            "2026-03-03": 505.0,
+        }):
+            chart = build_chart_data(history, period="1m")
+
+        assert chart is not None
+        assert chart["starting_value"] == 100.0
+        assert chart["spy_benchmark"] == [100.0, 102.0, 101.0]
+
+
 class TestGetHeartbeat:
     """Tests for get_heartbeat."""
 

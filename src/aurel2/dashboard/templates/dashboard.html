@@ -233,7 +233,7 @@
             font-size: 0.75rem;
             font-weight: 500;
             color: var(--text);
-            background: var(--card-bg);
+            background: var(--bg-card);
             border: 1px solid var(--border);
             cursor: pointer;
             outline: none;
@@ -358,14 +358,29 @@
             <div class="chart-container">
                 <canvas id="performanceChart"></canvas>
             </div>
-            <div style="display: flex; gap: 20px; margin-top: 12px; font-size: 0.8rem; color: var(--text-muted);">
+            <div style="display: flex; gap: 20px; margin-top: 12px; font-size: 0.8rem; color: var(--text-muted); flex-wrap: wrap;">
                 <span>Starting: ${{ "{:,.0f}".format(chart_data.starting_value) }}</span>
                 <span>Current: ${{ "{:,.0f}".format(chart_data.current_value) }}</span>
                 {% set gain = chart_data.current_value - chart_data.starting_value %}
                 {% set gain_pct = ((chart_data.current_value / chart_data.starting_value) - 1) * 100 if chart_data.starting_value else 0 %}
                 <span class="{% if gain >= 0 %}positive{% else %}negative{% endif %}">
-                    {{ "{:+,.2f}".format(gain).replace("+", "+$").replace("-", "-$") }} ({{ "{:+.1f}".format(gain_pct) }}%)
+                    Aurel2: {{ "{:+,.2f}".format(gain).replace("+", "+$").replace("-", "-$") }} ({{ "{:+.1f}".format(gain_pct) }}%)
                 </span>
+                {% if chart_data.spy_benchmark and chart_data.spy_benchmark|length > 0 %}
+                {% set spy_last = chart_data.spy_benchmark[-1] %}
+                {% set spy_gain = spy_last - chart_data.starting_value %}
+                {% set spy_gain_pct = ((spy_last / chart_data.starting_value) - 1) * 100 if chart_data.starting_value else 0 %}
+                {% set alpha_pct = gain_pct - spy_gain_pct %}
+                <span class="{% if spy_gain >= 0 %}positive{% else %}negative{% endif %}">
+                    SPY: {{ "{:+,.2f}".format(spy_gain).replace("+", "+$").replace("-", "-$") }} ({{ "{:+.1f}".format(spy_gain_pct) }}%)
+                </span>
+                <span class="{% if alpha_pct >= 0 %}positive{% else %}negative{% endif %}">
+                    vs SPY: {{ "{:+.1f}".format(alpha_pct) }}%
+                </span>
+                {% endif %}
+                {% if chart_data.available_points < chart_data.requested_days %}
+                <span style="opacity: 0.8;">(showing available data: {{ chart_data.available_points }} points)</span>
+                {% endif %}
             </div>
             {% else %}
             <div class="empty-chart">
@@ -709,20 +724,36 @@
         const chartData = {{ chart_data | tojson }};
         const ctx = document.getElementById('performanceChart').getContext('2d');
 
+        const datasets = [{
+            label: 'Aurel2',
+            data: chartData.portfolio,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 0,
+            borderWidth: 2.5,
+        }];
+
+        if (Array.isArray(chartData.spy_benchmark) && chartData.spy_benchmark.length > 0) {
+            datasets.push({
+                label: 'SPY (normalized)',
+                data: chartData.spy_benchmark,
+                borderColor: '#94a3b8',
+                backgroundColor: 'transparent',
+                fill: false,
+                tension: 0.25,
+                pointRadius: 0,
+                borderWidth: 1.8,
+                borderDash: [5, 5],
+            });
+        }
+
         new Chart(ctx, {
             type: 'line',
             data: {
                 labels: chartData.dates,
-                datasets: [{
-                    label: 'Portfolio',
-                    data: chartData.portfolio,
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    fill: true,
-                    tension: 0.3,
-                    pointRadius: 0,
-                    borderWidth: 2.5,
-                }]
+                datasets
             },
             options: {
                 responsive: true,
@@ -732,7 +763,10 @@
                     mode: 'index',
                 },
                 plugins: {
-                    legend: { display: false },
+                    legend: {
+                        display: datasets.length > 1,
+                        labels: { color: '#94a3b8' }
+                    },
                     tooltip: {
                         callbacks: {
                             label: (ctx) => '$' + ctx.parsed.y.toLocaleString()
