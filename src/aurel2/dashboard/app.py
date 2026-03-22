@@ -358,8 +358,13 @@ def _sync_get_portfolio_history(period: str) -> dict | None:
             alpaca_period, alpaca_tf = ALPACA_PERIOD.get(period, ("1M", "1D"))
             portfolio = await broker.get_portfolio_history(period=alpaca_period, timeframe=alpaca_tf)
             try:
-                # Use daily SPY bars for stable benchmark overlay across all dashboard periods
-                spy = await broker.get_price_history("SPY", period=alpaca_period, timeframe="1D")
+                # Prefer same timeframe as portfolio (intraday for 1D/1W)
+                spy = await broker.get_price_history("SPY", period=alpaca_period, timeframe=alpaca_tf)
+
+                # Fallback to daily if intraday feed is unavailable/empty
+                if not spy.get("dates"):
+                    spy = await broker.get_price_history("SPY", period=alpaca_period, timeframe="1D")
+
                 portfolio["spy_dates"] = spy.get("dates", [])
                 portfolio["spy_close"] = spy.get("close", [])
             except Exception:
@@ -511,8 +516,12 @@ def build_chart_data(history: dict | None, period: str = "1m") -> dict | None:
     spy_dates = history.get("spy_dates", []) if isinstance(history, dict) else []
     spy_close = history.get("spy_close", []) if isinstance(history, dict) else []
     if spy_dates and spy_close:
-        spy_map = {d[:10]: c for d, c in zip(spy_dates, spy_close)}
-        aligned = [spy_map.get(d[:10]) for d in dates]
+        spy_exact = {d: c for d, c in zip(spy_dates, spy_close)}
+        spy_daily = {d[:10]: c for d, c in zip(spy_dates, spy_close)}
+
+        # Prefer exact timestamp match (intraday). Fallback to same-day close.
+        aligned = [spy_exact.get(d, spy_daily.get(d[:10])) for d in dates]
+
         base_close = next((v for v in aligned if v is not None and v > 0), None)
         if base_close:
             last = starting_value
