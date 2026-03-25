@@ -1,6 +1,6 @@
 """Command-line interface for Aurel2."""
 
-from datetime import date
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -2532,6 +2532,122 @@ def progress():
         console.print(table)
 
     console.print("\n" + "=" * 60)
+    console.print()
+
+
+@app.command("ab-report")
+def ab_report(
+    days: int = typer.Option(7, "--days", "-d", help="Lookback window in days"),
+):
+    """Show weekly-style A/B comparison: paper baseline vs live experiment."""
+    from aurel2.live.journal import TradeJournal, journal_path_for_mode
+    from aurel2.monitor.session_tracker import SessionTracker, session_path_for_mode
+
+    console = Console()
+
+    if days < 1:
+        console.print("[red]--days must be >= 1[/red]")
+        raise typer.Exit(1)
+
+    cutoff_date = date.today() - timedelta(days=days)
+    cutoff_dt = datetime.combine(cutoff_date, datetime.min.time())
+
+    def _mode_metrics(mode: str) -> dict:
+        tracker = SessionTracker(session_file=session_path_for_mode(mode))
+        progress = tracker.get_progress()
+
+        # Account curve from daily sessions
+        recent_sessions = [s for s in progress.sessions if s.date >= cutoff_date.isoformat()]
+        curve = [(s.date, s.account_value) for s in recent_sessions if s.account_value is not None]
+
+        period_return_pct = None
+        max_dd_pct = None
+        if len(curve) >= 2:
+            start_val = curve[0][1]
+            end_val = curve[-1][1]
+            if start_val and start_val > 0:
+                period_return_pct = (end_val / start_val - 1) * 100
+
+            peak = curve[0][1]
+            max_dd = 0.0
+            for _, val in curve:
+                if val > peak:
+                    peak = val
+                if peak > 0:
+                    dd = (peak - val) / peak
+                    if dd > max_dd:
+                        max_dd = dd
+            max_dd_pct = max_dd * 100
+
+        journal = TradeJournal(filepath=journal_path_for_mode(mode))
+        recent_decisions = []
+        for e in journal.entries:
+            if e.entry_type != "decision":
+                continue
+            try:
+                ts = datetime.fromisoformat(e.timestamp)
+            except Exception:
+                continue
+            if ts >= cutoff_dt:
+                recent_decisions.append(e)
+
+        trade_decisions = [e for e in recent_decisions if e.action in ("buy", "sell")]
+        executed_trades = [e for e in trade_decisions if e.executed]
+        turnover = len(executed_trades)
+
+        switches = 0
+        for e in executed_trades:
+            if e.action == "buy" and e.current_holding_before and e.symbol and e.current_holding_before != e.symbol:
+                switches += 1
+
+        agreement_rate = None
+        override_rate = None
+        if recent_decisions:
+            agrees = sum(1 for e in recent_decisions if e.ai_agrees)
+            agreement_rate = agrees / len(recent_decisions) * 100
+            override_rate = 100 - agreement_rate
+
+        execution_rate = None
+        if trade_decisions:
+            execution_rate = len(executed_trades) / len(trade_decisions) * 100
+
+        return {
+            "mode": mode,
+            "return_pct": period_return_pct,
+            "max_dd_pct": max_dd_pct,
+            "turnover": turnover,
+            "switches": switches,
+            "decisions": len(recent_decisions),
+            "agreement_rate": agreement_rate,
+            "override_rate": override_rate,
+            "execution_rate": execution_rate,
+        }
+
+    paper = _mode_metrics("paper")
+    live = _mode_metrics("live")
+
+    console.print(f"\n[bold]A/B Report (last {days} days)[/bold]")
+    table = Table(show_header=True, box=None, padding=(0, 2))
+    table.add_column("Metric", style="bold")
+    table.add_column("Paper (Baseline)", justify="right")
+    table.add_column("Live (Experiment)", justify="right")
+
+    def _fmt_pct(v):
+        return "-" if v is None else f"{v:+.2f}%"
+
+    def _fmt_num(v):
+        return "-" if v is None else str(v)
+
+    table.add_row("Return", _fmt_pct(paper["return_pct"]), _fmt_pct(live["return_pct"]))
+    table.add_row("Max Drawdown", _fmt_pct(-paper["max_dd_pct"] if paper["max_dd_pct"] is not None else None), _fmt_pct(-live["max_dd_pct"] if live["max_dd_pct"] is not None else None))
+    table.add_row("Turnover (executed trades)", _fmt_num(paper["turnover"]), _fmt_num(live["turnover"]))
+    table.add_row("Switches", _fmt_num(paper["switches"]), _fmt_num(live["switches"]))
+    table.add_row("Decision count", _fmt_num(paper["decisions"]), _fmt_num(live["decisions"]))
+    table.add_row("AI agreement", _fmt_pct(paper["agreement_rate"]), _fmt_pct(live["agreement_rate"]))
+    table.add_row("AI override", _fmt_pct(paper["override_rate"]), _fmt_pct(live["override_rate"]))
+    table.add_row("Trade execution success", _fmt_pct(paper["execution_rate"]), _fmt_pct(live["execution_rate"]))
+
+    console.print(table)
     console.print()
 
 
