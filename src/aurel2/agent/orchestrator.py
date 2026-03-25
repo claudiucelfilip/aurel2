@@ -197,6 +197,7 @@ class AgentOrchestrator:
         correlation_threshold: float = 0.50,
         sideways_hold_enabled: bool = True,
         sideways_hold_momentum_threshold: float = 0.20,
+        dm_primary_enabled: bool = True,
     ) -> None:
         """Initialize the orchestrator.
 
@@ -215,6 +216,8 @@ class AgentOrchestrator:
                 the momentum advantage is overwhelming.
             sideways_hold_momentum_threshold: Minimum momentum advantage (fraction)
                 required to allow a switch in a sideways market.
+            dm_primary_enabled: If True, dual momentum directly drives trade action
+                when available. If False, use weighted multi-strategy voting.
         """
         self.timezone = timezone
         self.sleep_start = sleep_start
@@ -231,6 +234,7 @@ class AgentOrchestrator:
         self.correlation_threshold = correlation_threshold
         self.sideways_hold_enabled = sideways_hold_enabled
         self.sideways_hold_momentum_threshold = sideways_hold_momentum_threshold
+        self.dm_primary_enabled = dm_primary_enabled
 
         # Rolling accuracy tracking per strategy
         self._accuracy_history: dict[str, deque[bool]] = {
@@ -688,9 +692,8 @@ class AgentOrchestrator:
                     sideways_hold_applied = True
 
         if not calm_hold_applied and not sideways_hold_applied:
-            if "dual_momentum" in signals:
-                # DM-primary: use dual momentum signal directly for trade decisions.
-                # The 3-strategy weighted vote dilutes DM's conviction and hurts alpha.
+            if self.dm_primary_enabled and "dual_momentum" in signals:
+                # DM-primary mode: use dual momentum signal directly for trade decisions.
                 # Other strategies still contribute to decision classification and urgency.
                 dm = signals["dual_momentum"]
                 dm_action_str = dm.get("action", "hold")
@@ -698,7 +701,7 @@ class AgentOrchestrator:
                 asset_symbol = dm.get("asset_symbol")
                 confidence = dm.get("confidence", 0.8)
             else:
-                # Fallback to weighted vote if dual_momentum is missing
+                # Multi-strategy mode: use weighted vote across enabled strategies.
                 action = voted_action
                 asset_symbol = voted_asset
                 confidence = voted_confidence
@@ -748,9 +751,10 @@ class AgentOrchestrator:
         elif decision_type == DecisionType.URGENT:
             reasoning = f"{regime_info}Urgent condition detected. Recommended action: {action.value.upper()} (position: {position_size:.0%})"
         else:
-            dm_note = " (DM-primary)" if "dual_momentum" in signals else ""
+            dm_note = " (DM-primary)" if self.dm_primary_enabled and "dual_momentum" in signals else ""
             actions = [s.get("action", "unknown") for s in signals.values()]
-            reasoning = f"{regime_info}Strategy signals: {actions}. Action: {action.value.upper()}{dm_note} ({agreement_count}/3 agree)"
+            total_signals = len(signals)
+            reasoning = f"{regime_info}Strategy signals: {actions}. Action: {action.value.upper()}{dm_note} ({agreement_count}/{total_signals} agree)"
 
         return AgentDecision(
             decision_type=decision_type,

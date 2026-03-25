@@ -72,14 +72,30 @@ class Checker:
         self.dry_run = dry_run
         self.use_ai_advisor = use_ai_advisor
 
-        # Initialize strategies
-        self.strategies = {
-            "dual_momentum": DualMomentumStrategy(assets=ASSET_REGISTRY),
-            "mean_reversion": MeanReversionStrategy(),
-            "multi_timeframe": MultiTimeframeTrendStrategy(),
-        }
-
-        self.orchestrator = AgentOrchestrator()
+        # Strategy profile split (A/B):
+        # - paper = strict baseline dual momentum benchmark
+        # - live  = separate multi-strategy experiment
+        if mode == "paper":
+            self.strategies = {
+                "dual_momentum": DualMomentumStrategy(assets=ASSET_REGISTRY),
+            }
+            self.orchestrator = AgentOrchestrator(
+                use_dynamic_weights=False,
+                use_regime_selection=False,
+                correlation_guard_enabled=False,
+                sideways_hold_enabled=False,
+                calm_market_hold_threshold=0.0,
+                dm_primary_enabled=True,
+            )
+        else:
+            self.strategies = {
+                "dual_momentum": DualMomentumStrategy(assets=ASSET_REGISTRY),
+                "mean_reversion": MeanReversionStrategy(),
+                "multi_timeframe": MultiTimeframeTrendStrategy(),
+            }
+            self.orchestrator = AgentOrchestrator(
+                dm_primary_enabled=False,
+            )
         self.provider = YahooFinanceProvider()
 
         # Initialize AI advisor with failure learnings (uses Claude Code CLI)
