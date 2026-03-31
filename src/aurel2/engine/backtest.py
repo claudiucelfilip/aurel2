@@ -47,6 +47,9 @@ class BacktestResult:
     cagr: float = 0.0
     max_drawdown: float = 0.0
     sharpe_ratio: float = 0.0
+    sortino_ratio: float = 0.0
+    calmar_ratio: float = 0.0
+    turnover: float = 0.0  # trades per year
     num_trades: int = 0
     win_rate: float = 0.0
 
@@ -88,8 +91,24 @@ class BacktestResult:
                 periods_per_year = 12  # monthly rebalance
                 self.sharpe_ratio = (returns.mean() * periods_per_year) / (returns.std() * np.sqrt(periods_per_year))
 
+        # Sortino ratio (annualized, penalizes downside only)
+        if len(values) > 1:
+            returns = pd.Series(values).pct_change().dropna()
+            downside = returns[returns < 0]
+            if len(downside) > 0 and downside.std() > 0:
+                periods_per_year = 12
+                self.sortino_ratio = (returns.mean() * periods_per_year) / (downside.std() * np.sqrt(periods_per_year))
+
+        # Calmar ratio (CAGR / max drawdown)
+        if self.max_drawdown > 0:
+            self.calmar_ratio = self.cagr / self.max_drawdown
+
         # Trade stats
         self.num_trades = len([t for t in self.trades if t.action == SignalAction.BUY])
+
+        # Turnover (trades per year)
+        if years > 0:
+            self.turnover = self.num_trades / years
 
     def print_summary(self):
         """Print a summary of backtest results."""

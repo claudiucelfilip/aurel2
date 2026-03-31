@@ -110,7 +110,7 @@ class EvalRunner:
         self.dual_momentum = DualMomentumStrategy(
             assets=ASSET_REGISTRY,
             lookback_months=12,
-            switch_threshold=0.10,
+            switch_threshold=0.04,
         )
         self.mean_reversion = MeanReversionStrategy(
             rsi_oversold=25,
