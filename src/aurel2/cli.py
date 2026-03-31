@@ -43,7 +43,7 @@ def backtest(
     end: str = typer.Option(None, help="End date (YYYY-MM-DD), defaults to today"),
     capital: float = typer.Option(10000.0, help="Initial capital"),
     dca: float = typer.Option(0.0, "--dca", help="Monthly DCA contribution amount"),
-    frequency: str = typer.Option("monthly", help="Rebalance frequency: monthly or quarterly"),
+    frequency: str = typer.Option("monthly", help="Rebalance frequency: daily, monthly, or quarterly"),
     ai: bool = typer.Option(False, "--ai", help="Enable AI advisor (disabled by default — see ARCHITECTURE.md for findings)"),
     ai_model: str = typer.Option("haiku", "--ai-model", help="AI model: sonnet, opus, haiku"),
     amnesia: bool = typer.Option(False, "--amnesia", help="Tell AI to ignore training data financial knowledge and redact dates"),
@@ -2728,7 +2728,6 @@ def reset_data(
         "trade_journal.json",
         "pending_decisions.json",
         "session_progress.json",
-        "snapshots.json",
     ]
 
     archived = []

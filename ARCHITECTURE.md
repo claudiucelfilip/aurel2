@@ -2,6 +2,14 @@
 
 Tax-optimized dual momentum trading system with AI-assisted decision making.
 
+> Last doc/code consistency cleanup: 2026-03-08 (branch: `feature/sma200-trend-filter`).
+>
+> **Source of truth (to prevent doc drift):**
+> - CLI commands/flags/behavior: `src/aurel2/cli.py`
+> - Runtime/container defaults: `docker/docker-compose.yml`
+> - Config file defaults: `config/default.yaml`
+> - Strategy/orchestrator runtime defaults: `src/aurel2/strategies/*.py`, `src/aurel2/agent/orchestrator.py`
+
 ## Table of Contents
 
 1. [Project Overview](#project-overview)
@@ -29,7 +37,7 @@ Tax-optimized dual momentum trading system with AI-assisted decision making.
 - Uses **proven momentum anomaly** (200+ years of data) rather than ML price prediction
 - Employs **DM-primary + calm-hold** orchestration with multi-strategy classification
 - Includes **conservative AI advisor** to guard against known failure patterns
-- Requires **human approval** for non-routine decisions
+- Uses **human approval first** for non-routine decisions, with 1h timeout validation + auto-execution fallback
 - Optimizes for **tax efficiency** (quarterly rebalancing)
 
 ### Key Principles
@@ -38,8 +46,8 @@ Tax-optimized dual momentum trading system with AI-assisted decision making.
 2. **DM-primary + calm-hold**: Dual momentum drives trades; calm-hold prevents churn in bull markets
 3. **Multi-strategy classification**: 3 strategies determine decision type (routine vs non-routine), but DM signal drives the actual trade
 4. **Conservative AI**: AI guards against failures, doesn't replace system (disabled by default)
-5. **Human-in-the-loop**: Non-routine decisions require approval
-6. **Tax optimized**: Monthly rebalancing, US ETFs via Alpaca
+5. **Human-in-the-loop (approval-first)**: Non-routine decisions request approval first; timed-out decisions are validated, then may auto-execute
+6. **Tax optimized**: Configurable rebalance cadence (quarterly default), US ETFs via Alpaca
 7. **Audit trail**: Every decision logged for analysis
 
 ---
@@ -83,7 +91,8 @@ Tax-optimized dual momentum trading system with AI-assisted decision making.
 | Service | Image | Purpose | Ports |
 |---------|-------|---------|-------|
 | `aurel2` | Built from Dockerfile | Trading daemon | - |
-| `dashboard` | Built from Dockerfile | Web UI (optional) | 8080 |
+| `monitor` | Built from Dockerfile | Health watchdog + auto-recovery | - |
+| `dashboard` | Built from Dockerfile | Web UI (optional, `dashboard` profile) | 8080 |
 
 ### Key Environment Variables (`.env`)
 
@@ -101,7 +110,7 @@ POLL_INTERVAL=5             # Minutes between approval polls
 NTFY_TOPIC=aurel2           # Notification channel
 
 # AI Settings (disabled by default, enable with --ai flag)
-AI_MODEL=haiku              # haiku, sonnet, or opus
+AI_MODEL=sonnet             # docker-compose runtime default (CLI fallback default is haiku)
 AI_LOOKBACK_YEARS=3
 ```
 
@@ -530,7 +539,7 @@ Manages decisions awaiting human approval.
 PENDING → APPROVED/REJECTED/TIMEOUT → EXECUTED
 ```
 
-**Timeout**: 1 hour (both NON_ROUTINE and URGENT)
+**Timeout**: 1 hour (both NON_ROUTINE and URGENT); timed-out decisions are validated against current price before auto-execution.
 
 **Approval URL**: Vercel serverless endpoint for mobile approvals.
 
@@ -840,7 +849,7 @@ strategy:
   name: dual_momentum
   lookback_months: 12
   rebalance_frequency: quarterly
-  switch_threshold: 0.04
+  switch_threshold: 0.10   # config file default
 
 assets:
   us_stocks:
@@ -852,7 +861,7 @@ assets:
   bonds:
     symbol: AGG
     yahoo_symbol: AGG
-  cash_rate: 0.0
+  cash_rate: 0.04          # config file default
 
 broker:
   type: alpaca
@@ -868,15 +877,17 @@ logging:
 
 ### Key Parameters
 
+Note: defaults come from two places — `config/default.yaml` (config defaults) and class constructor defaults in code (runtime defaults if not overridden).
+
 **Strategy Parameters**:
 | Parameter | Location | Default |
 |-----------|----------|---------|
 | lookback_months | strategy | 12 |
-| switch_threshold | strategy | 0.04 |
-| equity_to_defensive_threshold | strategy | 0.15 |
-| defensive_to_equity_threshold | strategy | 0.05 |
-| cash_rate | strategy | 0.0 |
-| pilot_entry_enabled | strategy | False |
+| switch_threshold | config/default.yaml | 0.10 |
+| equity_to_defensive_threshold | DualMomentumStrategy | 0.15 |
+| defensive_to_equity_threshold | DualMomentumStrategy | 0.05 |
+| cash_rate | config/default.yaml | 0.04 |
+| pilot_entry_enabled | DualMomentumStrategy | True |
 | rebalance_frequency | strategy | quarterly |
 
 **Risk Parameters**:
@@ -1156,7 +1167,7 @@ aurel2 backtest [--start DATE] [--end DATE] [--capital AMOUNT] [--ai]
 aurel2 momentum [--date DATE]
 
 # Start live daemon
-aurel2 live [--paper] [--dry-run] [--ai-model sonnet]
+aurel2 live [--paper] [--dry-run] [--ai] [--ai-model haiku|sonnet|opus]
 
 # Single check cycle
 aurel2 check [--dry-run]
@@ -1165,7 +1176,7 @@ aurel2 check [--dry-run]
 aurel2 agent [--lookback-years N]
 
 # Evaluate agent performance
-aurel2 eval_agent [--start DATE] [--end DATE]
+aurel2 eval-agent [--start DATE] [--end DATE]
 
 # Get AI advice
 aurel2 advise [--date DATE]
@@ -1177,7 +1188,7 @@ aurel2 reset-data paper
 aurel2 dashboard
 
 # Start monitor
-aurel2 monitor [--ai-enabled]
+aurel2 monitor [--ai] [--ai-model haiku|sonnet|opus]
 
 # Show strategies
 aurel2 strategies
@@ -1808,3 +1819,69 @@ data path doesn't happen to trigger but future markets will.
     regressions (-100% and -134% return respectively on 10yr). AI can reason
     about mechanisms but can't simulate 20 years of market data in its head.
     Always run the numbers. (Experiment 15)
+
+### Experiment 16: Adaptive SMA-200 Trend Filter with Daily Rebalancing (Rejected)
+
+**Change:** When SPY drops below its 200-day SMA, override the momentum pick
+and move to AGG (safe asset). Tested three variants with daily rebalancing:
+
+1. **Naive SMA-200**: Force to AGG whenever SPY < SMA-200.
+2. **With hysteresis**: 2% entry threshold, 1% exit threshold, 5-day
+   confirmation period before activating.
+3. **Adaptive**: Only override to AGG if the momentum pick is *also* falling
+   (1-month return < -3%). Let divergent winners (e.g., XLE in 2022, GLD in
+   2025) ride through SPY weakness.
+
+**Results (daily rebalancing):**
+
+| Variant | 5Y Return | 5Y DD | 5Y Trades | 20Y Return | 20Y DD | 20Y Trades |
+|---------|-----------|-------|-----------|------------|--------|------------|
+| Baseline (no filter) | +262% | 26% | 7 | +450% | 55% | 65 |
+| Naive SMA-200 | +21% | 49% | 587 | — | — | — |
+| SMA-200 + hysteresis | +154% | 24% | 23 | — | — | — |
+| Adaptive SMA-200 | +237% | 18.5% | 39 | +566% | 40% | 205 |
+
+**Analysis:**
+
+- The naive filter whipsaws catastrophically with daily checks — 587 trades in
+  5 years, grinding the portfolio down with transaction costs.
+- Hysteresis (entry/exit thresholds + confirmation days) reduced churn but still
+  lost significant returns because it pulled out of XLE during the 2022 energy
+  boom.
+- The adaptive version was the best: correctly let GLD ride in 2025 and XLE
+  ride in 2022 (both rising while SPY fell). Improved 20Y drawdown from 55% to
+  40% and added +116% return.
+- However, it still generated 205 trades (vs 65 baseline) over 20 years due to
+  oscillation around the -3% asset-falling threshold. In the 5Y window it gave
+  up 25% return for 7.5% better drawdown.
+- Neither variant beat SPY buy-and-hold over 20 years.
+
+**Key finding — daily rebalancing is the root problem:** The 20Y daily baseline
+(+450%, 65 trades) underperforms the monthly baseline (+500%, 33 trades)
+because daily checks trigger more false switches in choppy markets. The SMA
+filter tries to fix a problem that monthly rebalancing already solves naturally
+by filtering out daily noise.
+
+**Verdict:** Rejected. The adaptive SMA-200 improves drawdowns but at the cost
+of 3x more trades and reduced returns in trending markets. The existing regime
+detection (bull/sideways/bear), correlation guard, and sideways hold already
+provide similar protection without the churn. Confirms Experiment 12's finding
+that the momentum system IS the risk manager.
+
+### Lessons Learned (continued)
+
+17. **Daily rebalancing hurts momentum strategies.** Monthly rebalancing acts as
+    a natural noise filter — it ignores daily fluctuations that trigger false
+    switches. Daily checks + daily action = churn. The right approach may be
+    daily monitoring with monthly execution cadence. (Experiment 16)
+
+18. **Overlays that fight the core strategy destroy value.** The SMA-200 filter
+    repeatedly pulled the portfolio out of winning momentum picks (XLE in 2022)
+    to move into AGG, which was also falling. A second opinion that contradicts
+    the primary signal is only useful if it's more accurate — and over 20 years,
+    it wasn't. (Experiment 16)
+
+19. **Backtest validation against paper trading works.** Running a daily backtest
+    for the paper trading period (Feb-Mar 2026) produced identical asset
+    selection (GLD) and final values within 0.6% ($889 vs $898). This confirms
+    the backtest engine faithfully reproduces live behavior. (Experiment 16)

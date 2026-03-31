@@ -27,6 +27,10 @@ services:
       # Persist aurel2 data (portfolio, logs, pending orders)
       - aurel2-data:/root/.aurel2
 
+      # Keep runtime code/config in sync with host checkout (no image drift)
+      - ../src:/app/src:ro
+      - ../config:/app/config:ro
+
       # Claude Code auth (mount from host - needs to be writable for CLI)
       - ${CLAUDE_CONFIG_PATH:-./claude-config}:/root/.claude
     # Command uses environment variables via typer's envvar support
@@ -46,6 +50,10 @@ services:
     volumes:
       # Share aurel2 data volume to read heartbeat file
       - aurel2-data:/root/.aurel2
+
+      # Keep monitor code/config in sync with host checkout
+      - ../src:/app/src:ro
+      - ../config:/app/config:ro
     command: ["monitor", "--paper"]
 
   # Dashboard (optional web UI)
@@ -62,10 +70,10 @@ services:
       TRADING_MODE: ${TRADING_MODE:-paper}
     volumes:
       - aurel2-data:/root/.aurel2
-      - /opt/aurel2/data:/app/host-data:ro
+      - ../data:/app/host-data:ro
       # Bind-mount source + config for hot reload
-      - /opt/aurel2/src:/app/src:ro
-      - /opt/aurel2/config:/app/config:ro
+      - ../src:/app/src:ro
+      - ../config:/app/config:ro
     ports:
       - "${DASHBOARD_PORT:-8080}:8080"
     command: ["dashboard", "--host", "0.0.0.0", "--port", "8080", "--reload"]

@@ -275,19 +275,22 @@ class DualMomentumStrategy:
         Args:
             start_date: Start of period
             end_date: End of period
-            frequency: 'monthly' or 'quarterly'
+            frequency: 'daily', 'monthly', or 'quarterly'
 
         Returns:
             List of rebalance dates
         """
-        dates = pd.date_range(start=start_date, end=end_date, freq="ME")  # Month End
-
-        if frequency == "quarterly":
-            # Filter to quarter ends (March, June, September, December)
-            dates = [d for d in dates if d.month in [3, 6, 9, 12]]
-        elif frequency == "monthly":
-            pass  # Keep all month ends
+        if frequency == "daily":
+            dates = pd.date_range(start=start_date, end=end_date, freq="B")  # Business days
         else:
-            raise ValueError(f"Unknown frequency: {frequency}")
+            dates = pd.date_range(start=start_date, end=end_date, freq="ME")  # Month End
+
+            if frequency == "quarterly":
+                # Filter to quarter ends (March, June, September, December)
+                dates = [d for d in dates if d.month in [3, 6, 9, 12]]
+            elif frequency == "monthly":
+                pass  # Keep all month ends
+            else:
+                raise ValueError(f"Unknown frequency: {frequency}")
 
         return [d.date() for d in dates]

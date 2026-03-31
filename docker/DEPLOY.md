@@ -186,8 +186,11 @@ docker compose --profile dashboard up -d
 ## Optional: Enable Monitoring
 
 ```bash
-# Start with AI-powered monitoring
-docker compose --profile monitoring up -d
+# Monitor service is part of the default compose stack and starts with:
+docker compose up -d
+
+# Optional AI analysis for monitor:
+# add `--ai` to the monitor service command in docker-compose.yml, then recreate monitor.
 ```
 
 ## Troubleshooting

@@ -555,7 +555,11 @@ class BacktestEngine:
                 target_asset_class = self._symbol_to_asset_class(target_symbol)
                 target_asset = ASSET_REGISTRY.get(target_asset_class) if target_asset_class else None
 
-                if target_asset_class == AssetClass.CASH:
+                # Skip if already holding the target asset
+                if target_asset_class and target_asset_class == current_holding and current_shares > 0:
+                    pass  # Already in target — just hold
+
+                elif target_asset_class == AssetClass.CASH:
                     # Move to cash
                     if current_holding and current_shares > 0:
                         sell_price = self._get_price(
@@ -691,8 +695,21 @@ class BacktestEngine:
 
         print()  # newline after progress
 
-        # Calculate final value at end date
-        final_value = float(snapshots[-1].total_value) if snapshots else self.initial_capital
+        # Mark to market at end date (not just last rebalance)
+        if snapshots and current_holding and current_holding != AssetClass.CASH and current_shares > 0:
+            held_asset = ASSET_REGISTRY.get(current_holding)
+            if held_asset and held_asset.yahoo_symbol:
+                end_price = self._get_price(prices, held_asset.yahoo_symbol, end_date)
+                if end_price:
+                    final_value = float(current_shares) * end_price + float(cash)
+                else:
+                    final_value = float(snapshots[-1].total_value)
+            else:
+                final_value = float(snapshots[-1].total_value)
+        elif snapshots:
+            final_value = float(snapshots[-1].total_value)
+        else:
+            final_value = self.initial_capital
 
         # Calculate benchmark if provided
         benchmark_final = None
