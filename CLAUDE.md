@@ -89,6 +89,13 @@ docker compose exec aurel2 cat /root/.aurel2/heartbeat.json
 # NEVER use docker compose from /root/aurel2/docker/ — it lacks the .env with Alpaca credentials
 ```
 
+### Publish Backtests Without Restarting The Daemon (Safe During An Active Paper Run)
+```bash
+# Regenerates data/backtest_comparison.json and copies it to /opt/aurel2/data/
+# without syncing code/config or restarting any containers.
+bash scripts/publish_backtests_only.sh
+```
+
 ### Local Testing
 ```bash
 # Requires APCA_API_KEY_ID and APCA_API_SECRET_KEY env vars

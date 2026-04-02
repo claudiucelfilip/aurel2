@@ -1,0 +1,154 @@
+{
+  "results": [
+    {
+      "name": "Robust_Quarterly",
+      "cagr": 0.15991771280724043,
+      "bench_cagr": 0.13440930748493107,
+      "alpha_cagr": 0.025508405322309358,
+      "max_dd": 0.23901109331936252,
+      "trades": 12,
+      "sharpe": 1.600885322953435,
+      "period": "15y"
+    },
+    {
+      "name": "Robust_Monthly",
+      "cagr": 0.16104687995057687,
+      "bench_cagr": 0.13440930748493107,
+      "alpha_cagr": 0.026637572465645798,
+      "max_dd": 0.2659370493123528,
+      "trades": 14,
+      "sharpe": 0.878855731208298,
+      "period": "15y"
+    },
+    {
+      "name": "Robust_ConditionalMonthly",
+      "cagr": 0.16104687995057687,
+      "bench_cagr": 0.13440930748493107,
+      "alpha_cagr": 0.026637572465645798,
+      "max_dd": 0.2659370493123528,
+      "trades": 14,
+      "sharpe": 0.878855731208298,
+      "period": "15y"
+    },
+    {
+      "name": "Robust_Quarterly",
+      "cagr": 0.2134782522053611,
+      "bench_cagr": 0.12779130573313946,
+      "alpha_cagr": 0.08568694647222164,
+      "max_dd": 0.1753010722864155,
+      "trades": 8,
+      "sharpe": 1.9278420250482677,
+      "period": "10y"
+    },
+    {
+      "name": "Robust_Monthly",
+      "cagr": 0.1869070797176835,
+      "bench_cagr": 0.12779130573313946,
+      "alpha_cagr": 0.05911577398454404,
+      "max_dd": 0.18425347990207572,
+      "trades": 10,
+      "sharpe": 0.9341864898168437,
+      "period": "10y"
+    },
+    {
+      "name": "Robust_ConditionalMonthly",
+      "cagr": 0.1869070797176835,
+      "bench_cagr": 0.12779130573313946,
+      "alpha_cagr": 0.05911577398454404,
+      "max_dd": 0.18425347990207572,
+      "trades": 10,
+      "sharpe": 0.9341864898168437,
+      "period": "10y"
+    },
+    {
+      "name": "Robust_Quarterly",
+      "cagr": 0.30263815355711476,
+      "bench_cagr": 0.13583478342827937,
+      "alpha_cagr": 0.1668033701288354,
+      "max_dd": 0.11220962137381216,
+      "trades": 5,
+      "sharpe": 2.5016630425694855,
+      "period": "5y"
+    },
+    {
+      "name": "Robust_Monthly",
+      "cagr": 0.24487620729808723,
+      "bench_cagr": 0.13583478342827937,
+      "alpha_cagr": 0.10904142386980786,
+      "max_dd": 0.17073462432809486,
+      "trades": 6,
+      "sharpe": 1.0103658210211341,
+      "period": "5y"
+    },
+    {
+      "name": "Robust_ConditionalMonthly",
+      "cagr": 0.24487620729808723,
+      "bench_cagr": 0.13583478342827937,
+      "alpha_cagr": 0.10904142386980786,
+      "max_dd": 0.17073462432809486,
+      "trades": 6,
+      "sharpe": 1.0103658210211341,
+      "period": "5y"
+    },
+    {
+      "name": "Robust_Quarterly",
+      "cagr": 0.4405415428385142,
+      "bench_cagr": 0.1864544253063407,
+      "alpha_cagr": 0.2540871175321735,
+      "max_dd": 0.0,
+      "trades": 1,
+      "sharpe": 10.406593841663026,
+      "period": "1y"
+    },
+    {
+      "name": "Robust_Monthly",
+      "cagr": 0.44557172444908333,
+      "bench_cagr": 0.1864544253063407,
+      "alpha_cagr": 0.2591172991427426,
+      "max_dd": 0.11051161024305561,
+      "trades": 1,
+      "sharpe": 1.800635401571877,
+      "period": "1y"
+    },
+    {
+      "name": "Robust_ConditionalMonthly",
+      "cagr": 0.44557172444908333,
+      "bench_cagr": 0.1864544253063407,
+      "alpha_cagr": 0.2591172991427426,
+      "max_dd": 0.11051161024305561,
+      "trades": 1,
+      "sharpe": 1.800635401571877,
+      "period": "1y"
+    },
+    {
+      "name": "Robust_Quarterly",
+      "cagr": 0.2666806858963924,
+      "bench_cagr": -0.3727278941663884,
+      "alpha_cagr": 0.6394085800627808,
+      "max_dd": 0.0,
+      "trades": 1,
+      "sharpe": 0.0,
+      "period": "1m"
+    },
+    {
+      "name": "Robust_Monthly",
+      "cagr": 0.2666806858963924,
+      "bench_cagr": -0.3727278941663884,
+      "alpha_cagr": 0.6394085800627808,
+      "max_dd": 0.0,
+      "trades": 1,
+      "sharpe": 0.0,
+      "period": "1m"
+    },
+    {
+      "name": "Robust_ConditionalMonthly",
+      "cagr": 0.2666806858963924,
+      "bench_cagr": -0.3727278941663884,
+      "alpha_cagr": 0.6394085800627808,
+      "max_dd": 0.0,
+      "trades": 1,
+      "sharpe": 0.0,
+      "period": "1m"
+    }
+  ]
+}

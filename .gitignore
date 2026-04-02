@@ -15,6 +15,7 @@ build/
 .vscode/
 *.swp
 *.swo
+.codex/
 
 # Environment
 .env

@@ -19,6 +19,7 @@ from aurel2.core.models import Asset, AssetClass, Signal, SignalAction, Trade, P
 from aurel2.strategies.dual_momentum import DualMomentumStrategy
 from aurel2.strategies.mean_reversion import MeanReversionStrategy
 from aurel2.strategies.multi_timeframe import MultiTimeframeTrendStrategy
+from aurel2.strategies.robust_quarterly import build_robust_quarterly_no_tlt_strategy
 from aurel2.agent.orchestrator import AgentOrchestrator, AgentDecision, DecisionType
 
 logger = structlog.get_logger()
@@ -177,6 +178,12 @@ class BacktestEngine:
         trend_filter_symbol: str = "SPY",
         trend_filter_period: int = 200,
         trend_filter_safe_asset: str = "AGG",
+        vix_filter_enabled: bool = False,
+        vix_filter_threshold: float = 30.0,
+        vix_filter_safe_asset: str = "AGG",
+        canary_enabled: bool = False,
+        canary_symbols: list[str] | None = None,
+        canary_safe_asset: str = "IEF",
     ):
         self.dual_momentum = DualMomentumStrategy(assets=ASSET_REGISTRY)
         self.mean_reversion = MeanReversionStrategy()
@@ -198,6 +205,12 @@ class BacktestEngine:
         self.trend_filter_symbol = trend_filter_symbol
         self.trend_filter_period = trend_filter_period
         self.trend_filter_safe_asset = trend_filter_safe_asset
+        self.vix_filter_enabled = vix_filter_enabled
+        self.vix_filter_threshold = vix_filter_threshold
+        self.vix_filter_safe_asset = vix_filter_safe_asset
+        self.canary_enabled = canary_enabled
+        self.canary_symbols = canary_symbols or ["SPY", "EFA", "EEM", "AGG"]
+        self.canary_safe_asset = canary_safe_asset
 
         # Tradeable symbols for AI override validation
         self._tradeable_symbols = {
@@ -292,10 +305,55 @@ class BacktestEngine:
                             if pd.notna(corr):
                                 context["spy_agg_correlation"] = float(corr)
 
+                # VIX level (for VIX filter)
+                vix_prices = prices[prices["symbol"] == "^VIX"].copy()
+                if not vix_prices.empty:
+                    vix_prices["date"] = pd.to_datetime(vix_prices["date"])
+                    vix_prices = vix_prices[vix_prices["date"] <= pd.Timestamp(calc_date)]
+                    if not vix_prices.empty:
+                        vix_prices = vix_prices.sort_values("date")
+                        context["vix_level"] = float(vix_prices.iloc[-1]["close"])
+
         except Exception as e:
             logger.warning("backtest_market_context_error", error=str(e))
 
         return context
+
+    def _calc_13612w(self, prices: pd.DataFrame, symbol: str, as_of: date) -> float | None:
+        """Calculate 13612W momentum score for a symbol.
+
+        Formula: (12 * 1mo_return + 4 * 3mo_return + 2 * 6mo_return + 1 * 12mo_return) / 19
+        Overweights recent months for faster crash detection.
+        """
+        sym_prices = prices[prices["symbol"] == symbol].copy()
+        if sym_prices.empty:
+            return None
+        sym_prices["date"] = pd.to_datetime(sym_prices["date"])
+        sym_prices = sym_prices[sym_prices["date"] <= pd.Timestamp(as_of)].sort_values("date")
+        if len(sym_prices) < 252:
+            return None
+
+        current = float(sym_prices.iloc[-1]["close"])
+
+        def _price_n_months_ago(n: int) -> float | None:
+            target = pd.Timestamp(as_of) - pd.DateOffset(months=n)
+            rows = sym_prices[sym_prices["date"] <= target]
+            return float(rows.iloc[-1]["close"]) if not rows.empty else None
+
+        p1 = _price_n_months_ago(1)
+        p3 = _price_n_months_ago(3)
+        p6 = _price_n_months_ago(6)
+        p12 = _price_n_months_ago(12)
+
+        if not all([p1, p3, p6, p12]):
+            return None
+
+        r1 = current / p1 - 1
+        r3 = current / p3 - 1
+        r6 = current / p6 - 1
+        r12 = current / p12 - 1
+
+        return (12 * r1 + 4 * r3 + 2 * r6 + 1 * r12) / 19
 
     def _get_price(self, prices: pd.DataFrame, symbol: str, as_of: date) -> float | None:
         """Get the price of a symbol as of a date."""
@@ -308,12 +366,34 @@ class BacktestEngine:
             return None
         return float(rows.iloc[-1]["close"])
 
+    def _dm_assets_registry(self) -> dict[AssetClass, Asset] | None:
+        """Best-effort access to the DualMomentumStrategy asset registry.
+
+        Research scripts sometimes override DualMomentumStrategy.assets (or swap symbols) without
+        changing the global ASSET_REGISTRY. Backtests must then trade using the strategy's asset
+        definition rather than the global registry.
+        """
+        assets = getattr(self.dual_momentum, "assets", None)
+        return assets if isinstance(assets, dict) else None
+
     def _symbol_to_asset_class(self, symbol: str) -> AssetClass | None:
         """Look up the AssetClass for a given symbol."""
+        dm_assets = self._dm_assets_registry()
+        if dm_assets:
+            for ac, asset in dm_assets.items():
+                if asset.symbol == symbol or asset.yahoo_symbol == symbol:
+                    return ac
         for ac, asset in ASSET_REGISTRY.items():
             if asset.symbol == symbol or asset.yahoo_symbol == symbol:
                 return ac
         return None
+
+    def _asset_for_class(self, asset_class: AssetClass) -> Asset | None:
+        """Resolve an AssetClass to an Asset, preferring the DM strategy registry if present."""
+        dm_assets = self._dm_assets_registry()
+        if dm_assets and asset_class in dm_assets:
+            return dm_assets[asset_class]
+        return ASSET_REGISTRY.get(asset_class)
 
     def run(
         self,
@@ -489,6 +569,80 @@ class BacktestEngine:
                             )
 
             # ================================================================
+            # Step 3.6: VIX Filter (optional)
+            # When VIX > threshold, force to safe asset (crisis mode)
+            # ================================================================
+            if self.vix_filter_enabled:
+                vix_level = market_context.get("vix_level")
+                if vix_level is not None and vix_level > self.vix_filter_threshold:
+                    safe_symbol = self.vix_filter_safe_asset
+                    if decision.asset_symbol != safe_symbol:
+                        logger.info(
+                            "vix_filter_override",
+                            date=str(rebal_date),
+                            vix_level=round(vix_level, 2),
+                            threshold=self.vix_filter_threshold,
+                            original_asset=decision.asset_symbol,
+                            safe_asset=safe_symbol,
+                        )
+                        decision = AgentDecision(
+                            decision_type=DecisionType.NON_ROUTINE,
+                            action=SignalAction.BUY,
+                            asset_symbol=safe_symbol,
+                            reasoning=f"VIX filter: VIX ({vix_level:.1f}) above threshold ({self.vix_filter_threshold}). Moving to {safe_symbol}.",
+                            confidence=0.95,
+                            strategy_signals=signals,
+                            requires_approval=False,
+                            timeout_hours=1.0,
+                            urgency=decision.urgency,
+                            market_context=market_context,
+                            position_size_pct=1.0,
+                            regime=decision.regime,
+                        )
+
+            # ================================================================
+            # Step 3.7: Canary Crash Protection (optional)
+            # If any canary asset has negative 13612W momentum, go defensive
+            # ================================================================
+            if self.canary_enabled:
+                canary_negative = False
+                for csym in self.canary_symbols:
+                    score = self._calc_13612w(prices, csym, rebal_date)
+                    if score is not None and score < 0:
+                        canary_negative = True
+                        logger.info(
+                            "canary_negative",
+                            date=str(rebal_date),
+                            symbol=csym,
+                            score_13612w=round(score, 4),
+                        )
+                        break
+
+                if canary_negative:
+                    safe_symbol = self.canary_safe_asset
+                    if decision.asset_symbol != safe_symbol:
+                        logger.info(
+                            "canary_override",
+                            date=str(rebal_date),
+                            original_asset=decision.asset_symbol,
+                            safe_asset=safe_symbol,
+                        )
+                        decision = AgentDecision(
+                            decision_type=DecisionType.NON_ROUTINE,
+                            action=SignalAction.BUY,
+                            asset_symbol=safe_symbol,
+                            reasoning=f"Canary crash protection: negative 13612W momentum detected. Moving to {safe_symbol}.",
+                            confidence=0.95,
+                            strategy_signals=signals,
+                            requires_approval=False,
+                            timeout_hours=1.0,
+                            urgency=decision.urgency,
+                            market_context=market_context,
+                            position_size_pct=1.0,
+                            regime=decision.regime,
+                        )
+
+            # ================================================================
             # Step 4: AI Advisor review (mirrors checker step 7)
             # Skip AI on HOLD — it churns the portfolio by overriding holds
             # ================================================================
@@ -520,7 +674,8 @@ class BacktestEngine:
                         ai_advice.recommended_asset is None
                         or ai_advice.recommended_asset in self._tradeable_symbols
                     )
-                    SAFETY_ASSETS = {"AGG", "TLT", "GLD", "CASH"}
+                    # Keep AI overrides aligned with the live universe (NO_TLT).
+                    SAFETY_ASSETS = {"AGG", "IEF", "SHY", "TIP", "GLD", "CASH"}
                     ai_asset = ai_advice.recommended_asset
                     override_type = "to_safety" if ai_asset in SAFETY_ASSETS else "to_opportunity"
                     OVERRIDE_THRESHOLDS = {"to_safety": 0.65, "to_opportunity": 0.85}
@@ -572,26 +727,24 @@ class BacktestEngine:
 
             if action == SignalAction.BUY and target_symbol:
                 target_asset_class = self._symbol_to_asset_class(target_symbol)
-                target_asset = ASSET_REGISTRY.get(target_asset_class) if target_asset_class else None
+                target_asset = self._asset_for_class(target_asset_class) if target_asset_class else None
 
                 # Skip if already holding the target asset
-                if target_asset_class and target_asset_class == current_holding and current_shares > 0:
+                if current_holding_symbol == target_symbol and current_shares > 0:
                     pass  # Already in target — just hold
 
                 elif target_asset_class == AssetClass.CASH:
                     # Move to cash
                     if current_holding and current_shares > 0:
-                        sell_price = self._get_price(
-                            prices,
-                            ASSET_REGISTRY[current_holding].yahoo_symbol or ASSET_REGISTRY[current_holding].symbol,
-                            rebal_date,
-                        )
+                        held_asset = self._asset_for_class(current_holding)
+                        held_symbol = (held_asset.yahoo_symbol or held_asset.symbol) if held_asset else None
+                        sell_price = self._get_price(prices, held_symbol, rebal_date) if held_symbol else None
                         if sell_price:
                             sell_value = float(current_shares) * sell_price
                             commission = sell_value * self.transaction_cost_pct
                             trades.append(Trade(
                                 date=rebal_date,
-                                asset=ASSET_REGISTRY[current_holding],
+                                asset=held_asset or ASSET_REGISTRY[current_holding],
                                 action=SignalAction.SELL,
                                 shares=current_shares,
                                 price=sell_price,
@@ -608,7 +761,7 @@ class BacktestEngine:
                     if buy_price:
                         # Sell current holding first
                         if current_holding and current_holding != AssetClass.CASH and current_shares > 0:
-                            old_asset = ASSET_REGISTRY[current_holding]
+                            old_asset = self._asset_for_class(current_holding) or ASSET_REGISTRY[current_holding]
                             sell_price = self._get_price(
                                 prices,
                                 old_asset.yahoo_symbol or old_asset.symbol,
@@ -662,7 +815,7 @@ class BacktestEngine:
             elif action == SignalAction.SELL:
                 # Sell current holding, go to cash
                 if current_holding and current_holding != AssetClass.CASH and current_shares > 0:
-                    old_asset = ASSET_REGISTRY[current_holding]
+                    old_asset = self._asset_for_class(current_holding) or ASSET_REGISTRY[current_holding]
                     sell_price = self._get_price(
                         prices,
                         old_asset.yahoo_symbol or old_asset.symbol,
@@ -696,7 +849,7 @@ class BacktestEngine:
             # Record snapshot
             current_price = None
             if current_holding and current_holding != AssetClass.CASH and current_shares > 0:
-                held_asset = ASSET_REGISTRY.get(current_holding)
+                held_asset = self._asset_for_class(current_holding)
                 if held_asset and held_asset.yahoo_symbol:
                     current_price = self._get_price(prices, held_asset.yahoo_symbol, rebal_date)
 
@@ -716,7 +869,7 @@ class BacktestEngine:
 
         # Mark to market at end date (not just last rebalance)
         if snapshots and current_holding and current_holding != AssetClass.CASH and current_shares > 0:
-            held_asset = ASSET_REGISTRY.get(current_holding)
+            held_asset = self._asset_for_class(current_holding)
             if held_asset and held_asset.yahoo_symbol:
                 end_price = self._get_price(prices, held_asset.yahoo_symbol, end_date)
                 if end_price:
@@ -835,13 +988,22 @@ def generate_comparison_json(output_path: str = "data/backtest_comparison.json")
         python -m aurel2.engine.backtest
     """
     import json
+    import os
     from pathlib import Path
-    from aurel2.data.providers.yahoo import YahooFinanceProvider
+    from aurel2.data.providers.cache import CachedPriceProvider
     from aurel2.core.assets import get_all_yahoo_symbols
 
-    end_date = date.today()
+    # Allow anchoring results for research (e.g. 2026-04-01) while defaulting to "latest".
+    env_end = os.getenv("AUREL2_BACKTEST_END_DATE")
+    if env_end:
+        try:
+            end_date = date.fromisoformat(env_end)
+        except Exception:
+            end_date = date.today()
+    else:
+        end_date = date.today()
     capital = 10000
-    provider = YahooFinanceProvider()
+    provider = CachedPriceProvider()
 
     # Fetch prices once (20y covers all periods)
     symbols = get_all_yahoo_symbols()
@@ -857,25 +1019,41 @@ def generate_comparison_json(output_path: str = "data/backtest_comparison.json")
 
     print(f"Total: {len(prices)} price records\n")
 
-    results = {}
+    def month_start(d: date) -> date:
+        return date(d.year, d.month, 1)
+
+    def previous_month_start(d: date) -> date:
+        if d.month == 1:
+            return date(d.year - 1, 12, 1)
+        return date(d.year, d.month - 1, 1)
+
     periods = [
-        ("20y", timedelta(days=20 * 365)),
-        ("15y", timedelta(days=15 * 365)),
-        ("10y", timedelta(days=10 * 365)),
-        ("5y", timedelta(days=5 * 365)),
-        ("1y", timedelta(days=365)),
-        ("3m", timedelta(days=90)),
+        ("20y", date(2005, 1, 1), end_date),
+        ("15y", date(2010, 1, 1), end_date),
+        ("10y", date(2015, 1, 1), end_date),
+        ("5y", date(2020, 1, 1), end_date),
+        ("1y", date(end_date.year - 1, end_date.month, 1), end_date),
+        ("1m", previous_month_start(month_start(end_date)), end_date),
     ]
-    for label, delta in periods:
-        start_date = end_date - delta
-        print(f"Running {label} backtest ({start_date} -> {end_date})...")
+
+    results = {
+        "_meta": {
+            "generated_at": end_date.isoformat(),
+            "strategy": "Robust_Quarterly_NO_TLT",
+            "benchmark": "SPY",
+        }
+    }
+    for label, start_date, period_end in periods:
+        print(f"Running {label} backtest ({start_date} -> {period_end})...")
 
         engine = BacktestEngine(initial_capital=capital, use_ai=False)
+        engine.dual_momentum = build_robust_quarterly_no_tlt_strategy()
         result = engine.run(
             prices=prices,
             start_date=start_date,
-            end_date=end_date,
+            end_date=period_end,
             benchmark_symbol="SPY",
+            frequency="quarterly",
         )
 
         # Build portfolio series
@@ -903,10 +1081,16 @@ def generate_comparison_json(output_path: str = "data/backtest_comparison.json")
                         })
 
         bench_return = ((result.benchmark_final / capital) - 1) * 100 if result.benchmark_final else 0
-        bench_years = (end_date - start_date).days / 365.25
+        bench_years = (period_end - start_date).days / 365.25
         bench_cagr = ((result.benchmark_final / capital) ** (1 / bench_years) - 1) * 100 if result.benchmark_final and bench_years > 0 else 0
+        alpha_cagr = (result.cagr * 100) - bench_cagr
+        alpha_total_return = (result.total_return * 100) - bench_return
 
         results[label] = {
+            "period": {
+                "start_date": start_date.isoformat(),
+                "end_date": period_end.isoformat(),
+            },
             "metrics": {
                 "total_return": round(result.total_return * 100, 1),
                 "cagr": round(result.cagr * 100, 1),
@@ -915,7 +1099,9 @@ def generate_comparison_json(output_path: str = "data/backtest_comparison.json")
                 "num_trades": result.num_trades,
                 "benchmark_return": round(bench_return, 1),
                 "benchmark_cagr": round(bench_cagr, 1),
-                "alpha": round(result.total_return * 100 - bench_return, 1),
+                # "Alpha" is presented as CAGR delta (less alarming than total-return delta on long windows).
+                "alpha": round(alpha_cagr, 1),
+                "alpha_total_return": round(alpha_total_return, 1),
             },
             "portfolio": portfolio_data,
             "benchmark": benchmark_data,

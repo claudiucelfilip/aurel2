@@ -2,7 +2,7 @@ strategy:
   name: dual_momentum
   lookback_months: 12
   rebalance_frequency: quarterly
-  switch_threshold: 0.10
+  switch_threshold: 0.02
 
 # US ETFs for backtesting (longer history available)
 # For live trading with Romanian tax optimization, use the UCITS versions
@@ -22,7 +22,7 @@ assets:
     name: "iShares Core US Aggregate Bond ETF"
     isin: null
     yahoo_symbol: AGG
-  cash_rate: 0.04
+  cash_rate: 0.0
 
 broker:
   type: alpaca

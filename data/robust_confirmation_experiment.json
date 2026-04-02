@@ -1,0 +1,204 @@
+{
+  "results": [
+    {
+      "name": "Robust_Base",
+      "cagr": 0.1610209470677415,
+      "bench_cagr": 0.13437960821467,
+      "alpha_cagr": 0.026641338853071517,
+      "max_dd": 0.26593698288149054,
+      "trades": 14,
+      "sharpe": 0.8788563816188177,
+      "period": "15y"
+    },
+    {
+      "name": "Robust_3m_Override",
+      "cagr": 0.13178627706382762,
+      "bench_cagr": 0.13437960821467,
+      "alpha_cagr": -0.0025933311508423706,
+      "max_dd": 0.2766062859497317,
+      "trades": 22,
+      "sharpe": 0.740545460377727,
+      "period": "15y"
+    },
+    {
+      "name": "Robust_3m6m_Consensus",
+      "cagr": 0.15843903216844257,
+      "bench_cagr": 0.13437960821467,
+      "alpha_cagr": 0.024059423953772585,
+      "max_dd": 0.19413230094617526,
+      "trades": 15,
+      "sharpe": 0.8615803666175055,
+      "period": "15y"
+    },
+    {
+      "name": "Robust_3m_WeakExit",
+      "cagr": 0.1353555995754372,
+      "bench_cagr": 0.13437960821467,
+      "alpha_cagr": 0.0009759913607672033,
+      "max_dd": 0.2766062859497317,
+      "trades": 21,
+      "sharpe": 0.7623425528195334,
+      "period": "15y"
+    },
+    {
+      "name": "Robust_Base",
+      "cagr": 0.18686871476491929,
+      "bench_cagr": 0.12774861961873607,
+      "alpha_cagr": 0.059120095146183216,
+      "max_dd": 0.1842531943108171,
+      "trades": 10,
+      "sharpe": 0.9341868886559563,
+      "period": "10y"
+    },
+    {
+      "name": "Robust_3m_Override",
+      "cagr": 0.13162374650615405,
+      "bench_cagr": 0.12774861961873607,
+      "alpha_cagr": 0.003875126887417979,
+      "max_dd": 0.306469832353231,
+      "trades": 18,
+      "sharpe": 0.6911231574010757,
+      "period": "10y"
+    },
+    {
+      "name": "Robust_3m6m_Consensus",
+      "cagr": 0.17031868504115377,
+      "bench_cagr": 0.12774861961873607,
+      "alpha_cagr": 0.0425700654224177,
+      "max_dd": 0.2274005848119967,
+      "trades": 11,
+      "sharpe": 0.852190315467928,
+      "period": "10y"
+    },
+    {
+      "name": "Robust_3m_WeakExit",
+      "cagr": 0.13427365230760757,
+      "bench_cagr": 0.12774861961873607,
+      "alpha_cagr": 0.0065250326888715016,
+      "max_dd": 0.32349130297551043,
+      "trades": 17,
+      "sharpe": 0.7048165407645355,
+      "period": "10y"
+    },
+    {
+      "name": "Robust_Base",
+      "cagr": 0.24480376304328644,
+      "bench_cagr": 0.13575737538061095,
+      "alpha_cagr": 0.10904638766267549,
+      "max_dd": 0.17073474218743162,
+      "trades": 6,
+      "sharpe": 1.0103664161743318,
+      "period": "5y"
+    },
+    {
+      "name": "Robust_3m_Override",
+      "cagr": 0.25182880226846605,
+      "bench_cagr": 0.13575737538061095,
+      "alpha_cagr": 0.1160714268878551,
+      "max_dd": 0.24843977998118702,
+      "trades": 8,
+      "sharpe": 1.0478335578830362,
+      "period": "5y"
+    },
+    {
+      "name": "Robust_3m6m_Consensus",
+      "cagr": 0.24480376304328644,
+      "bench_cagr": 0.13575737538061095,
+      "alpha_cagr": 0.10904638766267549,
+      "max_dd": 0.17073474218743162,
+      "trades": 6,
+      "sharpe": 1.0103664161743318,
+      "period": "5y"
+    },
+    {
+      "name": "Robust_3m_WeakExit",
+      "cagr": 0.22183883862751674,
+      "bench_cagr": 0.13575737538061095,
+      "alpha_cagr": 0.0860814632469058,
+      "max_dd": 0.24843977998118713,
+      "trades": 8,
+      "sharpe": 0.9360565546178758,
+      "period": "5y"
+    },
+    {
+      "name": "Robust_Base",
+      "cagr": 0.44504503163555453,
+      "bench_cagr": 0.18594911025821736,
+      "alpha_cagr": 0.25909592137733717,
+      "max_dd": 0.11051161024305561,
+      "trades": 1,
+      "sharpe": 1.800635401571877,
+      "period": "1y"
+    },
+    {
+      "name": "Robust_3m_Override",
+      "cagr": 0.44504503163555453,
+      "bench_cagr": 0.18594911025821736,
+      "alpha_cagr": 0.25909592137733717,
+      "max_dd": 0.11051161024305561,
+      "trades": 1,
+      "sharpe": 1.800635401571877,
+      "period": "1y"
+    },
+    {
+      "name": "Robust_3m6m_Consensus",
+      "cagr": 0.44504503163555453,
+      "bench_cagr": 0.18594911025821736,
+      "alpha_cagr": 0.25909592137733717,
+      "max_dd": 0.11051161024305561,
+      "trades": 1,
+      "sharpe": 1.800635401571877,
+      "period": "1y"
+    },
+    {
+      "name": "Robust_3m_WeakExit",
+      "cagr": 0.44504503163555453,
+      "bench_cagr": 0.18594911025821736,
+      "alpha_cagr": 0.25909592137733717,
+      "max_dd": 0.11051161024305561,
+      "trades": 1,
+      "sharpe": 1.800635401571877,
+      "period": "1y"
+    },
+    {
+      "name": "Robust_Base",
+      "cagr": 0.26125738355794903,
+      "bench_cagr": -0.37586624953358627,
+      "alpha_cagr": 0.6371236330915353,
+      "max_dd": 0.0,
+      "trades": 1,
+      "sharpe": 0.0,
+      "period": "1m"
+    },
+    {
+      "name": "Robust_3m_Override",
+      "cagr": 0.26125738355794903,
+      "bench_cagr": -0.37586624953358627,
+      "alpha_cagr": 0.6371236330915353,
+      "max_dd": 0.0,
+      "trades": 1,
+      "sharpe": 0.0,
+      "period": "1m"
+    },
+    {
+      "name": "Robust_3m6m_Consensus",
+      "cagr": 0.26125738355794903,
+      "bench_cagr": -0.37586624953358627,
+      "alpha_cagr": 0.6371236330915353,
+      "max_dd": 0.0,
+      "trades": 1,
+      "sharpe": 0.0,
+      "period": "1m"
+    },
+    {
+      "name": "Robust_3m_WeakExit",
+      "cagr": 0.26125738355794903,
+      "bench_cagr": -0.37586624953358627,
+      "alpha_cagr": 0.6371236330915353,
+      "max_dd": 0.0,
+      "trades": 1,
+      "sharpe": 0.0,
+      "period": "1m"
+    }
+  ]
+}

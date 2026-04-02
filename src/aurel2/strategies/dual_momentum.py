@@ -38,6 +38,7 @@ class DualMomentumStrategy:
         pilot_entry_enabled: bool = True,
         pilot_lookback_months: int = 3,
         pilot_position_size: float = 0.30,
+        exclude_from_selection: set[AssetClass] | None = None,
     ):
         self.assets = assets
         self.lookback_months = lookback_months
@@ -51,6 +52,9 @@ class DualMomentumStrategy:
         self.pilot_lookback_months = pilot_lookback_months
         self.pilot_position_size = pilot_position_size
         self.is_pilot_position: bool = False  # Track if current position is pilot-sized
+        # Some research variants intentionally ban certain assets from being selected
+        # as the "winner" (e.g. exclude long-duration treasuries like TLT).
+        self.exclude_from_selection: set[AssetClass] = exclude_from_selection or set()
 
     def generate_signal(
         self,
@@ -103,7 +107,11 @@ class DualMomentumStrategy:
             )
 
         # Find the winner based on 12-month momentum (excluding cash)
-        risky_scores = {k: v for k, v in scores.items() if k != AssetClass.CASH}
+        risky_scores = {
+            k: v
+            for k, v in scores.items()
+            if k != AssetClass.CASH and k not in self.exclude_from_selection
+        }
         if not risky_scores:
             winner_class = AssetClass.CASH
         else:
@@ -116,7 +124,11 @@ class DualMomentumStrategy:
         pilot_winner_class = None
         pilot_winner_score = None
         if pilot_scores:
-            pilot_risky_scores = {k: v for k, v in pilot_scores.items() if k != AssetClass.CASH}
+            pilot_risky_scores = {
+                k: v
+                for k, v in pilot_scores.items()
+                if k != AssetClass.CASH and k not in self.exclude_from_selection
+            }
             if pilot_risky_scores:
                 pilot_winner_class = max(pilot_risky_scores.keys(), key=lambda k: pilot_risky_scores[k].momentum_12m)
                 pilot_winner_score = pilot_scores[pilot_winner_class]
@@ -283,7 +295,9 @@ class DualMomentumStrategy:
         if frequency == "daily":
             dates = pd.date_range(start=start_date, end=end_date, freq="B")  # Business days
         else:
-            dates = pd.date_range(start=start_date, end=end_date, freq="ME")  # Month End
+            # Use business month-end so backtests don't rebalance on weekends.
+            # (Live trading runs daily; backtests need a realistic trading calendar proxy.)
+            dates = pd.date_range(start=start_date, end=end_date, freq="BME")
 
             if frequency == "quarterly":
                 # Filter to quarter ends (March, June, September, December)

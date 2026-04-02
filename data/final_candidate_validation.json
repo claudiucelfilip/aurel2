@@ -1,0 +1,166 @@
+{
+  "results": [
+    {
+      "name": "Baseline_CurrentPaper",
+      "cagr": 0.13429114074621573,
+      "bench_cagr": 0.1344294941320332,
+      "alpha_cagr": -0.00013835338581746903,
+      "max_dd": 0.26593726878210605,
+      "trades": 13,
+      "period": "15y"
+    },
+    {
+      "name": "Robust_Monthly",
+      "cagr": 0.1611363963715502,
+      "bench_cagr": 0.1344294941320332,
+      "alpha_cagr": 0.026706902239516994,
+      "max_dd": 0.26593726878210605,
+      "trades": 14,
+      "period": "15y"
+    },
+    {
+      "name": "Robust_Quarterly",
+      "cagr": 0.1600069243361848,
+      "bench_cagr": 0.1344294941320332,
+      "alpha_cagr": 0.025577430204151597,
+      "max_dd": 0.23901116352567678,
+      "trades": 12,
+      "period": "15y"
+    },
+    {
+      "name": "Baseline_CurrentPaper",
+      "cagr": 0.1966101456380953,
+      "bench_cagr": 0.12782029520380012,
+      "alpha_cagr": 0.0687898504342952,
+      "max_dd": 0.20035710852784508,
+      "trades": 8,
+      "period": "10y"
+    },
+    {
+      "name": "Robust_Monthly",
+      "cagr": 0.18703909294789822,
+      "bench_cagr": 0.12782029520380012,
+      "alpha_cagr": 0.059218797744098106,
+      "max_dd": 0.18425337379631457,
+      "trades": 10,
+      "period": "10y"
+    },
+    {
+      "name": "Robust_Quarterly",
+      "cagr": 0.21361300649493487,
+      "bench_cagr": 0.12782029520380012,
+      "alpha_cagr": 0.08579271129113475,
+      "max_dd": 0.17530099924157724,
+      "trades": 8,
+      "period": "10y"
+    },
+    {
+      "name": "Baseline_CurrentPaper",
+      "cagr": 0.24512541904642338,
+      "bench_cagr": 0.13588722100142236,
+      "alpha_cagr": 0.10923819804500101,
+      "max_dd": 0.1707349091537646,
+      "trades": 6,
+      "period": "5y"
+    },
+    {
+      "name": "Robust_Monthly",
+      "cagr": 0.24512541904642338,
+      "bench_cagr": 0.13588722100142236,
+      "alpha_cagr": 0.10923819804500101,
+      "max_dd": 0.1707349091537646,
+      "trades": 6,
+      "period": "5y"
+    },
+    {
+      "name": "Robust_Quarterly",
+      "cagr": 0.30289890037216227,
+      "bench_cagr": 0.13588722100142236,
+      "alpha_cagr": 0.1670116793707399,
+      "max_dd": 0.11220949669573142,
+      "trades": 5,
+      "period": "5y"
+    },
+    {
+      "name": "Baseline_CurrentPaper",
+      "cagr": 0.4473821503761908,
+      "bench_cagr": 0.18679715557951115,
+      "alpha_cagr": 0.2605849947966796,
+      "max_dd": 0.11051161024305561,
+      "trades": 1,
+      "period": "1y"
+    },
+    {
+      "name": "Robust_Monthly",
+      "cagr": 0.4473821503761908,
+      "bench_cagr": 0.18679715557951115,
+      "alpha_cagr": 0.2605849947966796,
+      "max_dd": 0.11051161024305561,
+      "trades": 1,
+      "period": "1y"
+    },
+    {
+      "name": "Robust_Quarterly",
+      "cagr": 0.4423456689943601,
+      "bench_cagr": 0.18679715557951115,
+      "alpha_cagr": 0.25554851341484897,
+      "max_dd": 0.0,
+      "trades": 1,
+      "period": "1y"
+    },
+    {
+      "name": "Baseline_CurrentPaper",
+      "cagr": 0.28548561013253804,
+      "bench_cagr": -0.3705902749872083,
+      "alpha_cagr": 0.6560758851197463,
+      "max_dd": 0.0,
+      "trades": 1,
+      "period": "1m"
+    },
+    {
+      "name": "Robust_Monthly",
+      "cagr": 0.28548561013253804,
+      "bench_cagr": -0.3705902749872083,
+      "alpha_cagr": 0.6560758851197463,
+      "max_dd": 0.0,
+      "trades": 1,
+      "period": "1m"
+    },
+    {
+      "name": "Robust_Quarterly",
+      "cagr": 0.28548561013253804,
+      "bench_cagr": -0.3705902749872083,
+      "alpha_cagr": 0.6560758851197463,
+      "max_dd": 0.0,
+      "trades": 1,
+      "period": "1m"
+    },
+    {
+      "name": "Baseline_CurrentPaper",
+      "cagr": 0.10992687670534584,
+      "bench_cagr": 0.10338619598098653,
+      "alpha_cagr": 0.006540680724359316,
+      "max_dd": 0.5328999118735618,
+      "trades": 19,
+      "period": "20y"
+    },
+    {
+      "name": "Robust_Monthly",
+      "cagr": 0.14569676051279856,
+      "bench_cagr": 0.10338619598098653,
+      "alpha_cagr": 0.042310564531812034,
+      "max_dd": 0.4480500892037709,
+      "trades": 22,
+      "period": "20y"
+    },
+    {
+      "name": "Robust_Quarterly",
+      "cagr": 0.11562435926353842,
+      "bench_cagr": 0.10338619598098653,
+      "alpha_cagr": 0.012238163282551895,
+      "max_dd": 0.6142809530330255,
+      "trades": 16,
+      "period": "20y"
+    }
+  ]
+}

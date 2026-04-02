@@ -22,9 +22,9 @@ from aurel2.data.momentum import calculate_momentum_scores
 from aurel2.data.providers.yahoo import YahooFinanceProvider
 from aurel2.persistence.portfolio import PortfolioStore
 from aurel2.strategies.base import StrategySignal
-from aurel2.strategies.dual_momentum import DualMomentumStrategy
 from aurel2.strategies.mean_reversion import MeanReversionStrategy
 from aurel2.strategies.multi_timeframe import MultiTimeframeTrendStrategy
+from aurel2.strategies.robust_quarterly import build_robust_quarterly_no_tlt_strategy
 
 logger = structlog.get_logger()
 
@@ -60,11 +60,7 @@ class Aurel2MCPServer:
         self._cache_date: date | None = None
 
         # Initialize strategies
-        self._dual_momentum = DualMomentumStrategy(
-            assets=ASSET_REGISTRY,
-            lookback_months=12,
-            switch_threshold=0.10,
-        )
+        self._dual_momentum = build_robust_quarterly_no_tlt_strategy()
         self._mean_reversion = MeanReversionStrategy()
         self._multi_timeframe = MultiTimeframeTrendStrategy()
 

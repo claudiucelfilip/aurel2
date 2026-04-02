@@ -1,0 +1,227 @@
+{
+  "meta": {
+    "end_date": "2026-04-01",
+    "frequency": "quarterly",
+    "switch_threshold": 0.02,
+    "cash_rate": 0.0,
+    "pilot_entry_enabled": false
+  },
+  "periods": {
+    "15y": {
+      "start": "2010-01-01",
+      "end": "2026-04-01",
+      "rows": [
+        {
+          "name": "Robust_Quarterly_BASELINE",
+          "cagr": 0.15956382676711778,
+          "bench_cagr": 0.13412172282162316
+        },
+        {
+          "name": "Robust_Quarterly_NO_TLT",
+          "cagr": 0.16617667235773537,
+          "bench_cagr": 0.13412172282162316
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_IEF",
+          "cagr": 0.16617667235773537,
+          "bench_cagr": 0.13412172282162316
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_SHY",
+          "cagr": 0.16617667235773537,
+          "bench_cagr": 0.13412172282162316
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_AGG",
+          "cagr": 0.16617667235773537,
+          "bench_cagr": 0.13412172282162316
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_TIP",
+          "cagr": 0.16617667235773537,
+          "bench_cagr": 0.13412172282162316
+        }
+      ]
+    },
+    "10y": {
+      "start": "2015-01-01",
+      "end": "2026-04-01",
+      "rows": [
+        {
+          "name": "Robust_Quarterly_BASELINE",
+          "cagr": 0.21294332105006508,
+          "bench_cagr": 0.12710493880807694
+        },
+        {
+          "name": "Robust_Quarterly_NO_TLT",
+          "cagr": 0.21690383322511142,
+          "bench_cagr": 0.12710493880807694
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_IEF",
+          "cagr": 0.21690383322511142,
+          "bench_cagr": 0.12710493880807694
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_SHY",
+          "cagr": 0.21690383322511142,
+          "bench_cagr": 0.12710493880807694
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_AGG",
+          "cagr": 0.21690383322511142,
+          "bench_cagr": 0.12710493880807694
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_TIP",
+          "cagr": 0.21690383322511142,
+          "bench_cagr": 0.12710493880807694
+        }
+      ]
+    },
+    "5y": {
+      "start": "2020-01-01",
+      "end": "2026-04-01",
+      "rows": [
+        {
+          "name": "Robust_Quarterly_BASELINE",
+          "cagr": 0.3016048382686294,
+          "bench_cagr": 0.13459063143155348
+        },
+        {
+          "name": "Robust_Quarterly_NO_TLT",
+          "cagr": 0.32789907643093485,
+          "bench_cagr": 0.13459063143155348
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_IEF",
+          "cagr": 0.32789907643093485,
+          "bench_cagr": 0.13459063143155348
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_SHY",
+          "cagr": 0.32789907643093485,
+          "bench_cagr": 0.13459063143155348
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_AGG",
+          "cagr": 0.32789907643093485,
+          "bench_cagr": 0.13459063143155348
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_TIP",
+          "cagr": 0.32789907643093485,
+          "bench_cagr": 0.13459063143155348
+        }
+      ]
+    },
+    "1y": {
+      "start": "2025-04-01",
+      "end": "2026-04-01",
+      "rows": [
+        {
+          "name": "Robust_Quarterly_BASELINE",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157320706149638
+        },
+        {
+          "name": "Robust_Quarterly_NO_TLT",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157320706149638
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_IEF",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157320706149638
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_SHY",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157320706149638
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_AGG",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157320706149638
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_TIP",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157320706149638
+        }
+      ]
+    },
+    "1m": {
+      "start": "2026-03-01",
+      "end": "2026-04-01",
+      "rows": [
+        {
+          "name": "Robust_Quarterly_BASELINE",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973
+        },
+        {
+          "name": "Robust_Quarterly_NO_TLT",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_IEF",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_SHY",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_AGG",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_TIP",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973
+        }
+      ]
+    },
+    "20y": {
+      "start": "2005-01-01",
+      "end": "2026-04-01",
+      "rows": [
+        {
+          "name": "Robust_Quarterly_BASELINE",
+          "cagr": 0.08898051051818201,
+          "bench_cagr": 0.10315725533081843
+        },
+        {
+          "name": "Robust_Quarterly_NO_TLT",
+          "cagr": 0.10013870681009052,
+          "bench_cagr": 0.10315725533081843
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_IEF",
+          "cagr": 0.10013870681009052,
+          "bench_cagr": 0.10315725533081843
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_SHY",
+          "cagr": 0.10013870681009052,
+          "bench_cagr": 0.10315725533081843
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_AGG",
+          "cagr": 0.10013870681009052,
+          "bench_cagr": 0.10315725533081843
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_TIP",
+          "cagr": 0.10013870681009052,
+          "bench_cagr": 0.10315725533081843
+        }
+      ]
+    }
+  }
+}

@@ -63,25 +63,29 @@ class CachedPriceProvider:
             cached_start = cached_df["date"].min()
             cached_end = cached_df["date"].max()
 
-            # Remove the last day from cache (re-fetch in case it was partial)
-            cached_df = cached_df[cached_df["date"] < cached_end]
-
             fetched_parts = []
 
             # Fetch data before cached start if needed
             if start_date < cached_start:
                 logger.info("cache_fetch_prefix", symbol=symbol, start=str(start_date), end=str(cached_start))
-                prefix = self.provider.get_prices(symbol, start_date, cached_start)
-                if not prefix.empty:
-                    fetched_parts.append(prefix)
+                try:
+                    prefix = self.provider.get_prices(symbol, start_date, cached_start)
+                    if not prefix.empty:
+                        fetched_parts.append(prefix)
+                except Exception as e:
+                    # Offline / transient Yahoo failures: keep cached data.
+                    logger.warning("cache_fetch_prefix_failed", symbol=symbol, error=str(e))
 
             # Fetch data from cached_end onward (includes re-fetch of last day)
             refetch_start = cached_end - timedelta(days=1)
             if refetch_start <= end_date:
                 logger.info("cache_fetch_suffix", symbol=symbol, start=str(refetch_start), end=str(end_date))
-                suffix = self.provider.get_prices(symbol, refetch_start, end_date)
-                if not suffix.empty:
-                    fetched_parts.append(suffix)
+                try:
+                    suffix = self.provider.get_prices(symbol, refetch_start, end_date)
+                    if not suffix.empty:
+                        fetched_parts.append(suffix)
+                except Exception as e:
+                    logger.warning("cache_fetch_suffix_failed", symbol=symbol, error=str(e))
 
             if fetched_parts:
                 new_data = pd.concat(fetched_parts, ignore_index=True)
@@ -95,7 +99,11 @@ class CachedPriceProvider:
         else:
             # No cache — full fetch
             logger.info("cache_miss", symbol=symbol)
-            merged = self.provider.get_prices(symbol, start_date, end_date)
+            try:
+                merged = self.provider.get_prices(symbol, start_date, end_date)
+            except Exception as e:
+                logger.warning("cache_full_fetch_failed", symbol=symbol, error=str(e))
+                merged = pd.DataFrame(columns=["date", "close", "symbol"])
             if not merged.empty:
                 merged["date"] = pd.to_datetime(merged["date"]).dt.date
 

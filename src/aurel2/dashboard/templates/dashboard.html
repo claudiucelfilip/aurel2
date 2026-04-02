@@ -395,13 +395,14 @@
                 <div class="card-title" style="margin-bottom: 0;">Strategy Backtest vs SPY</div>
                 <div style="display: flex; align-items: center; gap: 16px;">
                     <div id="backtest-metrics" style="display: flex; gap: 12px; font-size: 0.75rem; color: var(--text-muted);"></div>
+                    <div id="backtest-meta" style="font-size: 0.75rem; color: var(--text-muted);"></div>
                     <select class="period-select" id="backtest-toggle" onchange="if(backtestData) showBacktestPeriod(this.value)">
                         <option value="20y">20Y</option>
                         <option value="15y">15Y</option>
                         <option value="10y" selected>10Y</option>
                         <option value="5y">5Y</option>
                         <option value="1y">1Y</option>
-                        <option value="3m">3M</option>
+                        <option value="1m">1M</option>
                     </select>
                 </div>
             </div>
@@ -622,6 +623,12 @@
                     return;
                 }
                 backtestData = data;
+                if (data._meta) {
+                    const strategy = data._meta.strategy || 'Strategy';
+                    const generatedAt = data._meta.generated_at || '';
+                    document.getElementById('backtest-meta').textContent =
+                        strategy + (generatedAt ? ' · as of ' + generatedAt : '');
+                }
                 showBacktestPeriod('10y');
             })
             .catch(() => {
@@ -636,12 +643,18 @@
 
             // Update metrics
             const m = data.metrics;
+            const periodMeta = data.period || {};
             const alphaColor = m.alpha >= 0 ? '#22c55e' : '#ef4444';
             document.getElementById('backtest-metrics').innerHTML =
                 '<span>CAGR <strong>' + m.cagr + '%</strong></span>' +
+                '<span>SPY <strong>' + m.benchmark_cagr + '%</strong></span>' +
                 '<span>Sharpe <strong>' + m.sharpe_ratio + '</strong></span>' +
                 '<span>Max DD <strong>-' + m.max_drawdown + '%</strong></span>' +
-                '<span style="color:' + alphaColor + '">Alpha <strong>' + (m.alpha >= 0 ? '+' : '') + m.alpha + '%</strong></span>';
+                '<span style="color:' + alphaColor + '">CAGR Alpha <strong>' + (m.alpha >= 0 ? '+' : '') + m.alpha + '%</strong></span>';
+            if (periodMeta.start_date && periodMeta.end_date) {
+                document.getElementById('backtest-meta').textContent =
+                    (backtestData._meta?.strategy || 'Strategy') + ' · ' + periodMeta.start_date + ' to ' + periodMeta.end_date;
+            }
 
             // Prepare data
             const dates = data.portfolio.map(p => p.date);

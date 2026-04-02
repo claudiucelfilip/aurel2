@@ -1,0 +1,137 @@
+{
+  "meta": {
+    "end_date": "2026-04-01"
+  },
+  "periods": {
+    "15y": {
+      "start": "2010-01-01",
+      "end": "2026-04-01",
+      "rows": [
+        {
+          "name": "BASELINE_calm_hold_5pct",
+          "cagr": 0.15956382676711778,
+          "bench_cagr": 0.13412172282162316
+        },
+        {
+          "name": "BASELINE_calm_hold_OFF",
+          "cagr": 0.1125007577861159,
+          "bench_cagr": 0.13412172282162316
+        },
+        {
+          "name": "NO_TLT_calm_hold_5pct",
+          "cagr": 0.16617667235773537,
+          "bench_cagr": 0.13412172282162316
+        },
+        {
+          "name": "NO_TLT_calm_hold_OFF",
+          "cagr": 0.13639270523560354,
+          "bench_cagr": 0.13412172282162316
+        }
+      ]
+    },
+    "10y": {
+      "start": "2015-01-01",
+      "end": "2026-04-01",
+      "rows": [
+        {
+          "name": "BASELINE_calm_hold_5pct",
+          "cagr": 0.21294332105006508,
+          "bench_cagr": 0.12710493880807694
+        },
+        {
+          "name": "BASELINE_calm_hold_OFF",
+          "cagr": 0.11602836778697778,
+          "bench_cagr": 0.12710493880807694
+        },
+        {
+          "name": "NO_TLT_calm_hold_5pct",
+          "cagr": 0.21690383322511142,
+          "bench_cagr": 0.12710493880807694
+        },
+        {
+          "name": "NO_TLT_calm_hold_OFF",
+          "cagr": 0.15108741713333962,
+          "bench_cagr": 0.12710493880807694
+        }
+      ]
+    },
+    "5y": {
+      "start": "2020-01-01",
+      "end": "2026-04-01",
+      "rows": [
+        {
+          "name": "BASELINE_calm_hold_5pct",
+          "cagr": 0.3016048382686294,
+          "bench_cagr": 0.13459063143155348
+        },
+        {
+          "name": "BASELINE_calm_hold_OFF",
+          "cagr": 0.2721803909422047,
+          "bench_cagr": 0.13459063143155348
+        },
+        {
+          "name": "NO_TLT_calm_hold_5pct",
+          "cagr": 0.32789907643093485,
+          "bench_cagr": 0.13459063143155348
+        },
+        {
+          "name": "NO_TLT_calm_hold_OFF",
+          "cagr": 0.2978802141153769,
+          "bench_cagr": 0.13459063143155348
+        }
+      ]
+    },
+    "1y": {
+      "start": "2025-04-01",
+      "end": "2026-04-01",
+      "rows": [
+        {
+          "name": "BASELINE_calm_hold_5pct",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157320706149638
+        },
+        {
+          "name": "BASELINE_calm_hold_OFF",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157320706149638
+        },
+        {
+          "name": "NO_TLT_calm_hold_5pct",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157320706149638
+        },
+        {
+          "name": "NO_TLT_calm_hold_OFF",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157320706149638
+        }
+      ]
+    },
+    "1m": {
+      "start": "2026-03-01",
+      "end": "2026-04-01",
+      "rows": [
+        {
+          "name": "BASELINE_calm_hold_5pct",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973
+        },
+        {
+          "name": "BASELINE_calm_hold_OFF",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973
+        },
+        {
+          "name": "NO_TLT_calm_hold_5pct",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973
+        },
+        {
+          "name": "NO_TLT_calm_hold_OFF",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973
+        }
+      ]
+    }
+  }
+}

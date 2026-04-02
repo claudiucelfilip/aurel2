@@ -12,7 +12,6 @@ from aurel2.agent.orchestrator import AgentOrchestrator, AgentDecision, Decision
 from aurel2.agent.advisor import AIAdvisor, AIAdvice
 from aurel2.core.assets import ASSET_REGISTRY, get_all_yahoo_symbols
 from aurel2.data.providers.yahoo import YahooFinanceProvider
-from aurel2.strategies.dual_momentum import DualMomentumStrategy
 from aurel2.strategies.mean_reversion import MeanReversionStrategy
 from aurel2.strategies.multi_timeframe import MultiTimeframeTrendStrategy
 from aurel2.live.connection import AlpacaConnection
@@ -21,6 +20,7 @@ from aurel2.live.journal import TradeJournal, journal_path_for_mode
 from aurel2.live.pending import PendingManager, PendingDecision, DecisionUrgency
 from aurel2.live.trade_recorder import TradeRecorder
 from aurel2.notifications.ntfy import NtfyNotifier
+from aurel2.strategies.robust_quarterly import build_robust_quarterly_no_tlt_strategy
 
 logger = structlog.get_logger()
 
@@ -74,7 +74,8 @@ class Checker:
 
         # Initialize strategies
         self.strategies = {
-            "dual_momentum": DualMomentumStrategy(assets=ASSET_REGISTRY),
+            # Live variant: exclude long-duration treasuries (TLT) from selection.
+            "dual_momentum": build_robust_quarterly_no_tlt_strategy(),
             "mean_reversion": MeanReversionStrategy(),
             "multi_timeframe": MultiTimeframeTrendStrategy(),
         }
@@ -250,7 +251,8 @@ class Checker:
 
                 # If AI disagrees and has high confidence, use AI's recommendation
                 # Asymmetric thresholds: lower bar for safety, higher for opportunity
-                SAFETY_ASSETS = {"AGG", "TLT", "GLD", "CASH"}
+                # Keep AI overrides aligned with the live universe (NO_TLT).
+                SAFETY_ASSETS = {"AGG", "IEF", "SHY", "TIP", "GLD", "CASH"}
                 ai_asset = ai_advice.recommended_asset
                 override_type = "to_safety" if ai_asset in SAFETY_ASSETS else "to_opportunity"
                 OVERRIDE_THRESHOLDS = {"to_safety": 0.65, "to_opportunity": 0.85}

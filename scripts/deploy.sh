@@ -8,6 +8,10 @@ set -euo pipefail
 echo "=== Running tests ==="
 python3 -m pytest tests/ -x -q --tb=short
 
+echo ""
+echo "=== Regenerating dashboard backtests ==="
+python3 -m aurel2.engine.backtest
+
 # Check if dashboard needs a full rebuild (deps or Dockerfile changed)
 REBUILD_DASHBOARD=false
 if ! diff -q /root/aurel2/pyproject.toml /opt/aurel2/pyproject.toml >/dev/null 2>&1; then
