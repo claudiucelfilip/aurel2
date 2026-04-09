@@ -25,6 +25,52 @@ from aurel2.strategies.robust_quarterly import build_robust_quarterly_no_tlt_str
 logger = structlog.get_logger()
 
 
+def _decision_display_asset(decision: AgentDecision, current_holding: Optional[str]) -> Optional[str]:
+    """Human-facing asset label for a decision.
+
+    HOLD means "keep current position" from an operator's perspective, so the
+    display asset should be the actual broker holding when available, not the
+    orchestrator's internal candidate symbol.
+    """
+    if decision.action.value == "hold":
+        return current_holding or "cash"
+    return decision.asset_symbol
+
+
+def _build_hold_notification_message(
+    decision: AgentDecision,
+    current_holding: Optional[str],
+    account_value: Optional[float],
+    market_context: dict,
+    signals: dict,
+) -> str:
+    """Build explicit HOLD notification text.
+
+    Separates current broker state from the orchestrator's candidate/preferred
+    asset so operators don't confuse "hold current position" with
+    "already holding the candidate asset".
+    """
+    regime_str = market_context.get("regime", "unknown").upper()
+    acct_str = f"Account: ${account_value:,.0f}\n" if account_value else ""
+    signals_str = " / ".join(
+        f"{name.replace('_', ' ').title()}: {sig.get('action', '?').upper()}"
+        for name, sig in signals.items() if "error" not in sig
+    )
+    current_label = current_holding or "cash"
+    candidate_label = decision.asset_symbol or "—"
+    action_label = "HOLD current position"
+
+    return (
+        f"Current holding: {current_label}\n"
+        f"Candidate asset: {candidate_label}\n"
+        f"Action: {action_label}\n"
+        f"{acct_str}"
+        f"Regime: {regime_str}\n"
+        f"Signals: {signals_str}\n\n"
+        f"{decision.reasoning}"
+    )
+
+
 @dataclass
 class CheckResult:
     """Result of a single check cycle."""
@@ -182,11 +228,15 @@ class Checker:
             current_holding=current_holding,
         )
 
+        display_asset = _decision_display_asset(decision, current_holding)
+
         logger.info(
             "checker_deterministic_decision",
             decision_type=decision.decision_type.value,
             action=decision.action.value,
-            asset=decision.asset_symbol,
+            asset=display_asset,
+            decision_asset=decision.asset_symbol,
+            current_holding=current_holding,
             confidence=decision.confidence,
             requires_approval=decision.requires_approval,
         )
@@ -303,7 +353,9 @@ class Checker:
         self.journal.record_decision(
             decision_id=decision_id,
             action=decision.action.value,
-            symbol=decision.asset_symbol,
+            symbol=display_asset,
+            decision_symbol=decision.asset_symbol,
+            current_holding_symbol=current_holding,
             confidence=decision.confidence,
             decision_type=decision.decision_type.value,
             strategy_signals=signals_for_journal,
@@ -333,22 +385,17 @@ class Checker:
 
         if decision.action.value == "hold":
             # No action needed, but notify
-            regime_str = market_context.get("regime", "unknown").upper()
-            acct_str = f"Account: ${account_value:,.0f}\n" if account_value else ""
-            signals_str = " / ".join(
-                f"{name.replace('_', ' ').title()}: {sig.get('action', '?').upper()}"
-                for name, sig in signals.items() if "error" not in sig
-            )
+            current_label = current_holding or "cash"
 
             self.notifier.send(
-                message=(
-                    f"HOLD {current_holding or 'cash'}\n"
-                    f"{acct_str}"
-                    f"Regime: {regime_str}\n"
-                    f"Signals: {signals_str}\n\n"
-                    f"{decision.reasoning}"
+                message=_build_hold_notification_message(
+                    decision=decision,
+                    current_holding=current_holding,
+                    account_value=account_value,
+                    market_context=market_context,
+                    signals=signals,
                 ),
-                title=f"Aurel2: HOLD {current_holding or 'cash'}",
+                title=f"Aurel2: HOLD {current_label}",
                 tags=["white_check_mark"],
                 priority="low",
             )

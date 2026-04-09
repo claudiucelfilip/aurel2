@@ -154,6 +154,8 @@ class PortfolioSnapshot:
     cash: Decimal
     positions: list[Position]
     total_value: Decimal
+    holding_symbol: str | None = None
+    holding_asset_class: AssetClass | None = None
 
     @property
     def position_value(self) -> Decimal:

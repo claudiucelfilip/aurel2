@@ -43,6 +43,9 @@ Dashboard sync:
 - [backtest.py](/root/aurel2/src/aurel2/engine/backtest.py)
 - [dashboard.html](/root/aurel2/src/aurel2/dashboard/templates/dashboard.html)
 
+Measurement note:
+- backtest snapshots now preserve the held symbol / asset class, so offensive vs defensive vs cash attribution can be measured directly instead of being reconstructed from trades
+
 ## What Worked
 
 ### 1. Robust static policy

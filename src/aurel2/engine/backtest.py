@@ -15,7 +15,7 @@ import numpy as np
 import structlog
 
 from aurel2.core.assets import ASSET_REGISTRY
-from aurel2.core.models import Asset, AssetClass, Signal, SignalAction, Trade, PortfolioSnapshot
+from aurel2.core.models import Asset, AssetClass, Position, Signal, SignalAction, Trade, PortfolioSnapshot
 from aurel2.strategies.dual_momentum import DualMomentumStrategy
 from aurel2.strategies.mean_reversion import MeanReversionStrategy
 from aurel2.strategies.multi_timeframe import MultiTimeframeTrendStrategy
@@ -858,11 +858,31 @@ class BacktestEngine:
             else:
                 total_value = float(cash)
 
+            snapshot_positions = []
+            holding_symbol = "CASH"
+            holding_asset_class = AssetClass.CASH
+            if current_holding and current_holding != AssetClass.CASH and current_shares > 0:
+                held_asset = self._asset_for_class(current_holding)
+                if held_asset:
+                    snapshot_positions = [
+                        Position(
+                            asset=held_asset,
+                            shares=current_shares,
+                            entry_price=current_price or 0.0,
+                            entry_date=rebal_date,
+                            current_price=current_price,
+                        )
+                    ]
+                    holding_symbol = held_asset.symbol
+                    holding_asset_class = current_holding
+
             snapshots.append(PortfolioSnapshot(
                 date=rebal_date,
                 cash=cash,
-                positions=[],
+                positions=snapshot_positions,
                 total_value=Decimal(str(total_value)),
+                holding_symbol=holding_symbol,
+                holding_asset_class=holding_asset_class,
             ))
 
         print()  # newline after progress

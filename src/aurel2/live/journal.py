@@ -30,6 +30,8 @@ class JournalEntry:
     # Decision context
     action: Optional[str] = None
     symbol: Optional[str] = None
+    decision_symbol: Optional[str] = None
+    current_holding_symbol: Optional[str] = None
     confidence: float = 0.0
     decision_type: Optional[str] = None
 
@@ -108,6 +110,8 @@ class TradeJournal:
         market_regime: Optional[str] = None,
         account_value: Optional[float] = None,
         current_holding: Optional[str] = None,
+        decision_symbol: Optional[str] = None,
+        current_holding_symbol: Optional[str] = None,
     ) -> JournalEntry:
         """Record a trading decision."""
         entry = JournalEntry(
@@ -116,6 +120,8 @@ class TradeJournal:
             entry_type="decision",
             action=action,
             symbol=symbol,
+            decision_symbol=decision_symbol if decision_symbol is not None else symbol,
+            current_holding_symbol=current_holding_symbol if current_holding_symbol is not None else current_holding,
             confidence=confidence,
             decision_type=decision_type,
             strategy_signals=strategy_signals,
