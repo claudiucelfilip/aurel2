@@ -134,8 +134,12 @@ Data is partitioned by trading mode (`paper`/`live`):
 | `data/{mode}/session_progress.json` | Session tracking |
 | `data/failure_learnings.json` | Historical failures for AI (shared) |
 | `data/backtest_comparison.json` | Backtest results (shared) |
-| `~/.aurel2/heartbeat.json` | Daemon health status |
+| `~/.aurel2/heartbeat.json` | Daemon health status only |
 | `data/archive/` | Archived data from resets |
+
+Important: do *not* expect a per-mode runtime directory like `~/.aurel2/paper/`.
+Paper/live journals and pending approvals live under `data/{mode}/...`; `~/.aurel2`
+is only for runtime state such as heartbeat/log files.
 
 ## Decision Flow
 

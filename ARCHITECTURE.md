@@ -534,6 +534,10 @@ Manages decisions awaiting human approval.
 
 **Storage**: `data/{mode}/pending_decisions.json` (paper or live)
 
+Mode-partitioned trading state lives under `data/{mode}/...`. The runtime directory
+`~/.aurel2/` is still used for heartbeat/log-style state, but there is no required
+`~/.aurel2/paper/` directory in the current architecture.
+
 **Status Flow**:
 ```
 PENDING → APPROVED/REJECTED/TIMEOUT → EXECUTED

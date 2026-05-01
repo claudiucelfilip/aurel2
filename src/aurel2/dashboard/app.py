@@ -22,7 +22,7 @@ templates = Jinja2Templates(directory=str(templates_dir))
 APCA_API_KEY = os.environ.get("APCA_API_KEY_ID", "")
 APCA_API_SECRET = os.environ.get("APCA_API_SECRET_KEY", "")
 
-# Data directory
+# Runtime state directory (heartbeat, logs, misc daemon state)
 DATA_DIR = Path(os.environ.get("AUREL2_DATA_DIR", str(Path.home() / ".aurel2")))
 
 # Trading mode for data partitioning (paper/live)
@@ -276,21 +276,25 @@ async def dashboard(request: Request, period: str = "1m", page: int = 1):
     # Add first trade date info for display
     first_trade_date = get_first_trade_date()
 
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request,
-        "today": date.today(),
-        "connected": data.get("connected", False),
-        "error": data.get("error"),
-        "positions": data.get("positions", []),
-        "account": data.get("account"),
-        "heartbeat": heartbeat,
-        "chart_data": chart_data,
-        "first_trade_date": first_trade_date,
-        "pending_decisions": pending_decisions,
-        "trade_history": trade_history,
-        "period": period,
-        "page": page,
-    })
+    return templates.TemplateResponse(
+        request,
+        "dashboard.html",
+        {
+            "request": request,
+            "today": date.today(),
+            "connected": data.get("connected", False),
+            "error": data.get("error"),
+            "positions": data.get("positions", []),
+            "account": data.get("account"),
+            "heartbeat": heartbeat,
+            "chart_data": chart_data,
+            "first_trade_date": first_trade_date,
+            "pending_decisions": pending_decisions,
+            "trade_history": trade_history,
+            "period": period,
+            "page": page,
+        },
+    )
 
 
 @app.get("/api/positions")
