@@ -108,11 +108,14 @@ class PendingManager:
     def __init__(
         self,
         pending_file: str = DEFAULT_PENDING_FILE,
-        approval_base_url: str = "https://approval-endpoint.vercel.app/api/decision",
+        approval_base_url: str = "http://46.225.75.110:8080/decision",
     ):
         self.pending_file = Path(pending_file)
         self.approval_base_url = approval_base_url
         self.decisions: dict[str, PendingDecision] = {}
+        # IDs of decisions whose disk-edited approval/rejection has already
+        # been emitted to the daemon (prevents repeat-execute on each poll).
+        self._emitted_disk_status: set[str] = set()
 
         # Ensure data directory exists
         self.pending_file.parent.mkdir(parents=True, exist_ok=True)
@@ -253,7 +256,30 @@ class PendingManager:
         """
         results = []
 
+        # Reload from disk so external edits to pending_decisions.json
+        # (CLI approve, web UI, manual edits) are picked up on each poll.
+        self._load()
+
         for decision in list(self.decisions.values()):
+            # Disk-edited approvals/rejections: a decision sitting at approved
+            # or rejected with no executed_at means an out-of-band actor (CLI,
+            # web UI, manual edit) made a decision the daemon hasn't yet acted
+            # on. Emit it once so the daemon executes/handles it. Tracked in
+            # an in-memory set so we don't repeat on every poll.
+            if (
+                decision.status in (PendingStatus.APPROVED.value, PendingStatus.REJECTED.value)
+                and not decision.executed_at
+                and decision.id not in self._emitted_disk_status
+            ):
+                self._emitted_disk_status.add(decision.id)
+                results.append((decision, decision.status))
+                logger.info(
+                    "pending_disk_status_picked_up",
+                    id=decision.id,
+                    status=decision.status,
+                )
+                continue
+
             if decision.status != PendingStatus.PENDING.value:
                 continue
 

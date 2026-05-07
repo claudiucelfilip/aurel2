@@ -27,7 +27,11 @@ DATA_DIR = Path(os.environ.get("AUREL2_DATA_DIR", str(Path.home() / ".aurel2")))
 
 # Trading mode for data partitioning (paper/live)
 TRADING_MODE = os.environ.get("TRADING_MODE", "paper")
-MODE_DATA_DIR = Path(f"data/{TRADING_MODE}")
+# Dashboard container reads/writes mode-partitioned data via the host-data
+# bind mount (/opt/aurel2/data → /app/host-data). Falls back to a relative
+# path for local (non-Docker) dev runs.
+_HOST_DATA = Path("/app/host-data")
+MODE_DATA_DIR = (_HOST_DATA / TRADING_MODE) if _HOST_DATA.exists() else Path(f"data/{TRADING_MODE}")
 
 # Thread pool for running blocking broker calls
 executor = ThreadPoolExecutor(max_workers=2)
@@ -589,6 +593,117 @@ async def api_status():
         "heartbeat": get_heartbeat(),
         "trading_mode": TRADING_MODE,
     }
+
+
+# ---------------------------------------------------------------------------
+# Pending decision approval (local replacement for Vercel approval endpoint).
+# Daemon's check_all_pending() reloads the file and emits status changes via
+# the disk-edited approval path (see src/aurel2/live/pending.py).
+# ---------------------------------------------------------------------------
+def _set_decision_status(decision_id: str, new_status: str) -> dict:
+    """Mutate pending_decisions.json to set status. Returns updated decision."""
+    pending_file = MODE_DATA_DIR / "pending_decisions.json"
+    if not pending_file.exists():
+        return {"error": "no pending decisions file"}
+    data = json.loads(pending_file.read_text())
+    decisions = data.get("decisions", {})
+    if decision_id not in decisions:
+        return {"error": f"decision {decision_id} not found"}
+    dec = decisions[decision_id]
+    if dec.get("status") not in ("pending", None):
+        return {"error": f"decision already in status {dec.get('status')}", "decision": dec}
+    dec["status"] = new_status
+    pending_file.write_text(json.dumps(data, indent=2))
+    return {"ok": True, "decision": dec}
+
+
+@app.post("/api/decision/{decision_id}/approve")
+async def api_approve_decision(decision_id: str):
+    """Mark a pending decision as approved. Daemon picks up on next poll."""
+    return _set_decision_status(decision_id, "approved")
+
+
+@app.post("/api/decision/{decision_id}/reject")
+async def api_reject_decision(decision_id: str):
+    """Mark a pending decision as rejected."""
+    return _set_decision_status(decision_id, "rejected")
+
+
+@app.get("/api/decision/{decision_id}")
+async def api_get_decision(decision_id: str):
+    """Return JSON for a single pending decision."""
+    pending_file = MODE_DATA_DIR / "pending_decisions.json"
+    if not pending_file.exists():
+        return {"error": "no pending decisions file"}
+    data = json.loads(pending_file.read_text())
+    dec = data.get("decisions", {}).get(decision_id)
+    if not dec:
+        return {"error": "not found"}
+    return dec
+
+
+@app.post("/decision/{decision_id}")
+async def register_decision_noop(decision_id: str):
+    """No-op POST handler. Daemon's create_decision POSTs the new decision
+    here for backward-compat with the old Vercel flow; we don't need to do
+    anything because the decision is already on disk in pending_decisions.json
+    which the dashboard reads directly."""
+    return {"ok": True, "id": decision_id, "registered": "noop (file-based)"}
+
+
+@app.get("/decision/{decision_id}", response_class=HTMLResponse)
+async def render_decision(decision_id: str):
+    """Clickable approval page for a pending decision."""
+    pending_file = MODE_DATA_DIR / "pending_decisions.json"
+    if not pending_file.exists():
+        return HTMLResponse("<h2>No pending decisions file.</h2>", status_code=404)
+    data = json.loads(pending_file.read_text())
+    dec = data.get("decisions", {}).get(decision_id)
+    if not dec:
+        return HTMLResponse(f"<h2>Decision {decision_id} not found.</h2>", status_code=404)
+    status = dec.get("status", "pending")
+    action = (dec.get("action") or "").upper()
+    symbol = dec.get("symbol") or ""
+    reason = dec.get("reasoning", "") or ""
+    confidence = dec.get("confidence", 0)
+    price = dec.get("original_price")
+    price_str = f"${price:.2f}" if price else "—"
+    strategies = dec.get("strategies", []) or []
+    strategies_html = "".join(
+        f"<li><b>{s.get('name','?')}</b>: {str(s.get('action','?')).upper()} ({s.get('confidence',0):.2f})</li>"
+        for s in strategies
+    )
+    is_pending = status == "pending"
+    buttons = (
+        f"""
+        <form method="POST" action="/api/decision/{decision_id}/approve" style="display:inline">
+          <button type="submit" style="background:#22c55e;color:white;padding:12px 24px;border:0;border-radius:8px;font-size:16px;cursor:pointer;margin-right:12px">Approve</button>
+        </form>
+        <form method="POST" action="/api/decision/{decision_id}/reject" style="display:inline">
+          <button type="submit" style="background:#ef4444;color:white;padding:12px 24px;border:0;border-radius:8px;font-size:16px;cursor:pointer">Reject</button>
+        </form>
+        """
+        if is_pending else f"<p><b>Status:</b> {status}</p>"
+    )
+    html = f"""<!doctype html>
+<html><head><title>Aurel2 — Approve Decision</title>
+<style>body{{font-family:system-ui;background:#0f172a;color:#e2e8f0;max-width:640px;margin:40px auto;padding:24px}}
+h1{{color:#60a5fa}}h2{{color:#94a3b8;font-weight:500;font-size:14px;text-transform:uppercase}}
+.card{{background:rgba(30,41,59,0.9);border-radius:16px;padding:24px;margin:16px 0;border:1px solid rgba(148,163,184,0.2)}}
+.action{{font-size:32px;font-weight:700;color:{'#22c55e' if action == 'BUY' else '#ef4444' if action == 'SELL' else '#3b82f6'}}}
+.symbol{{font-size:32px;font-weight:700}}ul{{list-style:none;padding:0}}li{{padding:6px 0;color:#cbd5e1}}</style>
+</head><body>
+<h1>Aurel2 — Decision {decision_id[:8]}</h1>
+<div class="card">
+  <div><span class="action">{action}</span> <span class="symbol">{symbol}</span></div>
+  <p style="color:#94a3b8">{reason}</p>
+  <h2>Confidence</h2><p>{confidence:.0%}</p>
+  <h2>Reference price</h2><p>{price_str}</p>
+  <h2>Strategy signals</h2><ul>{strategies_html}</ul>
+</div>
+<div class="card">{buttons}</div>
+</body></html>"""
+    return HTMLResponse(html)
 
 
 def run_dashboard(host: str = "127.0.0.1", port: int = 8000):

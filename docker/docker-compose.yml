@@ -27,6 +27,13 @@ services:
       # Persist aurel2 data (portfolio, logs, pending orders)
       - aurel2-data:/root/.aurel2
 
+      # Persist mode-partitioned trade journal / pending decisions / session
+      # progress across container rebuilds. Without this, deploys wipe the
+      # paper/live track records (see 2026-05-07 incident).
+      - ../data/paper:/app/data/paper
+      - ../data/live:/app/data/live
+      - ../data/archive:/app/data/archive
+
       # Keep runtime code/config in sync with host checkout (no image drift)
       - ../src:/app/src:ro
       - ../config:/app/config:ro
@@ -70,7 +77,10 @@ services:
       TRADING_MODE: ${TRADING_MODE:-paper}
     volumes:
       - aurel2-data:/root/.aurel2
-      - ../data:/app/host-data:ro
+      # Writable: dashboard hosts the local approval UI and writes status
+      # changes back to data/{mode}/pending_decisions.json. Daemon picks up
+      # via the disk-edit path in src/aurel2/live/pending.py.
+      - ../data:/app/host-data
       # Bind-mount source + config for hot reload
       - ../src:/app/src:ro
       - ../config:/app/config:ro

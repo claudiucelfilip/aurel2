@@ -85,11 +85,18 @@ class BacktestResult:
                 max_dd = dd
         self.max_drawdown = max_dd
 
+        # Snapshot-cadence-aware annualization. Previously hardcoded to 12
+        # (monthly), which inflated quarterly Sharpe ~1.7x and deflated daily
+        # Sharpe ~4.6x. Derive from actual snapshot density instead.
+        if years > 0 and len(values) > 1:
+            periods_per_year = (len(values) - 1) / years
+        else:
+            periods_per_year = 12
+
         # Sharpe ratio (annualized, assuming 0% risk-free)
         if len(values) > 1:
             returns = pd.Series(values).pct_change().dropna()
             if len(returns) > 0 and returns.std() > 0:
-                periods_per_year = 12  # monthly rebalance
                 self.sharpe_ratio = (returns.mean() * periods_per_year) / (returns.std() * np.sqrt(periods_per_year))
 
         # Sortino ratio (annualized, penalizes downside only)
@@ -97,7 +104,6 @@ class BacktestResult:
             returns = pd.Series(values).pct_change().dropna()
             downside = returns[returns < 0]
             if len(downside) > 0 and downside.std() > 0:
-                periods_per_year = 12
                 self.sortino_ratio = (returns.mean() * periods_per_year) / (downside.std() * np.sqrt(periods_per_year))
 
         # Calmar ratio (CAGR / max drawdown)
@@ -1056,24 +1062,39 @@ def generate_comparison_json(output_path: str = "data/backtest_comparison.json")
         ("1m", previous_month_start(month_start(end_date)), end_date),
     ]
 
+    # Build the deployed strategy: plain DM with NO_TLT universe, no quarterly
+    # gate, no calm-hold. Daily cadence matches live behavior.
+    # See data/cadence_filter_revalidation_may2026.json for rationale.
+    no_tlt_assets = {ac: a for ac, a in ASSET_REGISTRY.items() if ac != AssetClass.BONDS_TREASURY}
+
     results = {
         "_meta": {
             "generated_at": end_date.isoformat(),
-            "strategy": "Robust_Quarterly_NO_TLT",
+            "strategy": "DM_NO_TLT_daily_no_calm",
             "benchmark": "SPY",
+            "cadence": "daily",
+            "calm_hold_threshold": 0.0,
         }
     }
     for label, start_date, period_end in periods:
         print(f"Running {label} backtest ({start_date} -> {period_end})...")
 
-        engine = BacktestEngine(initial_capital=capital, use_ai=False)
-        engine.dual_momentum = build_robust_quarterly_no_tlt_strategy()
+        engine = BacktestEngine(initial_capital=capital, use_ai=False,
+                                correlation_guard=False, sideways_hold=False)
+        engine.dual_momentum = DualMomentumStrategy(
+            assets=no_tlt_assets,
+            lookback_months=12,
+            switch_threshold=0.02,
+            cash_rate=0.0,
+            pilot_entry_enabled=False,
+        )
+        engine.orchestrator.calm_market_hold_threshold = 0.0
         result = engine.run(
             prices=prices,
             start_date=start_date,
             end_date=period_end,
             benchmark_symbol="SPY",
-            frequency="quarterly",
+            frequency="daily",
         )
 
         # Build portfolio series

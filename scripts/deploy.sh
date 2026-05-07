@@ -23,16 +23,23 @@ fi
 
 echo ""
 echo "=== Syncing source code to /opt/aurel2/ ==="
+# Sync top-level dirs and pyproject
 rsync -a --delete \
   --exclude='.git' \
-  --exclude='data/paper/' \
-  --exclude='data/live/' \
-  --exclude='data/price_cache/' \
-  --exclude='data/archive/' \
   /root/aurel2/src /root/aurel2/scripts /root/aurel2/config \
-  /root/aurel2/docker/Dockerfile /root/aurel2/docker/docker-compose.yml \
-  /root/aurel2/docker/.env.example /root/aurel2/pyproject.toml \
+  /root/aurel2/pyproject.toml \
   /opt/aurel2/
+
+# Sync docker config files INTO /opt/aurel2/docker/ (not /opt/aurel2/!) — the
+# previous rsync syntax silently put them at /opt/aurel2/{Dockerfile,docker-compose.yml},
+# leaving the actual /opt/aurel2/docker/ stale on every deploy.
+mkdir -p /opt/aurel2/docker/
+cp /root/aurel2/docker/Dockerfile          /opt/aurel2/docker/Dockerfile
+cp /root/aurel2/docker/docker-compose.yml  /opt/aurel2/docker/docker-compose.yml
+cp /root/aurel2/docker/.env.example        /opt/aurel2/docker/.env.example
+
+# Ensure mode-partitioned data dirs exist on host (bind mounts target these)
+mkdir -p /opt/aurel2/data/paper /opt/aurel2/data/live /opt/aurel2/data/archive
 
 # Sync backtest data separately (not --delete, just update)
 cp /root/aurel2/data/backtest_comparison.json /opt/aurel2/data/ 2>/dev/null || true

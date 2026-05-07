@@ -11,7 +11,9 @@ import structlog
 from aurel2.agent.orchestrator import AgentOrchestrator, AgentDecision, DecisionType
 from aurel2.agent.advisor import AIAdvisor, AIAdvice
 from aurel2.core.assets import ASSET_REGISTRY, get_all_yahoo_symbols
+from aurel2.core.models import AssetClass
 from aurel2.data.providers.yahoo import YahooFinanceProvider
+from aurel2.strategies.dual_momentum import DualMomentumStrategy
 from aurel2.strategies.mean_reversion import MeanReversionStrategy
 from aurel2.strategies.multi_timeframe import MultiTimeframeTrendStrategy
 from aurel2.live.connection import AlpacaConnection
@@ -20,7 +22,6 @@ from aurel2.live.journal import TradeJournal, journal_path_for_mode
 from aurel2.live.pending import PendingManager, PendingDecision, DecisionUrgency
 from aurel2.live.trade_recorder import TradeRecorder
 from aurel2.notifications.ntfy import NtfyNotifier
-from aurel2.strategies.robust_quarterly import build_robust_quarterly_no_tlt_strategy
 
 logger = structlog.get_logger()
 
@@ -118,15 +119,25 @@ class Checker:
         self.dry_run = dry_run
         self.use_ai_advisor = use_ai_advisor
 
-        # Initialize strategies
+        # Initialize strategies.
+        # 2026-05-07: Switched from RobustQuarterlyStrategy (quarterly gate) to plain
+        # DualMomentumStrategy. Daily-cadence backtests showed gate + calm-hold gave
+        # up +5.9% CAGR over 5y vs no filters (same max DD). See
+        # data/cadence_filter_revalidation_may2026.json.
+        no_tlt_assets = {ac: a for ac, a in ASSET_REGISTRY.items() if ac != AssetClass.BONDS_TREASURY}
         self.strategies = {
-            # Live variant: exclude long-duration treasuries (TLT) from selection.
-            "dual_momentum": build_robust_quarterly_no_tlt_strategy(),
+            "dual_momentum": DualMomentumStrategy(
+                assets=no_tlt_assets,
+                lookback_months=12,
+                switch_threshold=0.02,
+                cash_rate=0.0,
+                pilot_entry_enabled=False,
+            ),
             "mean_reversion": MeanReversionStrategy(),
             "multi_timeframe": MultiTimeframeTrendStrategy(),
         }
 
-        self.orchestrator = AgentOrchestrator()
+        self.orchestrator = AgentOrchestrator(calm_market_hold_threshold=0.0)
         self.provider = YahooFinanceProvider()
 
         # Initialize AI advisor with failure learnings (uses Claude Code CLI)

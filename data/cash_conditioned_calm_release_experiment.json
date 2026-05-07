@@ -1,0 +1,182 @@
+{
+  "_meta": {
+    "generated_at": "2026-05-06",
+    "end_date": "2026-05-05",
+    "variants": [
+      "Baseline",
+      "CalmOff",
+      "CashGap10",
+      "CashGap15",
+      "CashGap20"
+    ],
+    "rationale": "Only release calm-hold when current holding has already fallen below CASH and the winner leads by a large gap."
+  },
+  "15y": [
+    {
+      "variant": "Baseline",
+      "cagr": 0.1619028615985938,
+      "max_dd": 0.19647890551680663,
+      "sharpe": 1.7424167279048413,
+      "final_value": 116102.5802512348,
+      "trades": 12
+    },
+    {
+      "variant": "CalmOff",
+      "cagr": 0.1348176059892232,
+      "max_dd": 0.3049551727445554,
+      "sharpe": 1.34726678554132,
+      "final_value": 78970.3534256152,
+      "trades": 21
+    },
+    {
+      "variant": "CashGap10",
+      "cagr": 0.1619028615985938,
+      "max_dd": 0.19647890551680663,
+      "sharpe": 1.7424167279048413,
+      "final_value": 116102.5802512348,
+      "trades": 12
+    },
+    {
+      "variant": "CashGap15",
+      "cagr": 0.1619028615985938,
+      "max_dd": 0.19647890551680663,
+      "sharpe": 1.7424167279048413,
+      "final_value": 116102.5802512348,
+      "trades": 12
+    },
+    {
+      "variant": "CashGap20",
+      "cagr": 0.1619028615985938,
+      "max_dd": 0.19647890551680663,
+      "sharpe": 1.7424167279048413,
+      "final_value": 116102.5802512348,
+      "trades": 12
+    }
+  ],
+  "10y": [
+    {
+      "variant": "Baseline",
+      "cagr": 0.21006023809458174,
+      "max_dd": 0.1753012085877533,
+      "sharpe": 2.03255628054116,
+      "final_value": 86905.24907468352,
+      "trades": 8
+    },
+    {
+      "variant": "CalmOff",
+      "cagr": 0.14513651080224443,
+      "max_dd": 0.22945580801000895,
+      "sharpe": 1.3590288696878048,
+      "final_value": 46499.87885724899,
+      "trades": 15
+    },
+    {
+      "variant": "CashGap10",
+      "cagr": 0.21006023809458174,
+      "max_dd": 0.1753012085877533,
+      "sharpe": 2.03255628054116,
+      "final_value": 86905.24907468352,
+      "trades": 8
+    },
+    {
+      "variant": "CashGap15",
+      "cagr": 0.21006023809458174,
+      "max_dd": 0.1753012085877533,
+      "sharpe": 2.03255628054116,
+      "final_value": 86905.24907468352,
+      "trades": 8
+    },
+    {
+      "variant": "CashGap20",
+      "cagr": 0.21006023809458174,
+      "max_dd": 0.1753012085877533,
+      "sharpe": 2.03255628054116,
+      "final_value": 86905.24907468352,
+      "trades": 8
+    }
+  ],
+  "5y": [
+    {
+      "variant": "Baseline",
+      "cagr": 0.312889599108388,
+      "max_dd": 0.11331195898994235,
+      "sharpe": 2.7049794766420185,
+      "final_value": 56191.26383089883,
+      "trades": 5
+    },
+    {
+      "variant": "CalmOff",
+      "cagr": 0.2836408811052704,
+      "max_dd": 0.10798896348475934,
+      "sharpe": 2.524358024459697,
+      "final_value": 48710.8342401231,
+      "trades": 7
+    },
+    {
+      "variant": "CashGap10",
+      "cagr": 0.312889599108388,
+      "max_dd": 0.11331195898994235,
+      "sharpe": 2.7049794766420185,
+      "final_value": 56191.26383089883,
+      "trades": 5
+    },
+    {
+      "variant": "CashGap15",
+      "cagr": 0.312889599108388,
+      "max_dd": 0.11331195898994235,
+      "sharpe": 2.7049794766420185,
+      "final_value": 56191.26383089883,
+      "trades": 5
+    },
+    {
+      "variant": "CashGap20",
+      "cagr": 0.312889599108388,
+      "max_dd": 0.11331195898994235,
+      "sharpe": 2.7049794766420185,
+      "final_value": 56191.26383089883,
+      "trades": 5
+    }
+  ],
+  "paper_window": [
+    {
+      "variant": "Baseline",
+      "cagr": 0.0,
+      "max_dd": 0.0,
+      "sharpe": 0.0,
+      "final_value": 10000.0,
+      "trades": 0
+    },
+    {
+      "variant": "CalmOff",
+      "cagr": 0.0,
+      "max_dd": 0.0,
+      "sharpe": 0.0,
+      "final_value": 10000.0,
+      "trades": 0
+    },
+    {
+      "variant": "CashGap10",
+      "cagr": 0.0,
+      "max_dd": 0.0,
+      "sharpe": 0.0,
+      "final_value": 10000.0,
+      "trades": 0
+    },
+    {
+      "variant": "CashGap15",
+      "cagr": 0.0,
+      "max_dd": 0.0,
+      "sharpe": 0.0,
+      "final_value": 10000.0,
+      "trades": 0
+    },
+    {
+      "variant": "CashGap20",
+      "cagr": 0.0,
+      "max_dd": 0.0,
+      "sharpe": 0.0,
+      "final_value": 10000.0,
+      "trades": 0
+    }
+  ]
+}
