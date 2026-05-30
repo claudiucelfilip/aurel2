@@ -73,9 +73,19 @@ def _run(prices: pd.DataFrame, assets: dict[AssetClass, Asset], start: date, end
     years = (end - start).days / 365.25
     bench_return = ((result.benchmark_final / 10000.0) - 1.0) if result.benchmark_final else 0.0
     bench_cagr = ((1.0 + bench_return) ** (1.0 / years) - 1.0) if years > 0 else 0.0
+    strategy_total = (result.final_value / 10000.0 - 1.0) * 100.0
+    benchmark_total = bench_return * 100.0
     return {
         "cagr": result.cagr,
         "bench_cagr": bench_cagr,
+        "alpha_cagr": result.cagr - bench_cagr,
+        "strat_total": strategy_total,
+        "bench_total": benchmark_total,
+        "alpha_total": strategy_total - benchmark_total,
+        "max_dd": result.max_drawdown,
+        "sharpe": result.sharpe_ratio,
+        "turnover": result.turnover,
+        "trades": result.num_trades,
     }
 
 
@@ -86,6 +96,11 @@ def main() -> None:
         "--force-20y",
         action="store_true",
         help="Run 20y even if no candidate beats baseline in the shorter windows.",
+    )
+    parser.add_argument(
+        "--shortlist",
+        action="store_true",
+        help="Run only Robust_Quarterly_BASELINE vs Robust_Quarterly_NO_TLT.",
     )
     args = parser.parse_args()
 
@@ -128,6 +143,8 @@ def main() -> None:
         Candidate("Robust_Quarterly_TLT_TO_AGG", tlt_to_agg_assets),
         Candidate("Robust_Quarterly_TLT_TO_TIP", tlt_to_tip_assets),
     ]
+    if args.shortlist:
+        candidates = candidates[:2]
 
     provider = CachedPriceProvider()
     symbols = get_all_yahoo_symbols()
@@ -180,7 +197,11 @@ def main() -> None:
 
         console.print(f"\n[bold yellow]{label} ({start} -> {end})[/bold yellow]")
         console.print(f"  Baseline: {fmt_pct(base)}   SPY: {fmt_pct(spy)}")
-        console.print(f"  Best:     {best['name']}  {fmt_pct(best['cagr'])}")
+        console.print(
+            f"  Best:     {best['name']}  {fmt_pct(best['cagr'])}  "
+            f"Sharpe {best['sharpe']:.2f}  MaxDD {best['max_dd']:.1%}  "
+            f"Turnover {best['turnover']:.2f}  Trades {best['trades']}"
+        )
 
     should_run_20y = False
     if args.force_20y:
@@ -213,7 +234,11 @@ def main() -> None:
 
         console.print(f"\n[bold yellow]{label} ({start} -> {end})[/bold yellow]")
         console.print(f"  Baseline: {fmt_pct(base)}   SPY: {fmt_pct(spy)}")
-        console.print(f"  Best:     {best['name']}  {fmt_pct(best['cagr'])}")
+        console.print(
+            f"  Best:     {best['name']}  {fmt_pct(best['cagr'])}  "
+            f"Sharpe {best['sharpe']:.2f}  MaxDD {best['max_dd']:.1%}  "
+            f"Turnover {best['turnover']:.2f}  Trades {best['trades']}"
+        )
     elif args.include_20y:
         console.print("\n[dim]Skipping 20y (gate not met). Use --force-20y to run anyway.[/dim]")
 
