@@ -26,6 +26,19 @@ from aurel2.notifications.ntfy import NtfyNotifier
 logger = structlog.get_logger()
 
 
+def _trading_days_since(prices: pd.DataFrame, since: date) -> int:
+    """Count distinct trading days in ``prices`` strictly after ``since``.
+
+    Used for the min-hold cadence throttle. The latest price date is "today",
+    so this is the number of trading days elapsed since the last switch.
+    """
+    try:
+        dates = {d.date() for d in pd.to_datetime(prices["date"])}
+    except (KeyError, TypeError, ValueError):
+        return 0
+    return sum(1 for d in dates if d > since)
+
+
 def _decision_display_asset(decision: AgentDecision, current_holding: Optional[str]) -> Optional[str]:
     """Human-facing asset label for a decision.
 
@@ -134,7 +147,13 @@ class Checker:
                 pilot_entry_enabled=False,
             ),
             "mean_reversion": MeanReversionStrategy(),
-            "multi_timeframe": MultiTimeframeTrendStrategy(),
+            # Give multi-timeframe the SAME universe as dual_momentum. Its default
+            # universe was only {US_STOCKS, INTL_DEVELOPED, BONDS_AGGREGATE}, so it
+            # had no data for sector holdings like XLK and always voted "switch to
+            # SPY" — a permanently dead/divergent vote that blocked any majority.
+            "multi_timeframe": MultiTimeframeTrendStrategy(
+                target_assets=[ac for ac in no_tlt_assets if ac != AssetClass.CASH],
+            ),
         }
 
         self.orchestrator = AgentOrchestrator(calm_market_hold_threshold=0.0)
@@ -231,6 +250,12 @@ class Checker:
 
         # 5. Get market context
         market_context = self._build_market_context(prices)
+
+        # Min-hold cadence: trading days since the last executed switch, so the
+        # orchestrator can throttle churn (daily monitoring, monthly execution).
+        last_switch = self.journal.last_switch_date()
+        if last_switch is not None:
+            market_context["days_since_last_switch"] = _trading_days_since(prices, last_switch)
 
         # 6. Orchestrator analysis (deterministic)
         decision = self.orchestrator.analyze(

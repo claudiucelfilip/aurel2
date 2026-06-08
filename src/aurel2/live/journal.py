@@ -3,7 +3,7 @@
 import json
 import os
 from dataclasses import dataclass, field, asdict
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Optional
 
@@ -182,6 +182,24 @@ class TradeJournal:
                 return
 
         logger.warning("journal_decision_not_found", id=decision_id)
+
+    def last_switch_date(self) -> Optional[date]:
+        """Date of the most recent executed trade that changed the held asset.
+
+        Used by the min-hold cadence throttle (daily monitoring, monthly
+        execution). Returns None if there has never been an executed switch.
+        """
+        for entry in reversed(self.entries):
+            if (
+                entry.executed
+                and entry.current_holding_after is not None
+                and entry.current_holding_after != entry.current_holding_before
+            ):
+                try:
+                    return datetime.fromisoformat(entry.timestamp).date()
+                except (ValueError, TypeError):
+                    continue
+        return None
 
     def get_recent_entries(self, days: int = 30) -> list[JournalEntry]:
         """Get entries from the last N days."""

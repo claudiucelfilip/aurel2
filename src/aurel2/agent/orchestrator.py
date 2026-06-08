@@ -9,7 +9,7 @@ Enhanced with:
 - Regime-aware strategy selection/disabling
 """
 
-from collections import deque
+from collections import Counter, deque
 from dataclasses import dataclass, field
 from datetime import datetime, time
 from enum import Enum
@@ -198,6 +198,9 @@ class AgentOrchestrator:
         sideways_hold_enabled: bool = True,
         sideways_hold_momentum_threshold: float = 0.20,
         dm_primary_enabled: bool = True,
+        routine_agreement_threshold: float = 2 / 3,
+        min_hold_enabled: bool = True,
+        min_hold_days: int = 21,
     ) -> None:
         """Initialize the orchestrator.
 
@@ -218,6 +221,15 @@ class AgentOrchestrator:
                 required to allow a switch in a sideways market.
             dm_primary_enabled: If True, dual momentum directly drives trade action
                 when available. If False, use weighted multi-strategy voting.
+            routine_agreement_threshold: Fraction of strategies that must share the
+                same action for a decision to be ROUTINE (auto-executed without
+                approval). Default 2/3 — i.e. 2 of 3 strategies agreeing is enough.
+            min_hold_enabled: If True, suppress momentum switches until at least
+                ``min_hold_days`` trading days have passed since the last switch
+                (daily monitoring with monthly execution cadence — Lesson 17).
+            min_hold_days: Minimum trading days to hold a position before a new
+                switch is allowed (default 21 ≈ one month). Requires the caller to
+                pass ``days_since_last_switch`` in ``market_context``.
         """
         self.timezone = timezone
         self.sleep_start = sleep_start
@@ -235,6 +247,9 @@ class AgentOrchestrator:
         self.sideways_hold_enabled = sideways_hold_enabled
         self.sideways_hold_momentum_threshold = sideways_hold_momentum_threshold
         self.dm_primary_enabled = dm_primary_enabled
+        self.routine_agreement_threshold = routine_agreement_threshold
+        self.min_hold_enabled = min_hold_enabled
+        self.min_hold_days = min_hold_days
 
         # Rolling accuracy tracking per strategy
         self._accuracy_history: dict[str, deque[bool]] = {
@@ -418,7 +433,8 @@ class AgentOrchestrator:
                 Each signal should have an "action" key.
 
         Returns:
-            ROUTINE if all strategies agree, NON_ROUTINE otherwise.
+            ROUTINE if at least ``routine_agreement_threshold`` of strategies share
+            the same action (default 2/3), NON_ROUTINE otherwise.
         """
         if not signals:
             return DecisionType.NON_ROUTINE
@@ -431,9 +447,11 @@ class AgentOrchestrator:
         if not actions:
             return DecisionType.NON_ROUTINE
 
-        # All strategies must agree for ROUTINE
-        first_action = actions[0]
-        if all(action == first_action for action in actions):
+        # ROUTINE when a strong-enough majority shares the same action. With 3
+        # strategies and a 2/3 threshold, 2 agreeing is enough to auto-execute;
+        # only a true 3-way split stays NON_ROUTINE (needs approval).
+        top_count = Counter(actions).most_common(1)[0][1]
+        if top_count / len(actions) >= self.routine_agreement_threshold:
             return DecisionType.ROUTINE
 
         return DecisionType.NON_ROUTINE
@@ -691,7 +709,36 @@ class AgentOrchestrator:
                     confidence = voted_confidence
                     sideways_hold_applied = True
 
-        if not calm_hold_applied and not sideways_hold_applied:
+        # Min-hold throttle: daily monitoring, monthly execution (Lesson 17).
+        # Suppress a momentum switch until min_hold_days trading days have passed
+        # since the last switch, so we don't churn on daily noise. URGENT (crash)
+        # decisions bypass the throttle so we can still rotate to safety fast.
+        min_hold_applied = False
+        if (
+            self.min_hold_enabled
+            and not calm_hold_applied
+            and not sideways_hold_applied
+            and decision_type != DecisionType.URGENT
+        ):
+            days_since_switch = market_context.get("days_since_last_switch")
+            dm = signals.get("dual_momentum", {})
+            dm_target = dm.get("asset_symbol")
+            proposes_switch = (
+                current_holding not in ("CASH", None)
+                and dm.get("action") == "buy"
+                and dm_target not in (None, current_holding)
+            )
+            if (
+                proposes_switch
+                and days_since_switch is not None
+                and days_since_switch < self.min_hold_days
+            ):
+                action = SignalAction.HOLD
+                asset_symbol = None
+                confidence = voted_confidence
+                min_hold_applied = True
+
+        if not calm_hold_applied and not sideways_hold_applied and not min_hold_applied:
             if self.dm_primary_enabled and "dual_momentum" in signals:
                 # DM-primary mode: use dual momentum signal directly for trade decisions.
                 # Other strategies still contribute to decision classification and urgency.
@@ -712,6 +759,7 @@ class AgentOrchestrator:
             self.correlation_guard_enabled
             and not calm_hold_applied
             and not sideways_hold_applied
+            and not min_hold_applied
             and action == SignalAction.BUY
             and asset_symbol in BOND_SYMBOLS
         ):
@@ -744,10 +792,13 @@ class AgentOrchestrator:
         elif sideways_hold_applied:
             drawdown = market_context.get("drawdown", 0.0)
             reasoning = f"{regime_info}Sideways-hold: keeping {current_holding} (drawdown {drawdown:.1%}, momentum advantage {advantage:.0%} <= {self.sideways_hold_momentum_threshold:.0%} threshold)"
+        elif min_hold_applied:
+            days_since_switch = market_context.get("days_since_last_switch")
+            reasoning = f"{regime_info}Min-hold throttle: keeping {current_holding} ({days_since_switch}d since last switch < {self.min_hold_days}d cadence)"
         elif correlation_guard_applied:
             reasoning = f"{regime_info}Correlation guard: redirected bond rotation to {asset_symbol} (SPY-AGG correlation {spy_agg_corr:.2f} > {self.correlation_threshold:.2f})"
         elif decision_type == DecisionType.ROUTINE:
-            reasoning = f"{regime_info}All strategies agree on {action.value.upper()} action (weights: {weights_str})"
+            reasoning = f"{regime_info}Majority agree on {action.value.upper()} action ({agreement_count}/{len(signals)} strategies, weights: {weights_str})"
         elif decision_type == DecisionType.URGENT:
             reasoning = f"{regime_info}Urgent condition detected. Recommended action: {action.value.upper()} (position: {position_size:.0%})"
         else:

@@ -9,8 +9,12 @@ echo "=== Running tests ==="
 python3 -m pytest tests/ -x -q --tb=short
 
 echo ""
-echo "=== Regenerating dashboard backtests ==="
-python3 -m aurel2.engine.backtest
+if [ "${SKIP_BACKTEST_REGEN:-0}" = "1" ]; then
+    echo "=== Skipping dashboard backtest regeneration (SKIP_BACKTEST_REGEN=1) ==="
+else
+    echo "=== Regenerating dashboard backtests ==="
+    python3 -m aurel2.engine.backtest
+fi
 
 # Check if dashboard needs a full rebuild (deps or Dockerfile changed)
 REBUILD_DASHBOARD=false

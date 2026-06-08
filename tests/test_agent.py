@@ -189,15 +189,15 @@ class TestClassifyDecision:
         }
         assert orchestrator._classify_decision(signals) == DecisionType.ROUTINE
 
-    def test_disagreement_is_non_routine(self):
-        """When strategies disagree, decision should be NON_ROUTINE."""
+    def test_two_thirds_majority_is_routine(self):
+        """A 2/3 majority on the same action auto-executes (ROUTINE)."""
         orchestrator = AgentOrchestrator()
         signals = {
             "dual_momentum": {"action": "hold"},
             "mean_reversion": {"action": "buy"},
             "multi_timeframe": {"action": "hold"},
         }
-        assert orchestrator._classify_decision(signals) == DecisionType.NON_ROUTINE
+        assert orchestrator._classify_decision(signals) == DecisionType.ROUTINE
 
     def test_all_agree_buy_is_routine(self):
         """When all strategies agree on BUY, decision should be ROUTINE."""
@@ -219,12 +219,22 @@ class TestClassifyDecision:
         }
         assert orchestrator._classify_decision(signals) == DecisionType.ROUTINE
 
-    def test_two_out_of_three_disagree(self):
-        """When 2 out of 3 strategies disagree from the third, should be NON_ROUTINE."""
+    def test_two_out_of_three_agree_is_routine(self):
+        """2 of 3 agreeing (buy/buy/sell) is a strong-enough majority: ROUTINE."""
         orchestrator = AgentOrchestrator()
         signals = {
             "dual_momentum": {"action": "buy"},
             "mean_reversion": {"action": "buy"},
+            "multi_timeframe": {"action": "sell"},
+        }
+        assert orchestrator._classify_decision(signals) == DecisionType.ROUTINE
+
+    def test_three_way_split_is_non_routine(self):
+        """A true 3-way split (no majority) needs approval: NON_ROUTINE."""
+        orchestrator = AgentOrchestrator()
+        signals = {
+            "dual_momentum": {"action": "buy"},
+            "mean_reversion": {"action": "hold"},
             "multi_timeframe": {"action": "sell"},
         }
         assert orchestrator._classify_decision(signals) == DecisionType.NON_ROUTINE
@@ -421,6 +431,45 @@ def _make_signals(action="buy", asset="AGG", momentum_scores=None):
         "mean_reversion": {"action": action, "confidence": 0.7},
         "multi_timeframe": {"action": action, "confidence": 0.6},
     }
+
+
+class TestMinHoldThrottle:
+    """Tests for the min-hold execution-cadence throttle (daily monitor, monthly execute)."""
+
+    def _orch(self):
+        # Match live config: calm-hold disabled, sideways-hold off, throttle on.
+        return AgentOrchestrator(
+            calm_market_hold_threshold=0.0,
+            sideways_hold_enabled=False,
+            min_hold_enabled=True,
+            min_hold_days=21,
+        )
+
+    def test_switch_throttled_within_min_hold(self):
+        """A switch proposed before the min-hold window elapses is suppressed to HOLD."""
+        orch = self._orch()
+        signals = _make_signals(action="buy", asset="SPY")  # DM wants to rotate to SPY
+        ctx = {"drawdown": 0.0, "days_since_last_switch": 5}
+        decision = orch.analyze(signals, ctx, current_holding="XLK")
+        assert decision.action == SignalAction.HOLD
+
+    def test_switch_allowed_after_min_hold(self):
+        """Once the min-hold window has passed, the switch executes."""
+        orch = self._orch()
+        signals = _make_signals(action="buy", asset="SPY")
+        ctx = {"drawdown": 0.0, "days_since_last_switch": 30}
+        decision = orch.analyze(signals, ctx, current_holding="XLK")
+        assert decision.action == SignalAction.BUY
+        assert decision.asset_symbol == "SPY"
+
+    def test_no_throttle_without_prior_switch(self):
+        """With no recorded prior switch, nothing is throttled (e.g. first entry)."""
+        orch = self._orch()
+        signals = _make_signals(action="buy", asset="SPY")
+        ctx = {"drawdown": 0.0}
+        decision = orch.analyze(signals, ctx, current_holding="XLK")
+        assert decision.action == SignalAction.BUY
+        assert decision.asset_symbol == "SPY"
 
 
 class TestCorrelationGuard:

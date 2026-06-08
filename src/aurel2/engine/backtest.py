@@ -10,6 +10,8 @@ from dataclasses import dataclass, field
 from datetime import date, timedelta
 from decimal import Decimal
 
+import bisect
+
 import pandas as pd
 import numpy as np
 import structlog
@@ -191,10 +193,27 @@ class BacktestEngine:
         canary_symbols: list[str] | None = None,
         canary_safe_asset: str = "IEF",
     ):
-        self.dual_momentum = DualMomentumStrategy(assets=ASSET_REGISTRY)
+        # Mirror the LIVE checker configuration so backtests match the daemon:
+        # no-TLT universe, plain dual momentum (2% switch threshold), the same
+        # universe for multi-timeframe, and calm-market-hold disabled. Historically
+        # the backtest used the full registry + a narrow multi-timeframe universe +
+        # calm-hold enabled, which made backtest decisions diverge from live.
+        no_tlt_assets = {
+            ac: a for ac, a in ASSET_REGISTRY.items() if ac != AssetClass.BONDS_TREASURY
+        }
+        self.dual_momentum = DualMomentumStrategy(
+            assets=no_tlt_assets,
+            lookback_months=12,
+            switch_threshold=0.02,
+            cash_rate=0.0,
+            pilot_entry_enabled=False,
+        )
         self.mean_reversion = MeanReversionStrategy()
-        self.multi_timeframe = MultiTimeframeTrendStrategy()
+        self.multi_timeframe = MultiTimeframeTrendStrategy(
+            target_assets=[ac for ac in no_tlt_assets if ac != AssetClass.CASH],
+        )
         self.orchestrator = AgentOrchestrator(
+            calm_market_hold_threshold=0.0,
             correlation_guard_enabled=correlation_guard,
             sideways_hold_enabled=sideways_hold,
         )
@@ -435,6 +454,16 @@ class BacktestEngine:
         current_holding_symbol: str | None = None
         current_shares = Decimal("0")
 
+        # Min-hold cadence tracking: measure hold duration in trading days so the
+        # orchestrator can throttle switches (daily monitoring, monthly execution).
+        last_switch_date = None
+        _all_trading_days = sorted({d.date() for d in pd.to_datetime(prices["date"])})
+
+        def _trading_days_since(since_date) -> int:
+            lo = bisect.bisect_right(_all_trading_days, since_date)
+            hi = bisect.bisect_right(_all_trading_days, rebal_date)
+            return max(0, hi - lo)
+
         trades: list[Trade] = []
         all_signals: list[Signal] = []
         snapshots: list[PortfolioSnapshot] = []
@@ -511,6 +540,8 @@ class BacktestEngine:
             # Step 2: Market context (mirrors checker._build_market_context)
             # ================================================================
             market_context = self._build_market_context(prices, rebal_date)
+            if last_switch_date is not None:
+                market_context["days_since_last_switch"] = _trading_days_since(last_switch_date)
 
             # ================================================================
             # Step 3: Orchestrator analysis (mirrors checker step 6)
@@ -761,6 +792,7 @@ class BacktestEngine:
 
                     current_holding = AssetClass.CASH
                     current_holding_symbol = "CASH"
+                    last_switch_date = rebal_date
 
                 elif target_asset and target_asset.yahoo_symbol:
                     buy_price = self._get_price(prices, target_asset.yahoo_symbol, rebal_date)
@@ -807,6 +839,7 @@ class BacktestEngine:
                         current_shares = shares_to_buy
                         current_holding = target_asset_class
                         current_holding_symbol = target_symbol
+                        last_switch_date = rebal_date
 
                         logger.info(
                             "backtest_trade",
