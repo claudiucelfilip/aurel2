@@ -50,16 +50,20 @@ cp /root/aurel2/data/backtest_comparison.json /opt/aurel2/data/ 2>/dev/null || t
 
 cd /opt/aurel2/docker
 if [ "$REBUILD_DASHBOARD" = true ]; then
-    echo "=== Building + restarting containers (aurel2 + dashboard) ==="
+    # Deps/Dockerfile changed: a real image rebuild via compose is required.
+    # NOTE: this needs a valid /opt/aurel2/docker/.env (compose interpolates it).
+    echo "=== Rebuilding images (deps changed) — requires valid .env ==="
     docker compose build aurel2 dashboard
     docker compose up -d aurel2 dashboard
 else
-    echo "=== Building + restarting aurel2 container ==="
-    docker compose build aurel2
-    docker compose up -d aurel2
-    echo "Dashboard: source bind-mounted, auto-reloading (no rebuild needed)"
+    # Code-only change: src is bind-mounted into the containers, so a plain restart
+    # reloads it. Use `docker restart` (not compose) so deploys work even when
+    # /opt/aurel2/docker/.env is missing/broken — the container keeps its loaded env.
+    echo "=== Restarting aurel2 to reload bind-mounted code (no compose/.env needed) ==="
+    docker restart aurel2-trading-aurel2-1
+    echo "Dashboard: source bind-mounted, auto-reloading (no restart needed)"
 fi
 
 echo ""
 echo "=== Deploy complete ==="
-docker compose ps aurel2 dashboard
+docker ps --filter name=aurel2-trading- --format 'table {{.Names}}\t{{.Status}}'
