@@ -290,3 +290,62 @@ class TestCheckerExecuteDecision:
         assert call_kwargs.kwargs.get("action") == "buy"
         assert call_kwargs.kwargs.get("symbol") == "SPY"
         assert call_kwargs.kwargs.get("decision_id") == "test-id"
+
+
+class TestCheckerDispatchAutonomy:
+    """The autonomy guarantee: a ROUTINE decision auto-executes and NEVER
+    touches the approval path; only NON_ROUTINE/URGENT gets parked for approval.
+    """
+
+    def _mock_checker(self):
+        checker = MagicMock()
+        checker._execute_decision = AsyncMock(return_value="EXECUTED")
+        checker._create_pending_decision = AsyncMock(return_value="PENDING")
+        return checker
+
+    def _decision(self, decision_type, requires_approval):
+        from aurel2.agent.orchestrator import AgentDecision, Urgency
+        from aurel2.core.models import SignalAction
+        return AgentDecision(
+            decision_type=decision_type,
+            action=SignalAction.BUY,
+            asset_symbol="XLK",
+            reasoning="Test switch",
+            confidence=0.9,
+            strategy_signals={},
+            requires_approval=requires_approval,
+            timeout_hours=1.0,
+            urgency=Urgency.LOW,
+        )
+
+    def test_routine_switch_auto_executes_not_parked(self):
+        """A ROUTINE switch must auto-execute and never create a pending approval."""
+        from aurel2.live.checker import Checker
+        from aurel2.agent.orchestrator import DecisionType
+
+        checker = self._mock_checker()
+        decision = self._decision(DecisionType.ROUTINE, requires_approval=False)
+
+        result = asyncio.run(Checker._dispatch_decision(
+            checker, decision, None, {}, {}, "GLD", 100000.0, "did-1"
+        ))
+
+        assert result == "EXECUTED"
+        checker._execute_decision.assert_called_once()
+        checker._create_pending_decision.assert_not_called()
+
+    def test_non_routine_switch_is_parked_for_approval(self):
+        """A NON_ROUTINE switch must go to the approval path, not auto-execute."""
+        from aurel2.live.checker import Checker
+        from aurel2.agent.orchestrator import DecisionType
+
+        checker = self._mock_checker()
+        decision = self._decision(DecisionType.NON_ROUTINE, requires_approval=True)
+
+        result = asyncio.run(Checker._dispatch_decision(
+            checker, decision, None, {}, {}, "GLD", 100000.0, "did-2"
+        ))
+
+        assert result == "PENDING"
+        checker._create_pending_decision.assert_called_once()
+        checker._execute_decision.assert_not_called()

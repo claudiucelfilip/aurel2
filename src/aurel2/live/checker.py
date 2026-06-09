@@ -445,6 +445,21 @@ class Checker:
                 account_value=account_value,
             )
 
+        return await self._dispatch_decision(
+            decision, ai_advice, signals, market_context, current_holding, account_value, decision_id
+        )
+
+    async def _dispatch_decision(
+        self, decision, ai_advice, signals, market_context,
+        current_holding, account_value, decision_id,
+    ) -> "CheckResult":
+        """Route an actionable decision: auto-execute if it needs no approval
+        (ROUTINE), else park it for approval (NON_ROUTINE/URGENT).
+
+        This is the autonomy guarantee: a ROUTINE decision NEVER touches the
+        approval path — it goes straight to execution, independent of any
+        external approval backend.
+        """
         if not decision.requires_approval:
             # ROUTINE - auto-execute
             return await self._execute_decision(
