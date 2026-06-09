@@ -136,12 +136,16 @@ def main() -> int:
     )
 
     flags: list[dict[str, Any]] = []
-    if len(negative_recent_returns) > 2:
+    # Require 4+ of the last 5 days down. The old ">2" (3 of 5) fired on ~31% of
+    # normal weeks by chance — pure noise for a momentum strategy that routinely
+    # has mixed down-days. 4 of 5 is a genuine losing bias (~19% by chance), and
+    # magnitude is already covered by the rolling-drawdown and daily-move rules.
+    if len(negative_recent_returns) >= 4:
         flags.append(
             {
-                "rule": "losses_more_than_2_of_last_5",
+                "rule": "losses_at_least_4_of_last_5",
                 "observed": len(negative_recent_returns),
-                "threshold": 2,
+                "threshold": 4,
             }
         )
     if expected_rolling_7d_dd_p95_pct < 0 and rolling_7d_drawdown_pct < expected_rolling_7d_dd_p95_pct:

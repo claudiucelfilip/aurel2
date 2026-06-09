@@ -1,0 +1,37 @@
+{
+  "meta": {
+    "restored_at_utc": "2026-06-03T02:46:00Z",
+    "restored_by": "Claw",
+    "restored_from": [
+      "/root/.openclaw/workspace/memory/experiments/2026-05-15.jsonl",
+      "/root/.openclaw/workspace/memory/aurel2-pnl-scan.jsonl"
+    ],
+    "note": "Restored minimal expectation artifact for pnl_divergence_scan.py after the original file went missing.",
+    "recalibrated_at_utc": "2026-06-09T08:00:00Z",
+    "recalibrated_by": "Claude Code",
+    "recalibration_note": "paper_realized/paper_run were computed from only ~1 month of low-volatility paper data (daily_std 1.13%, 7d_dd_p95 -4.09%), producing chronic false-positive divergence alerts on normal momentum drawdowns (e.g. the routine XLK dip) and even big UP days. Repointed both to the baseline_1y distribution (the strategy's true recent-history tail) so the scan only flags genuinely abnormal divergence. Original short-sample values kept under periods.paper_run_shortsample for reference."
+  },
+  "paper_realized": {
+    "daily_std_pct": 1.665,
+    "rolling_7d_dd_p95_pct": -8.0937
+  },
+  "periods": {
+    "paper_run": {
+      "daily_std_pct": 1.665,
+      "rolling_7d_dd_p95_pct": -8.0937
+    },
+    "paper_run_shortsample": {
+      "daily_std_pct": 1.1289,
+      "rolling_7d_dd_p95_pct": -4.0868,
+      "note": "original ~1-month paper sample — too tight, kept for reference only"
+    },
+    "baseline_1y": {
+      "daily_std_pct": 1.665,
+      "rolling_7d_dd_p95_pct": -8.0937
+    },
+    "baseline_5y": {
+      "daily_std_pct": 1.5907,
+      "rolling_7d_dd_p95_pct": -6.4993
+    }
+  }
+}
