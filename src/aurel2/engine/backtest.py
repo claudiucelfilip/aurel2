@@ -195,9 +195,10 @@ class BacktestEngine:
     ):
         # Mirror the LIVE checker configuration so backtests match the daemon:
         # no-TLT universe, plain dual momentum (2% switch threshold), the same
-        # universe for multi-timeframe, and calm-market-hold disabled. Historically
-        # the backtest used the full registry + a narrow multi-timeframe universe +
-        # calm-hold enabled, which made backtest decisions diverge from live.
+        # universe for multi-timeframe, calm-market-hold disabled, and min-hold
+        # disabled. Historically the backtest used the full registry + a narrow
+        # multi-timeframe universe + calm-hold enabled, which made backtest
+        # decisions diverge from live.
         no_tlt_assets = {
             ac: a for ac, a in ASSET_REGISTRY.items() if ac != AssetClass.BONDS_TREASURY
         }
@@ -215,6 +216,7 @@ class BacktestEngine:
         self.orchestrator = AgentOrchestrator(
             calm_market_hold_threshold=0.0,
             correlation_guard_enabled=correlation_guard,
+            min_hold_enabled=False,
             sideways_hold_enabled=sideways_hold,
         )
 
@@ -454,8 +456,8 @@ class BacktestEngine:
         current_holding_symbol: str | None = None
         current_shares = Decimal("0")
 
-        # Min-hold cadence tracking: measure hold duration in trading days so the
-        # orchestrator can throttle switches (daily monitoring, monthly execution).
+        # Optional min-hold cadence input. The throttle is disabled by default,
+        # but keeping the context makes opt-in backtests deterministic.
         last_switch_date = None
         _all_trading_days = sorted({d.date() for d in pd.to_datetime(prices["date"])})
 
@@ -1096,17 +1098,18 @@ def generate_comparison_json(output_path: str = "data/backtest_comparison.json")
     ]
 
     # Build the deployed strategy: plain DM with NO_TLT universe, no quarterly
-    # gate, no calm-hold. Daily cadence matches live behavior.
+    # gate, no calm-hold, no min-hold throttle. Daily cadence matches live behavior.
     # See data/cadence_filter_revalidation_may2026.json for rationale.
     no_tlt_assets = {ac: a for ac, a in ASSET_REGISTRY.items() if ac != AssetClass.BONDS_TREASURY}
 
     results = {
         "_meta": {
             "generated_at": end_date.isoformat(),
-            "strategy": "DM_NO_TLT_daily_no_calm",
+            "strategy": "DM_NO_TLT_daily_no_calm_no_minhold",
             "benchmark": "SPY",
             "cadence": "daily",
             "calm_hold_threshold": 0.0,
+            "min_hold_enabled": False,
         }
     }
     for label, start_date, period_end in periods:
@@ -1122,6 +1125,7 @@ def generate_comparison_json(output_path: str = "data/backtest_comparison.json")
             pilot_entry_enabled=False,
         )
         engine.orchestrator.calm_market_hold_threshold = 0.0
+        engine.orchestrator.min_hold_enabled = False
         result = engine.run(
             prices=prices,
             start_date=start_date,

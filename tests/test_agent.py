@@ -453,6 +453,15 @@ class TestMinHoldThrottle:
         decision = orch.analyze(signals, ctx, current_holding="XLK")
         assert decision.action == SignalAction.HOLD
 
+    def test_min_hold_is_disabled_by_default(self):
+        """Default orchestrator behavior should not suppress profitable rotations."""
+        orch = AgentOrchestrator(calm_market_hold_threshold=0.0, sideways_hold_enabled=False)
+        signals = _make_signals(action="buy", asset="SPY")
+        ctx = {"drawdown": 0.0, "days_since_last_switch": 5}
+        decision = orch.analyze(signals, ctx, current_holding="XLK")
+        assert decision.action == SignalAction.BUY
+        assert decision.asset_symbol == "SPY"
+
     def test_switch_allowed_after_min_hold(self):
         """Once the min-hold window has passed, the switch executes."""
         orch = self._orch()

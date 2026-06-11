@@ -83,7 +83,10 @@ Four bundled changes:
    is real (no more dead "switch to SPY").
 2. **2/3-majority auto-execute** — `_classify_decision` returns ROUTINE on 2-of-3
    agreement instead of requiring unanimity; only a true 3-way split needs approval.
-3. **21-day min-hold throttle** — daily monitoring, ~monthly execution cadence.
+3. **21-day min-hold throttle** — originally added as daily monitoring with
+   ~monthly execution cadence. **2026-06-11 update:** disabled by default after
+   fixed-end backtests showed it regressed recent-window performance. See
+   `docs/2026-06-11-min-hold-regression.md`.
 4. **Backtest engine aligned to the live config** — the backtest had been running a
    *different, stale config* than live.
 
@@ -134,8 +137,8 @@ stranded, (c) no over-trading.
 - **Market evaluation:** once per trading day at `CHECK_TIME`.
 - **Approval/timeout poll:** every 5 min — services pending approvals only, makes no
   new decisions.
-- **Execution throttle:** a switch is allowed at most every **21 trading days**
-  (~monthly). It can still sell to cash any day if momentum collapses.
+- **Execution throttle:** no active min-hold throttle. The 21-trading-day gate is
+  retained only as an opt-in research path after the 2026-06-11 regression check.
 
 ---
 

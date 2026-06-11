@@ -199,7 +199,7 @@ class AgentOrchestrator:
         sideways_hold_momentum_threshold: float = 0.20,
         dm_primary_enabled: bool = True,
         routine_agreement_threshold: float = 2 / 3,
-        min_hold_enabled: bool = True,
+        min_hold_enabled: bool = False,
         min_hold_days: int = 21,
     ) -> None:
         """Initialize the orchestrator.
@@ -227,6 +227,8 @@ class AgentOrchestrator:
             min_hold_enabled: If True, suppress momentum switches until at least
                 ``min_hold_days`` trading days have passed since the last switch
                 (daily monitoring with monthly execution cadence — Lesson 17).
+                Default is False after the 2026-06-11 fixed-end regression check
+                showed it degraded recent-window performance.
             min_hold_days: Minimum trading days to hold a position before a new
                 switch is allowed (default 21 ≈ one month). Requires the caller to
                 pass ``days_since_last_switch`` in ``market_context``.
@@ -709,10 +711,9 @@ class AgentOrchestrator:
                     confidence = voted_confidence
                     sideways_hold_applied = True
 
-        # Min-hold throttle: daily monitoring, monthly execution (Lesson 17).
-        # Suppress a momentum switch until min_hold_days trading days have passed
-        # since the last switch, so we don't churn on daily noise. URGENT (crash)
-        # decisions bypass the throttle so we can still rotate to safety fast.
+        # Optional min-hold throttle: daily monitoring, monthly execution.
+        # Disabled by default after it regressed recent-window backtests; keep it
+        # opt-in for future research. URGENT decisions bypass it when enabled.
         min_hold_applied = False
         if (
             self.min_hold_enabled
