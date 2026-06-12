@@ -1,0 +1,1196 @@
+{
+  "meta": {
+    "end_date": "2026-04-01",
+    "mode": "both",
+    "include_20y": false,
+    "frequency": "quarterly",
+    "strategy": {
+      "lookback_months": 12,
+      "switch_threshold": 0.02,
+      "cash_rate": 0.0,
+      "pilot_entry_enabled": false
+    }
+  },
+  "periods": {
+    "15y": {
+      "ablation": [
+        {
+          "name": "NO_HEALTHCARE_SECTOR",
+          "cagr": 0.17214775813640526,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": 0.038026016472367585,
+          "alpha_total": 5.477082373745984,
+          "max_dd": 0.23901103022984863,
+          "trades": 10,
+          "sharpe": 1.704619678637086
+        },
+        {
+          "name": "NO_BONDS_TREASURY",
+          "cagr": 0.16605831219766753,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": 0.03193657053362986,
+          "alpha_total": 4.4056792300460605,
+          "max_dd": 0.19647832321696787,
+          "trades": 12,
+          "sharpe": 1.7411181569706038
+        },
+        {
+          "name": "NO_REITS",
+          "cagr": 0.16133905297103635,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": 0.02721731130699867,
+          "alpha_total": 3.6320596159540073,
+          "max_dd": 0.17530099924157735,
+          "trades": 12,
+          "sharpe": 1.6361834022813717
+        },
+        {
+          "name": "BASELINE",
+          "cagr": 0.15965244507145537,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": 0.0255307034074177,
+          "alpha_total": 3.3669889585889607,
+          "max_dd": 0.23901103022984863,
+          "trades": 12,
+          "sharpe": 1.6008867168627778
+        },
+        {
+          "name": "NO_INTL_DEVELOPED",
+          "cagr": 0.15965244507145537,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": 0.0255307034074177,
+          "alpha_total": 3.3669889585889607,
+          "max_dd": 0.23901103022984863,
+          "trades": 12,
+          "sharpe": 1.6008867168627778
+        },
+        {
+          "name": "NO_EMERGING_MARKETS",
+          "cagr": 0.15965244507145537,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": 0.0255307034074177,
+          "alpha_total": 3.3669889585889607,
+          "max_dd": 0.23901103022984863,
+          "trades": 12,
+          "sharpe": 1.6008867168627778
+        },
+        {
+          "name": "NO_BONDS_AGGREGATE",
+          "cagr": 0.15965244507145537,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": 0.0255307034074177,
+          "alpha_total": 3.3669889585889607,
+          "max_dd": 0.23901103022984863,
+          "trades": 12,
+          "sharpe": 1.6008867168627778
+        },
+        {
+          "name": "NO_BONDS_SHORT_TERM",
+          "cagr": 0.15965244507145537,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": 0.0255307034074177,
+          "alpha_total": 3.3669889585889607,
+          "max_dd": 0.23901103022984863,
+          "trades": 12,
+          "sharpe": 1.6008867168627778
+        },
+        {
+          "name": "NO_BONDS_INTERMEDIATE",
+          "cagr": 0.15965244507145537,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": 0.0255307034074177,
+          "alpha_total": 3.3669889585889607,
+          "max_dd": 0.23901103022984863,
+          "trades": 12,
+          "sharpe": 1.6008867168627778
+        },
+        {
+          "name": "NO_TIPS",
+          "cagr": 0.15965244507145537,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": 0.0255307034074177,
+          "alpha_total": 3.3669889585889607,
+          "max_dd": 0.23901103022984863,
+          "trades": 12,
+          "sharpe": 1.6008867168627778
+        },
+        {
+          "name": "NO_SMALL_CAP_VALUE",
+          "cagr": 0.15965244507145537,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": 0.0255307034074177,
+          "alpha_total": 3.3669889585889607,
+          "max_dd": 0.23901103022984863,
+          "trades": 12,
+          "sharpe": 1.6008867168627778
+        },
+        {
+          "name": "NO_COMMODITIES",
+          "cagr": 0.15965244507145537,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": 0.0255307034074177,
+          "alpha_total": 3.3669889585889607,
+          "max_dd": 0.23901103022984863,
+          "trades": 12,
+          "sharpe": 1.6008867168627778
+        },
+        {
+          "name": "NO_FINANCIAL_SECTOR",
+          "cagr": 0.15501971508386836,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": 0.020897973419830684,
+          "alpha_total": 2.668456635629073,
+          "max_dd": 0.23901103022984863,
+          "trades": 12,
+          "sharpe": 1.5313565429824136
+        },
+        {
+          "name": "NO_GOLD",
+          "cagr": 0.13170510299783222,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": -0.0024166386662054506,
+          "alpha_total": -0.2632038167681694,
+          "max_dd": 0.1954373775728753,
+          "trades": 12,
+          "sharpe": 1.4021152256128495
+        },
+        {
+          "name": "NO_ENERGY_SECTOR",
+          "cagr": 0.10628605963507187,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": -0.027835682028965802,
+          "alpha_total": -2.566762613116783,
+          "max_dd": 0.23901103022984863,
+          "trades": 14,
+          "sharpe": 1.2989178427798704
+        },
+        {
+          "name": "NO_ALTS",
+          "cagr": 0.1054984243296615,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": -0.028623317334376175,
+          "alpha_total": -2.626129979219595,
+          "max_dd": 0.31428596337556464,
+          "trades": 14,
+          "sharpe": 1.1134804479850327
+        },
+        {
+          "name": "NO_TECH_SECTOR",
+          "cagr": 0.0887561806807271,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": -0.04536556098331057,
+          "alpha_total": -3.7462399713977965,
+          "max_dd": 0.23901103022984863,
+          "trades": 15,
+          "sharpe": 0.9971291593460601
+        },
+        {
+          "name": "NO_SECTORS",
+          "cagr": 0.044806547745066094,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": -0.08931519391897158,
+          "alpha_total": -5.688936598632573,
+          "max_dd": 0.376223342887991,
+          "trades": 13,
+          "sharpe": 0.634456547107538
+        }
+      ],
+      "replacement": [
+        {
+          "name": "REITS_IYR",
+          "cagr": 0.1622618367880606,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": 0.028140095124022935,
+          "alpha_total": 3.779590071107053,
+          "max_dd": 0.17530099924157727,
+          "trades": 11,
+          "sharpe": 1.6815106709025907
+        },
+        {
+          "name": "BASELINE",
+          "cagr": 0.15965244507145537,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": 0.0255307034074177,
+          "alpha_total": 3.3669889585889607,
+          "max_dd": 0.23901103022984863,
+          "trades": 12,
+          "sharpe": 1.6008867168627778
+        },
+        {
+          "name": "EMERGING_MARKETS_VWO",
+          "cagr": 0.15965244507145537,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": 0.0255307034074177,
+          "alpha_total": 3.3669889585889607,
+          "max_dd": 0.23901103022984863,
+          "trades": 12,
+          "sharpe": 1.6008867168627778
+        },
+        {
+          "name": "SMALL_CAP_VALUE_VBR",
+          "cagr": 0.15965244507145537,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": 0.0255307034074177,
+          "alpha_total": 3.3669889585889607,
+          "max_dd": 0.23901103022984863,
+          "trades": 12,
+          "sharpe": 1.6008867168627778
+        },
+        {
+          "name": "BONDS_AGGREGATE_LQD",
+          "cagr": 0.15965244507145537,
+          "bench_cagr": 0.13412174166403767,
+          "alpha_cagr": 0.0255307034074177,
+          "alpha_total": 3.3669889585889607,
+          "max_dd": 0.23901103022984863,
+          "trades": 12,
+          "sharpe": 1.6008867168627778
+        }
+      ]
+    },
+    "10y": {
+      "ablation": [
+        {
+          "name": "NO_BONDS_TREASURY",
+          "cagr": 0.21703829080445902,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.08966002606570789,
+          "alpha_total": 5.256512465755068,
+          "max_dd": 0.17530099924157724,
+          "trades": 8,
+          "sharpe": 2.0344753860197855
+        },
+        {
+          "name": "BASELINE",
+          "cagr": 0.21307730901142263,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.0856990442726715,
+          "alpha_total": 4.92861821680158,
+          "max_dd": 0.17530099924157724,
+          "trades": 8,
+          "sharpe": 1.927842678172954
+        },
+        {
+          "name": "NO_INTL_DEVELOPED",
+          "cagr": 0.21307730901142263,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.0856990442726715,
+          "alpha_total": 4.92861821680158,
+          "max_dd": 0.17530099924157724,
+          "trades": 8,
+          "sharpe": 1.927842678172954
+        },
+        {
+          "name": "NO_EMERGING_MARKETS",
+          "cagr": 0.21307730901142263,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.0856990442726715,
+          "alpha_total": 4.92861821680158,
+          "max_dd": 0.17530099924157724,
+          "trades": 8,
+          "sharpe": 1.927842678172954
+        },
+        {
+          "name": "NO_FINANCIAL_SECTOR",
+          "cagr": 0.21307730901142263,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.0856990442726715,
+          "alpha_total": 4.92861821680158,
+          "max_dd": 0.17530099924157724,
+          "trades": 8,
+          "sharpe": 1.927842678172954
+        },
+        {
+          "name": "NO_BONDS_AGGREGATE",
+          "cagr": 0.21307730901142263,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.0856990442726715,
+          "alpha_total": 4.92861821680158,
+          "max_dd": 0.17530099924157724,
+          "trades": 8,
+          "sharpe": 1.927842678172954
+        },
+        {
+          "name": "NO_BONDS_SHORT_TERM",
+          "cagr": 0.21307730901142263,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.0856990442726715,
+          "alpha_total": 4.92861821680158,
+          "max_dd": 0.17530099924157724,
+          "trades": 8,
+          "sharpe": 1.927842678172954
+        },
+        {
+          "name": "NO_BONDS_INTERMEDIATE",
+          "cagr": 0.21307730901142263,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.0856990442726715,
+          "alpha_total": 4.92861821680158,
+          "max_dd": 0.17530099924157724,
+          "trades": 8,
+          "sharpe": 1.927842678172954
+        },
+        {
+          "name": "NO_TIPS",
+          "cagr": 0.21307730901142263,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.0856990442726715,
+          "alpha_total": 4.92861821680158,
+          "max_dd": 0.17530099924157724,
+          "trades": 8,
+          "sharpe": 1.927842678172954
+        },
+        {
+          "name": "NO_REITS",
+          "cagr": 0.21307730901142263,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.0856990442726715,
+          "alpha_total": 4.92861821680158,
+          "max_dd": 0.17530099924157724,
+          "trades": 8,
+          "sharpe": 1.927842678172954
+        },
+        {
+          "name": "NO_SMALL_CAP_VALUE",
+          "cagr": 0.21307730901142263,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.0856990442726715,
+          "alpha_total": 4.92861821680158,
+          "max_dd": 0.17530099924157724,
+          "trades": 8,
+          "sharpe": 1.927842678172954
+        },
+        {
+          "name": "NO_COMMODITIES",
+          "cagr": 0.21307730901142263,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.0856990442726715,
+          "alpha_total": 4.92861821680158,
+          "max_dd": 0.17530099924157724,
+          "trades": 8,
+          "sharpe": 1.927842678172954
+        },
+        {
+          "name": "NO_HEALTHCARE_SECTOR",
+          "cagr": 0.17622095597907994,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.048842691240328806,
+          "alpha_total": 2.354243266147347,
+          "max_dd": 0.26986700469129105,
+          "trades": 9,
+          "sharpe": 1.595774817174824
+        },
+        {
+          "name": "NO_GOLD",
+          "cagr": 0.16529158688683787,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.03791332214808674,
+          "alpha_total": 1.735704246815466,
+          "max_dd": 0.17530099924157724,
+          "trades": 9,
+          "sharpe": 1.5897808482165785
+        },
+        {
+          "name": "NO_ALTS",
+          "cagr": 0.16529158688683787,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.03791332214808674,
+          "alpha_total": 1.735704246815466,
+          "max_dd": 0.17530099924157724,
+          "trades": 9,
+          "sharpe": 1.5897808482165785
+        },
+        {
+          "name": "NO_ENERGY_SECTOR",
+          "cagr": 0.13327014937947235,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.005891884640721212,
+          "alpha_total": 0.23255051709943242,
+          "max_dd": 0.17530099924157724,
+          "trades": 10,
+          "sharpe": 1.5159969205527852
+        },
+        {
+          "name": "NO_TECH_SECTOR",
+          "cagr": 0.10742224430677272,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": -0.019956020431978416,
+          "alpha_total": -0.7009070868833476,
+          "max_dd": 0.19302182701420417,
+          "trades": 11,
+          "sharpe": 1.0923887915577741
+        },
+        {
+          "name": "NO_SECTORS",
+          "cagr": 0.03862497847494528,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": -0.08875328626380585,
+          "alpha_total": -2.3200335771340317,
+          "max_dd": 0.374122731705686,
+          "trades": 10,
+          "sharpe": 0.5614830501625453
+        }
+      ],
+      "replacement": [
+        {
+          "name": "BASELINE",
+          "cagr": 0.21307730901142263,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.0856990442726715,
+          "alpha_total": 4.92861821680158,
+          "max_dd": 0.17530099924157724,
+          "trades": 8,
+          "sharpe": 1.927842678172954
+        },
+        {
+          "name": "EMERGING_MARKETS_VWO",
+          "cagr": 0.21307730901142263,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.0856990442726715,
+          "alpha_total": 4.92861821680158,
+          "max_dd": 0.17530099924157724,
+          "trades": 8,
+          "sharpe": 1.927842678172954
+        },
+        {
+          "name": "REITS_IYR",
+          "cagr": 0.21307730901142263,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.0856990442726715,
+          "alpha_total": 4.92861821680158,
+          "max_dd": 0.17530099924157724,
+          "trades": 8,
+          "sharpe": 1.927842678172954
+        },
+        {
+          "name": "SMALL_CAP_VALUE_VBR",
+          "cagr": 0.21307730901142263,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.0856990442726715,
+          "alpha_total": 4.92861821680158,
+          "max_dd": 0.17530099924157724,
+          "trades": 8,
+          "sharpe": 1.927842678172954
+        },
+        {
+          "name": "BONDS_AGGREGATE_LQD",
+          "cagr": 0.21307730901142263,
+          "bench_cagr": 0.12737826473875113,
+          "alpha_cagr": 0.0856990442726715,
+          "alpha_total": 4.92861821680158,
+          "max_dd": 0.17530099924157724,
+          "trades": 8,
+          "sharpe": 1.927842678172954
+        }
+      ]
+    },
+    "5y": {
+      "ablation": [
+        {
+          "name": "NO_BONDS_TREASURY",
+          "cagr": 0.3281631393606168,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.19307711646487924,
+          "alpha_total": 3.6820508965668437,
+          "max_dd": 0.11220949669573142,
+          "trades": 5,
+          "sharpe": 2.7088919269325946
+        },
+        {
+          "name": "BASELINE",
+          "cagr": 0.3018634646067262,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.16677744171098863,
+          "alpha_total": 2.990290304369737,
+          "max_dd": 0.11220949669573146,
+          "trades": 5,
+          "sharpe": 2.5016633508531076
+        },
+        {
+          "name": "NO_INTL_DEVELOPED",
+          "cagr": 0.3018634646067262,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.16677744171098863,
+          "alpha_total": 2.990290304369737,
+          "max_dd": 0.11220949669573146,
+          "trades": 5,
+          "sharpe": 2.5016633508531076
+        },
+        {
+          "name": "NO_EMERGING_MARKETS",
+          "cagr": 0.3018634646067262,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.16677744171098863,
+          "alpha_total": 2.990290304369737,
+          "max_dd": 0.11220949669573146,
+          "trades": 5,
+          "sharpe": 2.5016633508531076
+        },
+        {
+          "name": "NO_FINANCIAL_SECTOR",
+          "cagr": 0.3018634646067262,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.16677744171098863,
+          "alpha_total": 2.990290304369737,
+          "max_dd": 0.11220949669573146,
+          "trades": 5,
+          "sharpe": 2.5016633508531076
+        },
+        {
+          "name": "NO_HEALTHCARE_SECTOR",
+          "cagr": 0.3018634646067262,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.16677744171098863,
+          "alpha_total": 2.990290304369737,
+          "max_dd": 0.11220949669573146,
+          "trades": 5,
+          "sharpe": 2.5016633508531076
+        },
+        {
+          "name": "NO_BONDS_AGGREGATE",
+          "cagr": 0.3018634646067262,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.16677744171098863,
+          "alpha_total": 2.990290304369737,
+          "max_dd": 0.11220949669573146,
+          "trades": 5,
+          "sharpe": 2.5016633508531076
+        },
+        {
+          "name": "NO_BONDS_SHORT_TERM",
+          "cagr": 0.3018634646067262,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.16677744171098863,
+          "alpha_total": 2.990290304369737,
+          "max_dd": 0.11220949669573146,
+          "trades": 5,
+          "sharpe": 2.5016633508531076
+        },
+        {
+          "name": "NO_BONDS_INTERMEDIATE",
+          "cagr": 0.3018634646067262,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.16677744171098863,
+          "alpha_total": 2.990290304369737,
+          "max_dd": 0.11220949669573146,
+          "trades": 5,
+          "sharpe": 2.5016633508531076
+        },
+        {
+          "name": "NO_TIPS",
+          "cagr": 0.3018634646067262,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.16677744171098863,
+          "alpha_total": 2.990290304369737,
+          "max_dd": 0.11220949669573146,
+          "trades": 5,
+          "sharpe": 2.5016633508531076
+        },
+        {
+          "name": "NO_REITS",
+          "cagr": 0.3018634646067262,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.16677744171098863,
+          "alpha_total": 2.990290304369737,
+          "max_dd": 0.11220949669573146,
+          "trades": 5,
+          "sharpe": 2.5016633508531076
+        },
+        {
+          "name": "NO_SMALL_CAP_VALUE",
+          "cagr": 0.3018634646067262,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.16677744171098863,
+          "alpha_total": 2.990290304369737,
+          "max_dd": 0.11220949669573146,
+          "trades": 5,
+          "sharpe": 2.5016633508531076
+        },
+        {
+          "name": "NO_COMMODITIES",
+          "cagr": 0.3018634646067262,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.16677744171098863,
+          "alpha_total": 2.990290304369737,
+          "max_dd": 0.11220949669573146,
+          "trades": 5,
+          "sharpe": 2.5016633508531076
+        },
+        {
+          "name": "NO_GOLD",
+          "cagr": 0.21100355197170084,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.07591752907596327,
+          "alpha_total": 1.1002764031635013,
+          "max_dd": 0.11220949669573146,
+          "trades": 6,
+          "sharpe": 1.8642914855580683
+        },
+        {
+          "name": "NO_ALTS",
+          "cagr": 0.21100355197170084,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.07591752907596327,
+          "alpha_total": 1.1002764031635013,
+          "max_dd": 0.11220949669573146,
+          "trades": 6,
+          "sharpe": 1.8642914855580683
+        },
+        {
+          "name": "NO_TECH_SECTOR",
+          "cagr": 0.18137736072465627,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.0462913378289187,
+          "alpha_total": 0.6261138011089522,
+          "max_dd": 0.11239033066470111,
+          "trades": 6,
+          "sharpe": 1.572501567313812
+        },
+        {
+          "name": "NO_ENERGY_SECTOR",
+          "cagr": 0.15175791422579188,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.01667189133005431,
+          "alpha_total": 0.21049939334771353,
+          "max_dd": 0.16442121666738363,
+          "trades": 7,
+          "sharpe": 1.793209680617321
+        },
+        {
+          "name": "NO_SECTORS",
+          "cagr": 0.06250526866950024,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": -0.07258075422623733,
+          "alpha_total": -0.7464950297573716,
+          "max_dd": 0.2230108389311854,
+          "trades": 7,
+          "sharpe": 0.8784652212215907
+        }
+      ],
+      "replacement": [
+        {
+          "name": "BASELINE",
+          "cagr": 0.3018634646067262,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.16677744171098863,
+          "alpha_total": 2.990290304369737,
+          "max_dd": 0.11220949669573146,
+          "trades": 5,
+          "sharpe": 2.5016633508531076
+        },
+        {
+          "name": "EMERGING_MARKETS_VWO",
+          "cagr": 0.3018634646067262,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.16677744171098863,
+          "alpha_total": 2.990290304369737,
+          "max_dd": 0.11220949669573146,
+          "trades": 5,
+          "sharpe": 2.5016633508531076
+        },
+        {
+          "name": "REITS_IYR",
+          "cagr": 0.3018634646067262,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.16677744171098863,
+          "alpha_total": 2.990290304369737,
+          "max_dd": 0.11220949669573146,
+          "trades": 5,
+          "sharpe": 2.5016633508531076
+        },
+        {
+          "name": "SMALL_CAP_VALUE_VBR",
+          "cagr": 0.3018634646067262,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.16677744171098863,
+          "alpha_total": 2.990290304369737,
+          "max_dd": 0.11220949669573146,
+          "trades": 5,
+          "sharpe": 2.5016633508531076
+        },
+        {
+          "name": "BONDS_AGGREGATE_LQD",
+          "cagr": 0.3018634646067262,
+          "bench_cagr": 0.13508602289573757,
+          "alpha_cagr": 0.16677744171098863,
+          "alpha_total": 2.990290304369737,
+          "max_dd": 0.11220949669573146,
+          "trades": 5,
+          "sharpe": 2.5016633508531076
+        }
+      ]
+    },
+    "1y": {
+      "ablation": [
+        {
+          "name": "BASELINE",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "NO_INTL_DEVELOPED",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "NO_EMERGING_MARKETS",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "NO_TECH_SECTOR",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "NO_FINANCIAL_SECTOR",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "NO_ENERGY_SECTOR",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "NO_HEALTHCARE_SECTOR",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "NO_BONDS_AGGREGATE",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "NO_BONDS_TREASURY",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "NO_BONDS_SHORT_TERM",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "NO_BONDS_INTERMEDIATE",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "NO_TIPS",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "NO_REITS",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "NO_SMALL_CAP_VALUE",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "NO_COMMODITIES",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "NO_SECTORS",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "NO_GOLD",
+          "cagr": -0.08446657021344806,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": -0.2660396471535672,
+          "alpha_total": -0.2658494164392299,
+          "max_dd": 0.09577176601974448,
+          "trades": 2,
+          "sharpe": -0.7108438634472796
+        },
+        {
+          "name": "NO_ALTS",
+          "cagr": -0.08446657021344806,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": -0.2660396471535672,
+          "alpha_total": -0.2658494164392299,
+          "max_dd": 0.09577176601974448,
+          "trades": 2,
+          "sharpe": -0.7108438634472796
+        }
+      ],
+      "replacement": [
+        {
+          "name": "BASELINE",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "EMERGING_MARKETS_VWO",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "REITS_IYR",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "SMALL_CAP_VALUE_VBR",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        },
+        {
+          "name": "BONDS_AGGREGATE_LQD",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157307694011915,
+          "alpha_cagr": 0.253621566420293,
+          "alpha_total": 0.2534016197196549,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 10.406593841663026
+        }
+      ]
+    },
+    "1m": {
+      "ablation": [
+        {
+          "name": "BASELINE",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "NO_INTL_DEVELOPED",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "NO_EMERGING_MARKETS",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "NO_TECH_SECTOR",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "NO_FINANCIAL_SECTOR",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "NO_ENERGY_SECTOR",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "NO_HEALTHCARE_SECTOR",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "NO_BONDS_AGGREGATE",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "NO_BONDS_TREASURY",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "NO_BONDS_SHORT_TERM",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "NO_BONDS_INTERMEDIATE",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "NO_TIPS",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "NO_REITS",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "NO_SMALL_CAP_VALUE",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "NO_COMMODITIES",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "NO_SECTORS",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "NO_GOLD",
+          "cagr": -0.3691398882309651,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.033308870656132195,
+          "alpha_total": 0.004417172209168041,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "NO_ALTS",
+          "cagr": -0.3691398882309651,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.033308870656132195,
+          "alpha_total": 0.004417172209168041,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        }
+      ],
+      "replacement": [
+        {
+          "name": "BASELINE",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "EMERGING_MARKETS_VWO",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "REITS_IYR",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "SMALL_CAP_VALUE_VBR",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        },
+        {
+          "name": "BONDS_AGGREGATE_LQD",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "alpha_total": 0.059243718969224195,
+          "max_dd": 0.0,
+          "trades": 1,
+          "sharpe": 0.0
+        }
+      ]
+    }
+  }
+}

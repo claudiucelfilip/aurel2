@@ -1,0 +1,304 @@
+{
+  "results": [
+    {
+      "name": "Robust_Quarterly",
+      "cagr": 0.15956382676711778,
+      "bench_cagr": 0.13412172282162316,
+      "alpha_cagr": 0.02544210394549462,
+      "max_dd": 0.2390108302806721,
+      "trades": 12,
+      "sharpe": 1.5996999461833934,
+      "period": "15y"
+    },
+    {
+      "name": "Robust_Quarterly_NO_TLT",
+      "cagr": 0.16617667235773537,
+      "bench_cagr": 0.13412172282162316,
+      "alpha_cagr": 0.03205494953611221,
+      "max_dd": 0.19647890551680663,
+      "trades": 12,
+      "sharpe": 1.7424167279048413,
+      "period": "15y"
+    },
+    {
+      "name": "EarlySwitch_12pct",
+      "cagr": 0.16105918614545311,
+      "bench_cagr": 0.13412172282162316,
+      "alpha_cagr": 0.026937463323829958,
+      "max_dd": 0.26593738403732664,
+      "trades": 14,
+      "sharpe": 0.8797777441259891,
+      "period": "15y"
+    },
+    {
+      "name": "EarlySwitch_10pct",
+      "cagr": 0.16105918614545311,
+      "bench_cagr": 0.13412172282162316,
+      "alpha_cagr": 0.026937463323829958,
+      "max_dd": 0.26593738403732664,
+      "trades": 14,
+      "sharpe": 0.8797777441259891,
+      "period": "15y"
+    },
+    {
+      "name": "EarlySwitch_8pct_Neg2",
+      "cagr": 0.16105918614545311,
+      "bench_cagr": 0.13412172282162316,
+      "alpha_cagr": 0.026937463323829958,
+      "max_dd": 0.26593738403732664,
+      "trades": 14,
+      "sharpe": 0.8797777441259891,
+      "period": "15y"
+    },
+    {
+      "name": "Robust_Quarterly",
+      "cagr": 0.21294332105006508,
+      "bench_cagr": 0.12710493880807694,
+      "alpha_cagr": 0.08583838224198814,
+      "max_dd": 0.1753012085877533,
+      "trades": 8,
+      "sharpe": 1.926099583729145,
+      "period": "10y"
+    },
+    {
+      "name": "Robust_Quarterly_NO_TLT",
+      "cagr": 0.21690383322511142,
+      "bench_cagr": 0.12710493880807694,
+      "alpha_cagr": 0.08979889441703448,
+      "max_dd": 0.1753012085877533,
+      "trades": 8,
+      "sharpe": 2.03255628054116,
+      "period": "10y"
+    },
+    {
+      "name": "EarlySwitch_12pct",
+      "cagr": 0.1863840704594355,
+      "bench_cagr": 0.12710493880807694,
+      "alpha_cagr": 0.05927913165135856,
+      "max_dd": 0.1842531937372129,
+      "trades": 10,
+      "sharpe": 0.9335930224203456,
+      "period": "10y"
+    },
+    {
+      "name": "EarlySwitch_10pct",
+      "cagr": 0.1863840704594355,
+      "bench_cagr": 0.12710493880807694,
+      "alpha_cagr": 0.05927913165135856,
+      "max_dd": 0.1842531937372129,
+      "trades": 10,
+      "sharpe": 0.9335930224203456,
+      "period": "10y"
+    },
+    {
+      "name": "EarlySwitch_8pct_Neg2",
+      "cagr": 0.1863840704594355,
+      "bench_cagr": 0.12710493880807694,
+      "alpha_cagr": 0.05927913165135856,
+      "max_dd": 0.1842531937372129,
+      "trades": 10,
+      "sharpe": 0.9335930224203456,
+      "period": "10y"
+    },
+    {
+      "name": "Robust_Quarterly",
+      "cagr": 0.3016048382686294,
+      "bench_cagr": 0.13459063143155348,
+      "alpha_cagr": 0.1670142068370759,
+      "max_dd": 0.11331195898994263,
+      "trades": 5,
+      "sharpe": 2.4980452859965094,
+      "period": "5y"
+    },
+    {
+      "name": "Robust_Quarterly_NO_TLT",
+      "cagr": 0.32789907643093485,
+      "bench_cagr": 0.13459063143155348,
+      "alpha_cagr": 0.19330844499938138,
+      "max_dd": 0.11331195898994235,
+      "trades": 5,
+      "sharpe": 2.7049794766420185,
+      "period": "5y"
+    },
+    {
+      "name": "EarlySwitch_12pct",
+      "cagr": 0.24388866424378963,
+      "bench_cagr": 0.13459063143155348,
+      "alpha_cagr": 0.10929803281223616,
+      "max_dd": 0.17073459118053266,
+      "trades": 6,
+      "sharpe": 1.0094625334983207,
+      "period": "5y"
+    },
+    {
+      "name": "EarlySwitch_10pct",
+      "cagr": 0.24388866424378963,
+      "bench_cagr": 0.13459063143155348,
+      "alpha_cagr": 0.10929803281223616,
+      "max_dd": 0.17073459118053266,
+      "trades": 6,
+      "sharpe": 1.0094625334983207,
+      "period": "5y"
+    },
+    {
+      "name": "EarlySwitch_8pct_Neg2",
+      "cagr": 0.24388866424378963,
+      "bench_cagr": 0.13459063143155348,
+      "alpha_cagr": 0.10929803281223616,
+      "max_dd": 0.17073459118053266,
+      "trades": 6,
+      "sharpe": 1.0094625334983207,
+      "period": "5y"
+    },
+    {
+      "name": "Robust_Quarterly",
+      "cagr": 0.43519464336041214,
+      "bench_cagr": 0.18157307694011915,
+      "alpha_cagr": 0.253621566420293,
+      "max_dd": 0.0,
+      "trades": 1,
+      "sharpe": 10.406593841663026,
+      "period": "1y"
+    },
+    {
+      "name": "Robust_Quarterly_NO_TLT",
+      "cagr": 0.43519464336041214,
+      "bench_cagr": 0.18157307694011915,
+      "alpha_cagr": 0.253621566420293,
+      "max_dd": 0.0,
+      "trades": 1,
+      "sharpe": 10.406593841663026,
+      "period": "1y"
+    },
+    {
+      "name": "EarlySwitch_12pct",
+      "cagr": 0.440206154301217,
+      "bench_cagr": 0.18157307694011915,
+      "alpha_cagr": 0.25863307736109786,
+      "max_dd": 0.11051161024305561,
+      "trades": 1,
+      "sharpe": 1.800635401571877,
+      "period": "1y"
+    },
+    {
+      "name": "EarlySwitch_10pct",
+      "cagr": 0.440206154301217,
+      "bench_cagr": 0.18157307694011915,
+      "alpha_cagr": 0.25863307736109786,
+      "max_dd": 0.11051161024305561,
+      "trades": 1,
+      "sharpe": 1.800635401571877,
+      "period": "1y"
+    },
+    {
+      "name": "EarlySwitch_8pct_Neg2",
+      "cagr": 0.440206154301217,
+      "bench_cagr": 0.18157307694011915,
+      "alpha_cagr": 0.25863307736109786,
+      "max_dd": 0.11051161024305561,
+      "trades": 1,
+      "sharpe": 1.800635401571877,
+      "period": "1y"
+    },
+    {
+      "name": "Robust_Quarterly",
+      "cagr": 0.21241704572060804,
+      "bench_cagr": -0.4024487588870973,
+      "alpha_cagr": 0.6148658046077053,
+      "max_dd": 0.0,
+      "trades": 1,
+      "sharpe": 0.0,
+      "period": "1m"
+    },
+    {
+      "name": "Robust_Quarterly_NO_TLT",
+      "cagr": 0.21241704572060804,
+      "bench_cagr": -0.4024487588870973,
+      "alpha_cagr": 0.6148658046077053,
+      "max_dd": 0.0,
+      "trades": 1,
+      "sharpe": 0.0,
+      "period": "1m"
+    },
+    {
+      "name": "EarlySwitch_12pct",
+      "cagr": 0.21241704572060804,
+      "bench_cagr": -0.4024487588870973,
+      "alpha_cagr": 0.6148658046077053,
+      "max_dd": 0.0,
+      "trades": 1,
+      "sharpe": 0.0,
+      "period": "1m"
+    },
+    {
+      "name": "EarlySwitch_10pct",
+      "cagr": 0.21241704572060804,
+      "bench_cagr": -0.4024487588870973,
+      "alpha_cagr": 0.6148658046077053,
+      "max_dd": 0.0,
+      "trades": 1,
+      "sharpe": 0.0,
+      "period": "1m"
+    },
+    {
+      "name": "EarlySwitch_8pct_Neg2",
+      "cagr": 0.21241704572060804,
+      "bench_cagr": -0.4024487588870973,
+      "alpha_cagr": 0.6148658046077053,
+      "max_dd": 0.0,
+      "trades": 1,
+      "sharpe": 0.0,
+      "period": "1m"
+    },
+    {
+      "name": "Robust_Quarterly",
+      "cagr": 0.08898051051818201,
+      "bench_cagr": 0.10315725533081843,
+      "alpha_cagr": -0.014176744812636421,
+      "max_dd": 0.6373979124097056,
+      "trades": 18,
+      "sharpe": 0.881799701862899,
+      "period": "20y"
+    },
+    {
+      "name": "Robust_Quarterly_NO_TLT",
+      "cagr": 0.10013870681009052,
+      "bench_cagr": 0.10315725533081843,
+      "alpha_cagr": -0.003018548520727915,
+      "max_dd": 0.5806081360216444,
+      "trades": 18,
+      "sharpe": 0.9955399304371915,
+      "period": "20y"
+    },
+    {
+      "name": "EarlySwitch_12pct",
+      "cagr": 0.1279969659804936,
+      "bench_cagr": 0.10315725533081843,
+      "alpha_cagr": 0.024839710649675162,
+      "max_dd": 0.44805024001294896,
+      "trades": 23,
+      "sharpe": 0.6762580028545424,
+      "period": "20y"
+    },
+    {
+      "name": "EarlySwitch_10pct",
+      "cagr": 0.1279969659804936,
+      "bench_cagr": 0.10315725533081843,
+      "alpha_cagr": 0.024839710649675162,
+      "max_dd": 0.44805024001294896,
+      "trades": 23,
+      "sharpe": 0.6762580028545424,
+      "period": "20y"
+    },
+    {
+      "name": "EarlySwitch_8pct_Neg2",
+      "cagr": 0.1279969659804936,
+      "bench_cagr": 0.10315725533081843,
+      "alpha_cagr": 0.024839710649675162,
+      "max_dd": 0.44805024001294896,
+      "trades": 23,
+      "sharpe": 0.6762580028545424,
+      "period": "20y"
+    }
+  ]
+}

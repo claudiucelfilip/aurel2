@@ -1,0 +1,204 @@
+{
+  "results": [
+    {
+      "name": "Robust_Base",
+      "cagr": 0.16100145473126926,
+      "bench_cagr": 0.13439076577806275,
+      "alpha_cagr": 0.026610688953206507,
+      "max_dd": 0.2659367980704775,
+      "trades": 14,
+      "sharpe": 0.8788563560155122,
+      "period": "15y"
+    },
+    {
+      "name": "Robust_VolTarget_18",
+      "cagr": 0.13512476589933486,
+      "bench_cagr": 0.13439076577806275,
+      "alpha_cagr": 0.0007340001212721159,
+      "max_dd": 0.21344540259123065,
+      "trades": 14,
+      "sharpe": 0.8843894922728968,
+      "period": "15y"
+    },
+    {
+      "name": "Robust_VolTarget_14",
+      "cagr": 0.11749352603681706,
+      "bench_cagr": 0.13439076577806275,
+      "alpha_cagr": -0.016897239741245684,
+      "max_dd": 0.1696963975414471,
+      "trades": 14,
+      "sharpe": 0.896771657176034,
+      "period": "15y"
+    },
+    {
+      "name": "Robust_StressClamp",
+      "cagr": 0.14894029868851488,
+      "bench_cagr": 0.13439076577806275,
+      "alpha_cagr": 0.014549532910452134,
+      "max_dd": 0.24288287029087102,
+      "trades": 14,
+      "sharpe": 0.8724811976968497,
+      "period": "15y"
+    },
+    {
+      "name": "Robust_Base",
+      "cagr": 0.18683988538295604,
+      "bench_cagr": 0.1277646245104771,
+      "alpha_cagr": 0.05907526087247894,
+      "max_dd": 0.18425337336381648,
+      "trades": 10,
+      "sharpe": 0.93418689859977,
+      "period": "10y"
+    },
+    {
+      "name": "Robust_VolTarget_18",
+      "cagr": 0.1518696740422838,
+      "bench_cagr": 0.1277646245104771,
+      "alpha_cagr": 0.0241050495318067,
+      "max_dd": 0.17785862289977702,
+      "trades": 10,
+      "sharpe": 0.9094117833916409,
+      "period": "10y"
+    },
+    {
+      "name": "Robust_VolTarget_14",
+      "cagr": 0.1273966647062339,
+      "bench_cagr": 0.1277646245104771,
+      "alpha_cagr": -0.00036795980424320085,
+      "max_dd": 0.1669558731298721,
+      "trades": 10,
+      "sharpe": 0.8872681478082901,
+      "period": "10y"
+    },
+    {
+      "name": "Robust_StressClamp",
+      "cagr": 0.17447689364486063,
+      "bench_cagr": 0.1277646245104771,
+      "alpha_cagr": 0.04671226913438353,
+      "max_dd": 0.18425337336381648,
+      "trades": 10,
+      "sharpe": 0.9285614875789918,
+      "period": "10y"
+    },
+    {
+      "name": "Robust_Base",
+      "cagr": 0.24474918898728681,
+      "bench_cagr": 0.1357864080679032,
+      "alpha_cagr": 0.1089627809193836,
+      "max_dd": 0.17073452365683914,
+      "trades": 6,
+      "sharpe": 1.0103658568210447,
+      "period": "5y"
+    },
+    {
+      "name": "Robust_VolTarget_18",
+      "cagr": 0.18926388077338752,
+      "bench_cagr": 0.1357864080679032,
+      "alpha_cagr": 0.05347747270548431,
+      "max_dd": 0.15812144189510907,
+      "trades": 6,
+      "sharpe": 0.9682286960163665,
+      "period": "5y"
+    },
+    {
+      "name": "Robust_VolTarget_14",
+      "cagr": 0.15737963509631347,
+      "bench_cagr": 0.1357864080679032,
+      "alpha_cagr": 0.021593227028410267,
+      "max_dd": 0.15702630645947185,
+      "trades": 6,
+      "sharpe": 0.9293495616302464,
+      "period": "5y"
+    },
+    {
+      "name": "Robust_StressClamp",
+      "cagr": 0.22350937780668234,
+      "bench_cagr": 0.1357864080679032,
+      "alpha_cagr": 0.08772296973877913,
+      "max_dd": 0.15861273788070232,
+      "trades": 6,
+      "sharpe": 0.9982785452432477,
+      "period": "5y"
+    },
+    {
+      "name": "Robust_Base",
+      "cagr": 0.4446496354003171,
+      "bench_cagr": 0.18613852782905282,
+      "alpha_cagr": 0.2585111075712643,
+      "max_dd": 0.11051161024305561,
+      "trades": 1,
+      "sharpe": 1.800635401571877,
+      "period": "1y"
+    },
+    {
+      "name": "Robust_VolTarget_18",
+      "cagr": 0.4015935613054471,
+      "bench_cagr": 0.18613852782905282,
+      "alpha_cagr": 0.21545503347639428,
+      "max_dd": 0.10353504618666061,
+      "trades": 1,
+      "sharpe": 1.7756874958183078,
+      "period": "1y"
+    },
+    {
+      "name": "Robust_VolTarget_14",
+      "cagr": 0.31234280254046887,
+      "bench_cagr": 0.18613852782905282,
+      "alpha_cagr": 0.12620427471141604,
+      "max_dd": 0.08727613335978186,
+      "trades": 1,
+      "sharpe": 1.719093055128863,
+      "period": "1y"
+    },
+    {
+      "name": "Robust_StressClamp",
+      "cagr": 0.4446496354003171,
+      "bench_cagr": 0.18613852782905282,
+      "alpha_cagr": 0.2585111075712643,
+      "max_dd": 0.11051161024305561,
+      "trades": 1,
+      "sharpe": 1.800635401571877,
+      "period": "1y"
+    },
+    {
+      "name": "Robust_Base",
+      "cagr": 0.2572000008176225,
+      "bench_cagr": -0.3746907122606965,
+      "alpha_cagr": 0.631890713078319,
+      "max_dd": 0.0,
+      "trades": 1,
+      "sharpe": 0.0,
+      "period": "1m"
+    },
+    {
+      "name": "Robust_VolTarget_18",
+      "cagr": 0.16099960572905503,
+      "bench_cagr": -0.3746907122606965,
+      "alpha_cagr": 0.5356903179897515,
+      "max_dd": 0.0,
+      "trades": 1,
+      "sharpe": 0.0,
+      "period": "1m"
+    },
+    {
+      "name": "Robust_VolTarget_14",
+      "cagr": 0.1218726649741042,
+      "bench_cagr": -0.3746907122606965,
+      "alpha_cagr": 0.4965633772348007,
+      "max_dd": 0.0,
+      "trades": 1,
+      "sharpe": 0.0,
+      "period": "1m"
+    },
+    {
+      "name": "Robust_StressClamp",
+      "cagr": 0.21511187565712242,
+      "bench_cagr": -0.3746907122606965,
+      "alpha_cagr": 0.5898025879178189,
+      "max_dd": 0.0,
+      "trades": 1,
+      "sharpe": 0.0,
+      "period": "1m"
+    }
+  ]
+}

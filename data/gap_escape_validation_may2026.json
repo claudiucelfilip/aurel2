@@ -1,0 +1,34 @@
+{
+  "_meta": {
+    "generated_at": "2026-05-07",
+    "rationale": "Validate momentum-gap escape hatch (release calm-hold when winner_mom - held_mom > threshold) against historical analogues to the May 2026 paper-run GLD trap. Primary question: would the fix help in similar past situations (anti-overfit check)?",
+    "base": "DualMomentumStrategy(no_tlt, lookback=12m, switch=0.02, calm_hold=5%)",
+    "variants": ["Baseline", "CalmOff", "Gap15", "Gap20", "Gap25", "Gap30"],
+    "windows_tested": ["paper (2026-02-11→2026-05-06)", "1y", "5y", "10y", "15y", "20y", "2013_lag", "2019_lag", "2023_recov"],
+    "decision": "REJECTED — gap escape does help paper window (Gap20: +0.67% vs -7.93% baseline daily), and slightly improves 20y (+1.96%) and 15y (+0.30%). But it hurts 5y (-2.39%) and 10y (-1.44%), materially hurts 2013_lag (-3.61%), and does not trigger in the most analogous historical period (2023_recov, 0%). The paper-window improvement is one data point and structurally identical scenarios in history don't validate it. Consistent with the 20y validation that already documented this strategy 'loses in V-shaped recoveries' as an accepted weakness."
+  },
+  "paper_window_daily_cadence": {
+    "Baseline":   {"return_pct": -7.93, "trades": 1, "rotation": null},
+    "Gap15":      {"return_pct":  4.73, "trades": 3, "rotation": "GLD→XLK Apr 17 @ $154.35"},
+    "Gap20":      {"return_pct":  0.67, "trades": 3, "rotation": "GLD→XLK Apr 21 @ $154.69"},
+    "Gap25":      {"return_pct":  0.67, "trades": 3, "rotation": "GLD→XLK Apr 21 (same as Gap20)"},
+    "CalmOff":    {"return_pct":  4.94, "trades": 3, "rotation": "GLD→XLK Apr 16 @ $152.02"},
+    "SPY_benchmark_pct": 6.34
+  },
+  "long_term_delta_cagr_vs_baseline": {
+    "20y":         {"Gap15": -0.20, "Gap20":  1.96, "Gap25":  1.88, "Gap30":  0.47, "CalmOff":  1.24},
+    "15y":         {"Gap15": -4.63, "Gap20":  0.30, "Gap25":  0.19, "Gap30": -0.96, "CalmOff": -2.70},
+    "10y":         {"Gap15": -7.78, "Gap20": -1.44, "Gap25": -1.44, "Gap30": -1.44, "CalmOff": -6.47},
+    "5y":          {"Gap15": -5.85, "Gap20": -2.39, "Gap25": -2.39, "Gap30": -2.39, "CalmOff": -2.86},
+    "2013_lag":    {"Gap15": -3.61, "Gap20": -3.61, "Gap25": -3.61, "Gap30":  0.00, "CalmOff":  8.39},
+    "2019_lag":    {"Gap15": -2.96, "Gap20": -2.96, "Gap25": -2.96, "Gap30": -2.96, "CalmOff": -2.96},
+    "2023_recov":  {"Gap15": -8.35, "Gap20":  0.00, "Gap25":  0.00, "Gap30":  0.00, "CalmOff": -8.35}
+  },
+  "key_findings": [
+    "Gap20 is the safest variant: +1.96% on 20y, +0.30% on 15y, ~0 trigger on 2023_recov.",
+    "All gap variants hurt 2013_lag by -3.6% (rotated to wrong asset). CalmOff would have helped +8.4% there.",
+    "Daily cadence matters: monthly cadence with Gap15/CalmOff rotated to DBC at month-end (-15.18%) instead of XLK mid-month.",
+    "The most analogous historical period (2023_recov, post-SVB tech rally) does not trigger any gap variant — preserves baseline. Suggests paper-window improvement may not generalize.",
+    "Documented strategy weakness in 20y validation: 'loses in V-shaped recoveries' — paper window is consistent with this, not a parameter bug."
+  ]
+}

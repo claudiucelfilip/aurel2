@@ -1,0 +1,94 @@
+name: aurel2-trading
+
+services:
+  # Aurel2 Trading Daemon
+  aurel2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    environment:
+      # Alpaca credentials
+      APCA_API_KEY_ID: ${APCA_API_KEY_ID:-}
+      APCA_API_SECRET_KEY: ${APCA_API_SECRET_KEY:-}
+
+      # Trading settings (read by CLI via envvar)
+      TRADING_MODE: ${TRADING_MODE:-paper}
+      CHECK_TIME: ${CHECK_TIME:-16:00}
+      POLL_INTERVAL: ${POLL_INTERVAL:-5}
+      DRY_RUN: ${DRY_RUN:-false}
+      NTFY_TOPIC: ${NTFY_TOPIC:-aurel2}
+
+      # AI settings
+      AI_MODEL: ${AI_MODEL:-sonnet}
+      AI_LOOKBACK_YEARS: ${AI_LOOKBACK_YEARS:-3}
+
+    volumes:
+      # Persist aurel2 data (portfolio, logs, pending orders)
+      - aurel2-data:/root/.aurel2
+
+      # Persist mode-partitioned trade journal / pending decisions / session
+      # progress across container rebuilds. Without this, deploys wipe the
+      # paper/live track records (see 2026-05-07 incident).
+      - ../data/paper:/app/data/paper
+      - ../data/live:/app/data/live
+      - ../data/archive:/app/data/archive
+
+      # Keep runtime code/config in sync with host checkout (no image drift)
+      - ../src:/app/src:ro
+      - ../config:/app/config:ro
+
+      # Optional Claude Code auth mount. Keep the host path outside the repo.
+      - ${CLAUDE_CONFIG_PATH:-/tmp/aurel2-claude-config}:/root/.claude
+    # Command uses environment variables via typer's envvar support
+    command: ["live", "--paper"]
+
+  # Daemon Monitor - watches health and auto-recovers
+  monitor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      aurel2:
+        condition: service_healthy
+    environment:
+      NTFY_TOPIC: ${NTFY_TOPIC:-aurel2}
+    volumes:
+      # Share aurel2 data volume to read heartbeat file
+      - aurel2-data:/root/.aurel2
+
+      # Keep monitor code/config in sync with host checkout
+      - ../src:/app/src:ro
+      - ../config:/app/config:ro
+    command: ["monitor", "--paper"]
+
+  # Dashboard (optional web UI)
+  dashboard:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - aurel2
+    environment:
+      APCA_API_KEY_ID: ${APCA_API_KEY_ID:-}
+      APCA_API_SECRET_KEY: ${APCA_API_SECRET_KEY:-}
+      TRADING_MODE: ${TRADING_MODE:-paper}
+    volumes:
+      - aurel2-data:/root/.aurel2
+      # Writable: dashboard hosts the local approval UI and writes status
+      # changes back to data/{mode}/pending_decisions.json. Daemon picks up
+      # via the disk-edit path in src/aurel2/live/pending.py.
+      - ../data:/app/host-data
+      # Bind-mount source + config for hot reload
+      - ../src:/app/src:ro
+      - ../config:/app/config:ro
+    ports:
+      - "${DASHBOARD_PORT:-8080}:8080"
+    command: ["dashboard", "--host", "0.0.0.0", "--port", "8080", "--reload"]
+    profiles:
+      - dashboard
+
+volumes:
+  aurel2-data:

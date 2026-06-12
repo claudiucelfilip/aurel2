@@ -1,0 +1,2505 @@
+{
+  "start_date": "2010-01-01",
+  "end_date": "2026-01-23",
+  "total_periods": 192,
+  "total_opportunity_cost": 11.255073046072571,
+  "failure_rate": 0.8645833333333334,
+  "common_failure_types": {
+    "missed_opportunity": 36,
+    "bad_hold": 29,
+    "late_entry": 75,
+    "suboptimal_asset": 26
+  },
+  "failure_events": [
+    {
+      "date": "2020-03-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "AGG",
+      "optimal_asset": "XLE",
+      "actual_return": 0.017190671271287483,
+      "optimal_return": 0.30763919706685794,
+      "opportunity_cost": 0.29044852579557046,
+      "market_context": {
+        "vix": 53.540000915527344,
+        "spy_drawdown": -0.23371268062461537,
+        "spy_return": 0.12698361216078746
+      },
+      "description": "Was in defensive position (AGG) while XLE returned +30.8%. VIX was 53.540000915527344, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2022-09-30",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLE",
+      "actual_return": 0.0,
+      "optimal_return": 0.2496525735500994,
+      "opportunity_cost": 0.2496525735500994,
+      "market_context": {
+        "vix": 31.6200008392334,
+        "spy_drawdown": -0.21959357358960707,
+        "spy_return": 0.08127556243495682
+      },
+      "description": "Was in defensive position (CASH) while XLE returned +25.0%. VIX was 31.6200008392334, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2021-12-31",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": -0.05274128372963993,
+      "optimal_return": 0.1877479324371243,
+      "opportunity_cost": 0.24048921616676422,
+      "market_context": {
+        "vix": 17.219999313354492,
+        "spy_drawdown": -0.0052776650894504895,
+        "spy_return": -0.05274128372963993
+      },
+      "description": "Held SPY which lost -5.3% while XLE gained +18.8%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2011-08-31",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": -0.06942101375324872,
+      "optimal_return": 0.13206217918143937,
+      "opportunity_cost": 0.20148319293468808,
+      "market_context": {
+        "vix": 31.6200008392334,
+        "spy_drawdown": -0.09971445253595879,
+        "spy_return": -0.06942101375324872
+      },
+      "description": "Held SPY which lost -6.9% while TLT gained +13.2%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2021-01-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": 0.027805453084774445,
+      "optimal_return": 0.2245676696333485,
+      "opportunity_cost": 0.19676221654857406,
+      "market_context": {
+        "vix": 33.09000015258789,
+        "spy_drawdown": -0.03725388319445655,
+        "spy_return": 0.027805453084774445
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.8% vs +22.5%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2020-02-29",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": -0.12487148600065778,
+      "optimal_return": 0.0637668503036728,
+      "opportunity_cost": 0.18863833630433058,
+      "market_context": {
+        "vix": 40.11000061035156,
+        "spy_drawdown": -0.1243716698551538,
+        "spy_return": -0.12487148600065778
+      },
+      "description": "Held SPY which lost -12.5% while TLT gained +6.4%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2011-07-31",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "GLD",
+      "actual_return": -0.054975317414919345,
+      "optimal_return": 0.12274943937515781,
+      "opportunity_cost": 0.17772475679007715,
+      "market_context": {
+        "vix": 25.25,
+        "spy_drawdown": -0.047341763602043896,
+        "spy_return": -0.054975317414919345
+      },
+      "description": "Held SPY which lost -5.5% while GLD gained +12.3%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2020-10-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": 0.10877691823532598,
+      "optimal_return": 0.27994420941371834,
+      "opportunity_cost": 0.17116729117839236,
+      "market_context": {
+        "vix": 38.02000045776367,
+        "spy_drawdown": -0.08345783989554256,
+        "spy_return": 0.10877691823532598
+      },
+      "description": "Entered SPY late, capturing only partial move (+10.9% vs +28.0%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2010-04-30",
+      "failure_type": "bad_hold",
+      "asset_held": "EFA",
+      "optimal_asset": "TLT",
+      "actual_return": -0.11192773326974714,
+      "optimal_return": 0.05108395694449164,
+      "opportunity_cost": 0.16301169021423878,
+      "market_context": {
+        "vix": 22.049999237060547,
+        "spy_drawdown": -0.02462888564221355,
+        "spy_return": -0.07945460003815275
+      },
+      "description": "Held EFA which lost -11.2% while TLT gained +5.1%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2022-04-30",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLE",
+      "actual_return": 0.0,
+      "optimal_return": 0.16034570060147924,
+      "opportunity_cost": 0.16034570060147924,
+      "market_context": {
+        "vix": 33.400001525878906,
+        "spy_drawdown": -0.1348726906685297,
+        "spy_return": 0.002257224621523557
+      },
+      "description": "Was in defensive position (CASH) while XLE returned +16.0%. VIX was 33.400001525878906, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2022-10-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "EEM",
+      "actual_return": 0.0,
+      "optimal_return": 0.15589346330731946,
+      "opportunity_cost": 0.15589346330731946,
+      "market_context": {
+        "vix": 25.8799991607666,
+        "spy_drawdown": -0.15616560235524757,
+        "spy_return": 0.05559136758802419
+      },
+      "description": "Was in defensive position (CASH) while EEM returned +15.6%. VIX was 25.8799991607666, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2012-04-30",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": -0.06005559701640428,
+      "optimal_return": 0.09025262551857671,
+      "opportunity_cost": 0.150308222534981,
+      "market_context": {
+        "vix": 17.149999618530273,
+        "spy_drawdown": -0.013888804132398902,
+        "spy_return": -0.06005559701640428
+      },
+      "description": "Held SPY which lost -6.0% while TLT gained +9.0%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2025-02-28",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "GLD",
+      "actual_return": -0.05571909772666972,
+      "optimal_return": 0.09446585889998316,
+      "opportunity_cost": 0.15018495662665288,
+      "market_context": {
+        "vix": 19.6299991607666,
+        "spy_drawdown": -0.030590832714232574,
+        "spy_return": -0.05571909772666972
+      },
+      "description": "Held SPY which lost -5.6% while GLD gained +9.4%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2018-11-30",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": -0.0880481526316731,
+      "optimal_return": 0.0585349045184449,
+      "opportunity_cost": 0.146583057150118,
+      "market_context": {
+        "vix": 18.06999969482422,
+        "spy_drawdown": -0.05682383136678437,
+        "spy_return": -0.0880481526316731
+      },
+      "description": "Held SPY which lost -8.8% while TLT gained +5.9%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2020-01-31",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": -0.0791656725200981,
+      "optimal_return": 0.06626489387338474,
+      "opportunity_cost": 0.14543056639348284,
+      "market_context": {
+        "vix": 18.84000015258789,
+        "spy_drawdown": -0.030787767761430884,
+        "spy_return": -0.0791656725200981
+      },
+      "description": "Held SPY which lost -7.9% while TLT gained +6.6%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2022-03-31",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "DBC",
+      "actual_return": -0.08776888341090394,
+      "optimal_return": 0.0564084373940954,
+      "opportunity_cost": 0.14417732080499934,
+      "market_context": {
+        "vix": 20.559999465942383,
+        "spy_drawdown": -0.051635826054422074,
+        "spy_return": -0.08776888341090394
+      },
+      "description": "Held SPY which lost -8.8% while DBC gained +5.6%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2021-08-31",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": -0.04660525528376691,
+      "optimal_return": 0.08931490226458472,
+      "opportunity_cost": 0.13592015754835163,
+      "market_context": {
+        "vix": 16.479999542236328,
+        "spy_drawdown": -0.0014815863927037931,
+        "spy_return": -0.04660525528376691
+      },
+      "description": "Held SPY which lost -4.7% while XLE gained +8.9%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2022-06-30",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLK",
+      "actual_return": 0.0,
+      "optimal_return": 0.13451860235867863,
+      "opportunity_cost": 0.13451860235867863,
+      "market_context": {
+        "vix": 28.709999084472656,
+        "spy_drawdown": -0.2044197880130708,
+        "spy_return": 0.09208763320665736
+      },
+      "description": "Was in defensive position (CASH) while XLK returned +13.5%. VIX was 28.709999084472656, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2016-02-29",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "EEM",
+      "actual_return": 0.0,
+      "optimal_return": 0.12961732965838468,
+      "opportunity_cost": 0.12961732965838468,
+      "market_context": {
+        "vix": 20.549999237060547,
+        "spy_drawdown": -0.07933454060329415,
+        "spy_return": 0.0672660071465836
+      },
+      "description": "Was in defensive position (CASH) while EEM returned +13.0%. VIX was 20.549999237060547, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2010-07-31",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": -0.04498029902773437,
+      "optimal_return": 0.08390857881718539,
+      "opportunity_cost": 0.12888887784491976,
+      "market_context": {
+        "vix": 23.5,
+        "spy_drawdown": -0.09043109383406145,
+        "spy_return": -0.04498029902773437
+      },
+      "description": "Held SPY which lost -4.5% while TLT gained +8.4%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2014-12-31",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": -0.02962921839208088,
+      "optimal_return": 0.09815731569351138,
+      "opportunity_cost": 0.12778653408559226,
+      "market_context": {
+        "vix": 19.200000762939453,
+        "spy_drawdown": -0.015235318788844321,
+        "spy_return": -0.02962921839208088
+      },
+      "description": "Held SPY which lost -3.0% while TLT gained +9.8%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2020-07-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "AGG",
+      "optimal_asset": "XLK",
+      "actual_return": -0.008235609058258153,
+      "optimal_return": 0.11880799853936952,
+      "opportunity_cost": 0.12704360759762767,
+      "market_context": {
+        "vix": 24.459999084472656,
+        "spy_drawdown": -0.024988513178052285,
+        "spy_return": 0.06979679571086983
+      },
+      "description": "Was in defensive position (AGG) while XLK returned +11.9%. VIX was 24.459999084472656, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2018-12-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLE",
+      "actual_return": 0.0,
+      "optimal_return": 0.11211846952018911,
+      "opportunity_cost": 0.11211846952018911,
+      "market_context": {
+        "vix": 25.420000076293945,
+        "spy_drawdown": -0.13986875062115833,
+        "spy_return": 0.08006531987533183
+      },
+      "description": "Was in defensive position (CASH) while XLE returned +11.2%. VIX was 25.420000076293945, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2015-09-30",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLE",
+      "actual_return": 0.0,
+      "optimal_return": 0.11160153645628279,
+      "opportunity_cost": 0.11160153645628279,
+      "market_context": {
+        "vix": 24.5,
+        "spy_drawdown": -0.09390707172637636,
+        "spy_return": 0.08505952048482479
+      },
+      "description": "Was in defensive position (CASH) while XLE returned +11.2%. VIX was 24.5, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2019-07-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "TLT",
+      "actual_return": 0.0,
+      "optimal_return": 0.11049104130228193,
+      "opportunity_cost": 0.11049104130228193,
+      "market_context": {
+        "vix": 16.1200008392334,
+        "spy_drawdown": -0.01516510689516748,
+        "spy_return": -0.0167435671183932
+      },
+      "description": "Was in defensive position (CASH) while TLT returned +11.0%. VIX was 16.1200008392334, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2010-05-31",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": -0.05174057045742875,
+      "optimal_return": 0.05797816065522965,
+      "opportunity_cost": 0.1097187311126584,
+      "market_context": {
+        "vix": 32.06999969482422,
+        "spy_drawdown": -0.10212660742227886,
+        "spy_return": -0.05174057045742875
+      },
+      "description": "Held SPY which lost -5.2% while TLT gained +5.8%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2016-01-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "GLD",
+      "actual_return": 0.0,
+      "optimal_return": 0.10930343875618398,
+      "opportunity_cost": 0.10930343875618398,
+      "market_context": {
+        "vix": 20.200000762939453,
+        "spy_drawdown": -0.0785734244583235,
+        "spy_return": -0.0008260193108965419
+      },
+      "description": "Was in defensive position (CASH) while GLD returned +10.9%. VIX was 20.200000762939453, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2023-02-28",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLK",
+      "actual_return": 0.0,
+      "optimal_return": 0.10857975939493048,
+      "opportunity_cost": 0.10857975939493048,
+      "market_context": {
+        "vix": 20.700000762939453,
+        "spy_drawdown": -0.06978152219455291,
+        "spy_return": 0.03707798590127043
+      },
+      "description": "Was in defensive position (CASH) while XLK returned +10.9%. VIX was 20.700000762939453, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2011-06-30",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "GLD",
+      "actual_return": -0.02000498803194284,
+      "optimal_return": 0.08417803620638908,
+      "opportunity_cost": 0.10418302423833192,
+      "market_context": {
+        "vix": 16.520000457763672,
+        "spy_drawdown": -0.027894810928886682,
+        "spy_return": -0.02000498803194284
+      },
+      "description": "Held SPY which lost -2.0% while GLD gained +8.4%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2016-10-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLF",
+      "actual_return": 0.03683839478126072,
+      "optimal_return": 0.14032445859418097,
+      "opportunity_cost": 0.10348606381292025,
+      "market_context": {
+        "vix": 17.059999465942383,
+        "spy_drawdown": -0.024949882351926966,
+        "spy_return": 0.03683839478126072
+      },
+      "description": "Entered SPY late, capturing only partial move (+3.7% vs +14.0%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2022-01-31",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": -0.029517058003522334,
+      "optimal_return": 0.07069163858066552,
+      "opportunity_cost": 0.10020869658418785,
+      "market_context": {
+        "vix": 24.829999923706055,
+        "spy_drawdown": -0.058194258206144434,
+        "spy_return": -0.029517058003522334
+      },
+      "description": "Held SPY which lost -3.0% while XLE gained +7.1%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2013-12-31",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": -0.035248114608130265,
+      "optimal_return": 0.06302692395382103,
+      "opportunity_cost": 0.0982750385619513,
+      "market_context": {
+        "vix": 13.720000267028809,
+        "spy_drawdown": 0.0,
+        "spy_return": -0.035248114608130265
+      },
+      "description": "Held SPY which lost -3.5% while TLT gained +6.3%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2015-07-31",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "GLD",
+      "actual_return": -0.06095009793054218,
+      "optimal_return": 0.03707232801234017,
+      "opportunity_cost": 0.09802242594288235,
+      "market_context": {
+        "vix": 12.119999885559082,
+        "spy_drawdown": -0.009830798092105852,
+        "spy_return": -0.06095009793054218
+      },
+      "description": "Held SPY which lost -6.1% while GLD gained +3.7%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2016-03-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "DBC",
+      "actual_return": 0.0,
+      "optimal_return": 0.09706553211224334,
+      "opportunity_cost": 0.09706553211224334,
+      "market_context": {
+        "vix": 13.949999809265137,
+        "spy_drawdown": -0.015120975442695417,
+        "spy_return": 0.003941055248677605
+      },
+      "description": "Was in defensive position (CASH) while DBC returned +9.7%. VIX was 13.949999809265137, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2023-09-30",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "GLD",
+      "actual_return": -0.02170849182204837,
+      "optimal_return": 0.07372411557093361,
+      "opportunity_cost": 0.09543260739298198,
+      "market_context": {
+        "vix": 17.520000457763672,
+        "spy_drawdown": -0.06291571417833997,
+        "spy_return": -0.02170849182204837
+      },
+      "description": "Held SPY which lost -2.2% while GLD gained +7.4%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2020-06-30",
+      "failure_type": "missed_opportunity",
+      "asset_held": "AGG",
+      "optimal_asset": "GLD",
+      "actual_return": 0.01333183688875228,
+      "optimal_return": 0.10790463097013703,
+      "opportunity_cost": 0.09457279408138475,
+      "market_context": {
+        "vix": 30.43000030517578,
+        "spy_drawdown": -0.07921556522447826,
+        "spy_return": 0.05889223361996354
+      },
+      "description": "Was in defensive position (AGG) while GLD returned +10.8%. VIX was 30.43000030517578, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2019-05-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLE",
+      "actual_return": 0.0,
+      "optimal_return": 0.09395178872299725,
+      "opportunity_cost": 0.09395178872299725,
+      "market_context": {
+        "vix": 18.709999084472656,
+        "spy_drawdown": -0.06380322891511447,
+        "spy_return": 0.06958663324154735
+      },
+      "description": "Was in defensive position (CASH) while XLE returned +9.4%. VIX was 18.709999084472656, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2022-12-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLK",
+      "actual_return": 0.0,
+      "optimal_return": 0.09257458086676884,
+      "opportunity_cost": 0.09257458086676884,
+      "market_context": {
+        "vix": 21.670000076293945,
+        "spy_drawdown": -0.10224741023676964,
+        "spy_return": 0.06288726342480011
+      },
+      "description": "Was in defensive position (CASH) while XLK returned +9.3%. VIX was 21.670000076293945, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2025-10-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLV",
+      "actual_return": 0.0019499283249213573,
+      "optimal_return": 0.09289421278969878,
+      "opportunity_cost": 0.09094428446477743,
+      "market_context": {
+        "vix": 17.440000534057617,
+        "spy_drawdown": -0.0077539289503257836,
+        "spy_return": 0.0019499283249213573
+      },
+      "description": "Entered SPY late, capturing only partial move (+0.2% vs +9.3%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2018-09-30",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "GLD",
+      "actual_return": -0.06910424021050066,
+      "optimal_return": 0.02119545356837582,
+      "opportunity_cost": 0.09029969377887648,
+      "market_context": {
+        "vix": 12.119999885559082,
+        "spy_drawdown": -0.005259481577566505,
+        "spy_return": -0.06910424021050066
+      },
+      "description": "Held SPY which lost -6.9% while GLD gained +2.1%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2019-03-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLF",
+      "actual_return": 0.0,
+      "optimal_return": 0.08984817296098546,
+      "opportunity_cost": 0.08984817296098546,
+      "market_context": {
+        "vix": 13.710000038146973,
+        "spy_drawdown": -0.023527289684677544,
+        "spy_return": 0.040852329914615515
+      },
+      "description": "Was in defensive position (CASH) while XLF returned +9.0%. VIX was 13.710000038146973, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2018-03-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": 0.005168118785654041,
+      "optimal_return": 0.0949411533227329,
+      "opportunity_cost": 0.08977303453707886,
+      "market_context": {
+        "vix": 19.969999313354492,
+        "spy_drawdown": -0.07807940549493675,
+        "spy_return": 0.005168118785654041
+      },
+      "description": "Entered SPY late, capturing only partial move (+0.5% vs +9.5%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2016-05-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "GLD",
+      "actual_return": 0.0,
+      "optimal_return": 0.08969501879279118,
+      "opportunity_cost": 0.08969501879279118,
+      "market_context": {
+        "vix": 14.1899995803833,
+        "spy_drawdown": -0.00190264681148411,
+        "spy_return": 0.003475985627960698
+      },
+      "description": "Was in defensive position (CASH) while GLD returned +9.0%. VIX was 14.1899995803833, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2023-04-30",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLK",
+      "actual_return": 0.0,
+      "optimal_return": 0.0891730119850569,
+      "opportunity_cost": 0.0891730119850569,
+      "market_context": {
+        "vix": 15.779999732971191,
+        "spy_drawdown": 0.0,
+        "spy_return": 0.0046160546879336906
+      },
+      "description": "Was in defensive position (CASH) while XLK returned +8.9%. VIX was 15.779999732971191, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2010-03-31",
+      "failure_type": "bad_hold",
+      "asset_held": "EFA",
+      "optimal_asset": "GLD",
+      "actual_return": -0.028045777660638094,
+      "optimal_return": 0.058834362933984474,
+      "opportunity_cost": 0.08688014059462257,
+      "market_context": {
+        "vix": 17.59000015258789,
+        "spy_drawdown": -0.003492542712725255,
+        "spy_return": 0.015470003292631818
+      },
+      "description": "Held EFA which lost -2.8% while GLD gained +5.9%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2011-09-30",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": 0.10914771237037635,
+      "optimal_return": 0.19142019176875702,
+      "opportunity_cost": 0.08227247939838067,
+      "market_context": {
+        "vix": 42.959999084472656,
+        "spy_drawdown": -0.16221318790831096,
+        "spy_return": 0.10914771237037635
+      },
+      "description": "Held SPY (+10.9%) when XLE would have returned +19.1%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2013-07-31",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "GLD",
+      "actual_return": -0.029992359792087586,
+      "optimal_return": 0.052047484216675155,
+      "opportunity_cost": 0.08203984400876274,
+      "market_context": {
+        "vix": 13.449999809265137,
+        "spy_drawdown": -0.00466113708696636,
+        "spy_return": -0.029992359792087586
+      },
+      "description": "Held SPY which lost -3.0% while GLD gained +5.2%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2025-08-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "GLD",
+      "actual_return": 0.03562036952182912,
+      "optimal_return": 0.11758415768627128,
+      "opportunity_cost": 0.08196378816444216,
+      "market_context": {
+        "vix": 15.359999656677246,
+        "spy_drawdown": -0.005963709384858351,
+        "spy_return": 0.03562036952182912
+      },
+      "description": "Entered SPY late, capturing only partial move (+3.6% vs +11.8%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2017-08-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": 0.020149575425356225,
+      "optimal_return": 0.10182359350379944,
+      "opportunity_cost": 0.08167401807844321,
+      "market_context": {
+        "vix": 10.59000015258789,
+        "spy_drawdown": -0.0015328176642369629,
+        "spy_return": 0.020149575425356225
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.0% vs +10.2%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2019-12-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": -0.00040384420781036656,
+      "optimal_return": 0.07691194650398758,
+      "opportunity_cost": 0.07731579071179795,
+      "market_context": {
+        "vix": 13.779999732971191,
+        "spy_drawdown": -0.003344419523919062,
+        "spy_return": -0.00040384420781036656
+      },
+      "description": "Entered SPY late, capturing only partial move (-0.0% vs +7.7%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2020-04-30",
+      "failure_type": "missed_opportunity",
+      "asset_held": "AGG",
+      "optimal_asset": "DBC",
+      "actual_return": 0.006725585697229031,
+      "optimal_return": 0.08073404495143488,
+      "opportunity_cost": 0.07400845925420585,
+      "market_context": {
+        "vix": 34.150001525878906,
+        "spy_drawdown": -0.13640674885732207,
+        "spy_return": 0.04764528962183112
+      },
+      "description": "Was in defensive position (AGG) while DBC returned +8.1%. VIX was 34.150001525878906, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2024-02-29",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": 0.03270185932656733,
+      "optimal_return": 0.10486383079926553,
+      "opportunity_cost": 0.0721619714726982,
+      "market_context": {
+        "vix": 13.399999618530273,
+        "spy_drawdown": 0.0,
+        "spy_return": 0.03270185932656733
+      },
+      "description": "Entered SPY late, capturing only partial move (+3.3% vs +10.5%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2023-08-31",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": -0.04743462179761082,
+      "optimal_return": 0.02403326823267271,
+      "opportunity_cost": 0.07146789003028353,
+      "market_context": {
+        "vix": 13.569999694824219,
+        "spy_drawdown": -0.016251999846922716,
+        "spy_return": -0.04743462179761082
+      },
+      "description": "Held SPY which lost -4.7% while XLE gained +2.4%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2016-06-30",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLK",
+      "actual_return": 0.0,
+      "optimal_return": 0.07101689636871122,
+      "opportunity_cost": 0.07101689636871122,
+      "market_context": {
+        "vix": 15.630000114440918,
+        "spy_drawdown": -0.00847844304387635,
+        "spy_return": 0.03647107168281316
+      },
+      "description": "Was in defensive position (CASH) while XLK returned +7.1%. VIX was 15.630000114440918, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2021-04-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "GLD",
+      "actual_return": 0.006566017303594407,
+      "optimal_return": 0.07678377966625938,
+      "opportunity_cost": 0.07021776236266497,
+      "market_context": {
+        "vix": 18.610000610351562,
+        "spy_drawdown": -0.0065705826618411844,
+        "spy_return": 0.006566017303594407
+      },
+      "description": "Entered SPY late, capturing only partial move (+0.7% vs +7.7%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2024-03-31",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "GLD",
+      "actual_return": -0.04031962466094863,
+      "optimal_return": 0.02989497307015121,
+      "opportunity_cost": 0.07021459773109984,
+      "market_context": {
+        "vix": 13.010000228881836,
+        "spy_drawdown": -0.0001912804708001925,
+        "spy_return": -0.04031962466094863
+      },
+      "description": "Held SPY which lost -4.0% while GLD gained +3.0%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2025-01-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": -0.012694838336049674,
+      "optimal_return": 0.056971147079521556,
+      "opportunity_cost": 0.06966598541557123,
+      "market_context": {
+        "vix": 16.43000030517578,
+        "spy_drawdown": -0.013005421204169698,
+        "spy_return": -0.012694838336049674
+      },
+      "description": "Entered SPY late, capturing only partial move (-1.3% vs +5.7%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2023-05-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLE",
+      "actual_return": 0.0,
+      "optimal_return": 0.06913373347411444,
+      "opportunity_cost": 0.06913373347411444,
+      "market_context": {
+        "vix": 17.940000534057617,
+        "spy_drawdown": -0.005545304732458067,
+        "spy_return": 0.06479982070818902
+      },
+      "description": "Was in defensive position (CASH) while XLE returned +6.9%. VIX was 17.940000534057617, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2019-01-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLK",
+      "actual_return": 0.0,
+      "optimal_return": 0.06910026849684137,
+      "opportunity_cost": 0.06910026849684137,
+      "market_context": {
+        "vix": 16.56999969482422,
+        "spy_drawdown": -0.07100206700487266,
+        "spy_return": 0.03241612957626816
+      },
+      "description": "Was in defensive position (CASH) while XLK returned +6.9%. VIX was 16.56999969482422, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2019-04-30",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "TLT",
+      "actual_return": 0.0,
+      "optimal_return": 0.06839233610189699,
+      "opportunity_cost": 0.06839233610189699,
+      "market_context": {
+        "vix": 13.119999885559082,
+        "spy_drawdown": 0.0,
+        "spy_return": -0.06377117161485413
+      },
+      "description": "Was in defensive position (CASH) while TLT returned +6.8%. VIX was 13.119999885559082, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2011-12-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "GLD",
+      "actual_return": 0.04637427082197454,
+      "optimal_return": 0.11395480912860867,
+      "opportunity_cost": 0.06758053830663413,
+      "market_context": {
+        "vix": 23.399999618530273,
+        "spy_drawdown": -0.06487739989935382,
+        "spy_return": 0.04637427082197454
+      },
+      "description": "Entered SPY late, capturing only partial move (+4.6% vs +11.4%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2025-03-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "GLD",
+      "actual_return": -0.008670119115083419,
+      "optimal_return": 0.05424437277239913,
+      "opportunity_cost": 0.06291449188748255,
+      "market_context": {
+        "vix": 22.280000686645508,
+        "spy_drawdown": -0.08460543684335775,
+        "spy_return": -0.008670119115083419
+      },
+      "description": "Entered SPY late, capturing only partial move (-0.9% vs +5.4%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2020-05-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "AGG",
+      "optimal_asset": "XLK",
+      "actual_return": 0.0065905503935912435,
+      "optimal_return": 0.06949027992380574,
+      "opportunity_cost": 0.0628997295302145,
+      "market_context": {
+        "vix": 27.510000228881836,
+        "spy_drawdown": -0.0952605982911704,
+        "spy_return": 0.01773442500280953
+      },
+      "description": "Was in defensive position (AGG) while XLK returned +6.9%. VIX was 27.510000228881836, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2011-02-28",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "EEM",
+      "actual_return": 0.00012014161430640158,
+      "optimal_return": 0.06289579690295444,
+      "opportunity_cost": 0.06277565528864804,
+      "market_context": {
+        "vix": 18.350000381469727,
+        "spy_drawdown": -0.010258214537210208,
+        "spy_return": 0.00012014161430640158
+      },
+      "description": "Entered SPY late, capturing only partial move (+0.0% vs +6.3%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2018-10-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLV",
+      "actual_return": 0.018549074447527625,
+      "optimal_return": 0.0808345612796082,
+      "opportunity_cost": 0.06228548683208057,
+      "market_context": {
+        "vix": 21.229999542236328,
+        "spy_drawdown": -0.07400026930974835,
+        "spy_return": 0.018549074447527625
+      },
+      "description": "Entered SPY late, capturing only partial move (+1.9% vs +8.1%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2015-03-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "DBC",
+      "actual_return": 0.00983372604609456,
+      "optimal_return": 0.07147056199674218,
+      "opportunity_cost": 0.06163683595064762,
+      "market_context": {
+        "vix": 15.289999961853027,
+        "spy_drawdown": -0.02188125825187781,
+        "spy_return": 0.00983372604609456
+      },
+      "description": "Entered SPY late, capturing only partial move (+1.0% vs +7.1%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2011-03-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "GLD",
+      "actual_return": 0.028961360462804286,
+      "optimal_return": 0.08944654978008071,
+      "opportunity_cost": 0.06048518931727642,
+      "market_context": {
+        "vix": 17.739999771118164,
+        "spy_drawdown": -0.010139305361358208,
+        "spy_return": 0.028961360462804286
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.9% vs +8.9%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2012-11-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "EEM",
+      "actual_return": 0.008934280278667384,
+      "optimal_return": 0.06803606694025488,
+      "opportunity_cost": 0.059101786661587496,
+      "market_context": {
+        "vix": 15.869999885559082,
+        "spy_drawdown": -0.029416238909892978,
+        "spy_return": 0.008934280278667384
+      },
+      "description": "Entered SPY late, capturing only partial move (+0.9% vs +6.8%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2017-05-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLF",
+      "actual_return": 0.006374822033250238,
+      "optimal_return": 0.06513305531470537,
+      "opportunity_cost": 0.05875823328145513,
+      "market_context": {
+        "vix": 10.40999984741211,
+        "spy_drawdown": -0.0013236382187161722,
+        "spy_return": 0.006374822033250238
+      },
+      "description": "Entered SPY late, capturing only partial move (+0.6% vs +6.5%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2010-10-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": 0.0,
+      "optimal_return": 0.05857490287232858,
+      "opportunity_cost": 0.05857490287232858,
+      "market_context": {
+        "vix": 21.200000762939453,
+        "spy_drawdown": -0.01739528273580271,
+        "spy_return": 0.0
+      },
+      "description": "Entered SPY late, capturing only partial move (+0.0% vs +5.9%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2018-02-28",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": -0.027410263824035885,
+      "optimal_return": 0.028596342458520718,
+      "opportunity_cost": 0.056006606282556604,
+      "market_context": {
+        "vix": 19.850000381469727,
+        "spy_drawdown": -0.05209713796705495,
+        "spy_return": -0.027410263824035885
+      },
+      "description": "Held SPY which lost -2.7% while TLT gained +2.9%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2022-02-28",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": 0.03759029104606304,
+      "optimal_return": 0.0933858770848972,
+      "opportunity_cost": 0.055795586038834166,
+      "market_context": {
+        "vix": 30.149999618530273,
+        "spy_drawdown": -0.08599359291472408,
+        "spy_return": 0.03759029104606304
+      },
+      "description": "Entered SPY late, capturing only partial move (+3.8% vs +9.3%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2015-12-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "TLT",
+      "actual_return": 0.0,
+      "optimal_return": 0.05573026212284815,
+      "opportunity_cost": 0.05573026212284815,
+      "market_context": {
+        "vix": 18.209999084472656,
+        "spy_drawdown": -0.030295128608333166,
+        "spy_return": -0.049786586903192376
+      },
+      "description": "Was in defensive position (CASH) while TLT returned +5.6%. VIX was 18.209999084472656, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2019-02-28",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "TLT",
+      "actual_return": 0.0,
+      "optimal_return": 0.055716398991328075,
+      "opportunity_cost": 0.055716398991328075,
+      "market_context": {
+        "vix": 14.779999732971191,
+        "spy_drawdown": -0.040887549632817266,
+        "spy_return": 0.018100338434240637
+      },
+      "description": "Was in defensive position (CASH) while TLT returned +5.6%. VIX was 14.779999732971191, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2012-03-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": -0.006675755632837177,
+      "optimal_return": 0.04834288273883769,
+      "opportunity_cost": 0.055018638371674866,
+      "market_context": {
+        "vix": 15.5,
+        "spy_drawdown": -0.005649552608398167,
+        "spy_return": -0.006675755632837177
+      },
+      "description": "Entered SPY late, capturing only partial move (-0.7% vs +4.8%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2023-06-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "DBC",
+      "actual_return": 0.032733383257103066,
+      "optimal_return": 0.08722470283873629,
+      "opportunity_cost": 0.054491319581633224,
+      "market_context": {
+        "vix": 13.59000015258789,
+        "spy_drawdown": 0.0,
+        "spy_return": 0.032733383257103066
+      },
+      "description": "Entered SPY late, capturing only partial move (+3.3% vs +8.7%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2021-10-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLK",
+      "actual_return": -0.008034740862282619,
+      "optimal_return": 0.044511964949240035,
+      "opportunity_cost": 0.052546705811522654,
+      "market_context": {
+        "vix": 16.260000228881836,
+        "spy_drawdown": 0.0,
+        "spy_return": -0.008034740862282619
+      },
+      "description": "Entered SPY late, capturing only partial move (-0.8% vs +4.5%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2024-09-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "GLD",
+      "actual_return": -0.008923451594921361,
+      "optimal_return": 0.04299348742370923,
+      "opportunity_cost": 0.05191693901863059,
+      "market_context": {
+        "vix": 16.729999542236328,
+        "spy_drawdown": 0.0,
+        "spy_return": -0.008923451594921361
+      },
+      "description": "Entered SPY late, capturing only partial move (-0.9% vs +4.3%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2024-06-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLF",
+      "actual_return": 0.01210917131402578,
+      "optimal_return": 0.06397467413113733,
+      "opportunity_cost": 0.05186550281711155,
+      "market_context": {
+        "vix": 12.4399995803833,
+        "spy_drawdown": -0.004584108605383386,
+        "spy_return": 0.01210917131402578
+      },
+      "description": "Entered SPY late, capturing only partial move (+1.2% vs +6.4%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2019-09-30",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLV",
+      "actual_return": 0.0,
+      "optimal_return": 0.05125931766487479,
+      "opportunity_cost": 0.05125931766487479,
+      "market_context": {
+        "vix": 16.239999771118164,
+        "spy_drawdown": -0.012812814283770901,
+        "spy_return": 0.02210454831684494
+      },
+      "description": "Was in defensive position (CASH) while XLV returned +5.1%. VIX was 16.239999771118164, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2016-04-30",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLK",
+      "actual_return": 0.0,
+      "optimal_return": 0.048896331476954824,
+      "opportunity_cost": 0.048896331476954824,
+      "market_context": {
+        "vix": 15.699999809265137,
+        "spy_drawdown": -0.017943674356069916,
+        "spy_return": 0.017011675533759485
+      },
+      "description": "Was in defensive position (CASH) while XLK returned +4.9%. VIX was 15.699999809265137, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2016-12-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "EEM",
+      "actual_return": 0.01789467509070808,
+      "optimal_return": 0.06655246201818121,
+      "opportunity_cost": 0.048657786927473134,
+      "market_context": {
+        "vix": 14.039999961853027,
+        "spy_drawdown": -0.012787477322013019,
+        "spy_return": 0.01789467509070808
+      },
+      "description": "Entered SPY late, capturing only partial move (+1.8% vs +6.7%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2010-12-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": 0.023300022246164787,
+      "optimal_return": 0.0717948269842219,
+      "opportunity_cost": 0.04849480473805712,
+      "market_context": {
+        "vix": 17.75,
+        "spy_drawdown": -0.0013496799767083179,
+        "spy_return": 0.023300022246164787
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.3% vs +7.2%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2019-11-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "EEM",
+      "actual_return": 0.029055653721064223,
+      "optimal_return": 0.07730283130834548,
+      "opportunity_cost": 0.048247177587281254,
+      "market_context": {
+        "vix": 12.619999885559082,
+        "spy_drawdown": -0.0037088282353829882,
+        "spy_return": 0.029055653721064223
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.9% vs +7.7%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2010-06-30",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "EFA",
+      "actual_return": 0.06830025850345312,
+      "optimal_return": 0.11610384797207374,
+      "opportunity_cost": 0.04780358946862062,
+      "market_context": {
+        "vix": 34.540000915527344,
+        "spy_drawdown": -0.14858308895279704,
+        "spy_return": 0.06830025850345312
+      },
+      "description": "Held SPY (+6.8%) when EFA would have returned +11.6%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2020-12-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": -0.010190360551989852,
+      "optimal_return": 0.037466994216247995,
+      "opportunity_cost": 0.04765735476823785,
+      "market_context": {
+        "vix": 22.75,
+        "spy_drawdown": 0.0,
+        "spy_return": -0.010190360551989852
+      },
+      "description": "Entered SPY late, capturing only partial move (-1.0% vs +3.7%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2025-05-31",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "XLK",
+      "actual_return": 0.051386182837998895,
+      "optimal_return": 0.0984785507893593,
+      "opportunity_cost": 0.0470923679513604,
+      "market_context": {
+        "vix": 18.56999969482422,
+        "spy_drawdown": -0.035512910644161066,
+        "spy_return": 0.051386182837998895
+      },
+      "description": "Held SPY (+5.1%) when XLK would have returned +9.8%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2013-08-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "EFA",
+      "actual_return": 0.031646406324654874,
+      "optimal_return": 0.07824872781490066,
+      "opportunity_cost": 0.04660232149024579,
+      "market_context": {
+        "vix": 17.010000228881836,
+        "spy_drawdown": -0.04270284376713751,
+        "spy_return": 0.031646406324654874
+      },
+      "description": "Entered SPY late, capturing only partial move (+3.2% vs +7.8%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2021-05-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLK",
+      "actual_return": 0.022427437255858607,
+      "optimal_return": 0.06886296801094383,
+      "opportunity_cost": 0.04643553075508522,
+      "market_context": {
+        "vix": 16.760000228881836,
+        "spy_drawdown": -0.004927683081907053,
+        "spy_return": 0.022427437255858607
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.2% vs +6.9%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2012-06-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "DBC",
+      "actual_return": 0.011829598109163841,
+      "optimal_return": 0.05825232511042144,
+      "opportunity_cost": 0.0464227270012576,
+      "market_context": {
+        "vix": 17.079999923706055,
+        "spy_drawdown": -0.03549606373718528,
+        "spy_return": 0.011829598109163841
+      },
+      "description": "Entered SPY late, capturing only partial move (+1.2% vs +5.8%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2014-03-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": 0.006951500175787162,
+      "optimal_return": 0.05254836998058221,
+      "opportunity_cost": 0.04559686980479505,
+      "market_context": {
+        "vix": 13.880000114440918,
+        "spy_drawdown": -0.002255351259713767,
+        "spy_return": 0.006951500175787162
+      },
+      "description": "Entered SPY late, capturing only partial move (+0.7% vs +5.3%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2011-04-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": -0.011214536019579557,
+      "optimal_return": 0.034228592472347996,
+      "opportunity_cost": 0.045443128491927554,
+      "market_context": {
+        "vix": 14.75,
+        "spy_drawdown": 0.0,
+        "spy_return": -0.011214536019579557
+      },
+      "description": "Entered SPY late, capturing only partial move (-1.1% vs +3.4%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2019-08-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLF",
+      "actual_return": 0.0,
+      "optimal_return": 0.04542153353500433,
+      "opportunity_cost": 0.04542153353500433,
+      "market_context": {
+        "vix": 18.979999542236328,
+        "spy_drawdown": -0.03165475602840384,
+        "spy_return": 0.019457876064278734
+      },
+      "description": "Was in defensive position (CASH) while XLF returned +4.5%. VIX was 18.979999542236328, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2020-08-31",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": -0.03744369738652831,
+      "optimal_return": 0.0077341965277410996,
+      "opportunity_cost": 0.04517789391426941,
+      "market_context": {
+        "vix": 26.40999984741211,
+        "spy_drawdown": -0.003622395668545275,
+        "spy_return": -0.03744369738652831
+      },
+      "description": "Held SPY which lost -3.7% while TLT gained +0.8%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2024-10-31",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "XLF",
+      "actual_return": 0.05963352184722481,
+      "optimal_return": 0.10456091024659186,
+      "opportunity_cost": 0.04492738839936705,
+      "market_context": {
+        "vix": 23.15999984741211,
+        "spy_drawdown": -0.02728405453822036,
+        "spy_return": 0.05963352184722481
+      },
+      "description": "Held SPY (+6.0%) when XLF would have returned +10.5%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2021-11-30",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "XLV",
+      "actual_return": 0.04624778587983336,
+      "optimal_return": 0.09019853018689572,
+      "opportunity_cost": 0.04395074430706236,
+      "market_context": {
+        "vix": 27.190000534057617,
+        "spy_drawdown": -0.030166193101047845,
+        "spy_return": 0.04624778587983336
+      },
+      "description": "Held SPY (+4.6%) when XLV would have returned +9.0%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2018-04-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLK",
+      "actual_return": 0.024309346154399503,
+      "optimal_return": 0.06782781673880622,
+      "opportunity_cost": 0.04351847058440672,
+      "market_context": {
+        "vix": 15.930000305175781,
+        "spy_drawdown": -0.07331481035159382,
+        "spy_return": 0.024309346154399503
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.4% vs +6.8%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2016-08-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "DBC",
+      "actual_return": 0.0,
+      "optimal_return": 0.04308543762017103,
+      "opportunity_cost": 0.04308543762017103,
+      "market_context": {
+        "vix": 13.420000076293945,
+        "spy_drawdown": -0.007805006828069505,
+        "spy_return": 5.836255969660087e-05
+      },
+      "description": "Was in defensive position (CASH) while DBC returned +4.3%. VIX was 13.420000076293945, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2024-05-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLK",
+      "actual_return": 0.03528016665523781,
+      "optimal_return": 0.07835384544432555,
+      "opportunity_cost": 0.043073678789087744,
+      "market_context": {
+        "vix": 12.920000076293945,
+        "spy_drawdown": -0.007509233264982207,
+        "spy_return": 0.03528016665523781
+      },
+      "description": "Entered SPY late, capturing only partial move (+3.5% vs +7.8%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2025-09-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLK",
+      "actual_return": 0.023837458474752493,
+      "optimal_return": 0.06677076556061601,
+      "opportunity_cost": 0.042933307085863515,
+      "market_context": {
+        "vix": 16.280000686645508,
+        "spy_drawdown": -0.0009897810749672775,
+        "spy_return": 0.023837458474752493
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.4% vs +6.7%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2014-05-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "GLD",
+      "actual_return": 0.02064457660346508,
+      "optimal_return": 0.06319017654797743,
+      "opportunity_cost": 0.04254559994451235,
+      "market_context": {
+        "vix": 11.399999618530273,
+        "spy_drawdown": 0.0,
+        "spy_return": 0.02064457660346508
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.1% vs +6.3%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2012-02-29",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLF",
+      "actual_return": 0.032163664938000824,
+      "optimal_return": 0.07387804281467569,
+      "opportunity_cost": 0.04171437787667487,
+      "market_context": {
+        "vix": 18.43000030517578,
+        "spy_drawdown": -0.003925587806747344,
+        "spy_return": 0.032163664938000824
+      },
+      "description": "Entered SPY late, capturing only partial move (+3.2% vs +7.4%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2017-09-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLK",
+      "actual_return": 0.02356406643108966,
+      "optimal_return": 0.06514413124225449,
+      "opportunity_cost": 0.04158006481116483,
+      "market_context": {
+        "vix": 9.510000228881836,
+        "spy_drawdown": 0.0,
+        "spy_return": 0.02356406643108966
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.4% vs +6.5%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2024-11-30",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "DBC",
+      "actual_return": -0.024060285058999265,
+      "optimal_return": 0.01722728461039935,
+      "opportunity_cost": 0.041287569669398616,
+      "market_context": {
+        "vix": 13.510000228881836,
+        "spy_drawdown": 0.0,
+        "spy_return": -0.024060285058999265
+      },
+      "description": "Held SPY which lost -2.4% while DBC gained +1.7%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2023-11-30",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": 0.045655322257667,
+      "optimal_return": 0.0868577193862039,
+      "opportunity_cost": 0.041202397128536905,
+      "market_context": {
+        "vix": 12.920000076293945,
+        "spy_drawdown": 0.0,
+        "spy_return": 0.045655322257667
+      },
+      "description": "Held SPY (+4.6%) when TLT would have returned +8.7%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2024-12-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "GLD",
+      "actual_return": 0.026856410906426875,
+      "optimal_return": 0.06785607873643396,
+      "opportunity_cost": 0.04099966783000708,
+      "market_context": {
+        "vix": 17.350000381469727,
+        "spy_drawdown": -0.032506102597026354,
+        "spy_return": 0.026856410906426875
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.7% vs +6.8%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2017-11-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": 0.012127800388334498,
+      "optimal_return": 0.05269429529514236,
+      "opportunity_cost": 0.04056649490680786,
+      "market_context": {
+        "vix": 11.279999732971191,
+        "spy_drawdown": 0.0,
+        "spy_return": 0.012127800388334498
+      },
+      "description": "Entered SPY late, capturing only partial move (+1.2% vs +5.3%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2010-11-30",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "XLF",
+      "actual_return": 0.06685238772125768,
+      "optimal_return": 0.10704219289419248,
+      "opportunity_cost": 0.0401898051729348,
+      "market_context": {
+        "vix": 23.540000915527344,
+        "spy_drawdown": -0.03446879730878638,
+        "spy_return": 0.06685238772125768
+      },
+      "description": "Held SPY (+6.7%) when XLF would have returned +10.7%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2016-09-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLF",
+      "actual_return": -0.0173370947665773,
+      "optimal_return": 0.022798134780200652,
+      "opportunity_cost": 0.04013522954677795,
+      "market_context": {
+        "vix": 13.289999961853027,
+        "spy_drawdown": -0.007747099788549816,
+        "spy_return": -0.0173370947665773
+      },
+      "description": "Entered SPY late, capturing only partial move (-1.7% vs +2.3%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2017-07-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "GLD",
+      "actual_return": 0.002917805428165554,
+      "optimal_return": 0.04198757511241591,
+      "opportunity_cost": 0.039069769684250355,
+      "market_context": {
+        "vix": 10.260000228881836,
+        "spy_drawdown": -0.0026675789393743043,
+        "spy_return": 0.002917805428165554
+      },
+      "description": "Entered SPY late, capturing only partial move (+0.3% vs +4.2%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2020-09-30",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "EEM",
+      "actual_return": -0.02493356249253076,
+      "optimal_return": 0.014062259624216589,
+      "opportunity_cost": 0.03899582211674735,
+      "market_context": {
+        "vix": 26.3700008392334,
+        "spy_drawdown": -0.06002081002051052,
+        "spy_return": -0.02493356249253076
+      },
+      "description": "Held SPY which lost -2.5% while EEM gained +1.4%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2011-01-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": 0.03473752747776948,
+      "optimal_return": 0.07368413292453946,
+      "opportunity_cost": 0.03894660544676998,
+      "market_context": {
+        "vix": 19.530000686645508,
+        "spy_drawdown": -0.010077828409233769,
+        "spy_return": 0.03473752747776948
+      },
+      "description": "Entered SPY late, capturing only partial move (+3.5% vs +7.4%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2010-01-31",
+      "failure_type": "late_entry",
+      "asset_held": "EFA",
+      "optimal_asset": "DBC",
+      "actual_return": 0.0026679735761681034,
+      "optimal_return": 0.041427879117140076,
+      "opportunity_cost": 0.03875990554097197,
+      "market_context": {
+        "vix": 24.6200008392334,
+        "spy_drawdown": -0.06666028570448823,
+        "spy_return": 0.03119428315654349
+      },
+      "description": "Entered EFA late, capturing only partial move (+0.3% vs +4.1%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2016-07-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLF",
+      "actual_return": 0.0,
+      "optimal_return": 0.03847741394787163,
+      "opportunity_cost": 0.03847741394787163,
+      "market_context": {
+        "vix": 11.869999885559082,
+        "spy_drawdown": -0.0005526688129268154,
+        "spy_return": 0.0011973726410774432
+      },
+      "description": "Was in defensive position (CASH) while XLF returned +3.8%. VIX was 11.869999885559082, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2012-09-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLF",
+      "actual_return": -0.01819837571155869,
+      "optimal_return": 0.019884577150407257,
+      "opportunity_cost": 0.038082952861965946,
+      "market_context": {
+        "vix": 15.729999542236328,
+        "spy_drawdown": -0.016989339237762247,
+        "spy_return": -0.01819837571155869
+      },
+      "description": "Entered SPY late, capturing only partial move (-1.8% vs +2.0%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2017-06-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "EEM",
+      "actual_return": 0.02055403573073722,
+      "optimal_return": 0.05822664587853765,
+      "opportunity_cost": 0.037672610147800434,
+      "market_context": {
+        "vix": 11.180000305175781,
+        "spy_drawdown": -0.011689717304406266,
+        "spy_return": 0.02055403573073722
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.1% vs +5.8%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2023-10-31",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "XLK",
+      "actual_return": 0.0913437610063772,
+      "optimal_return": 0.12895547304329846,
+      "opportunity_cost": 0.03761171203692126,
+      "market_context": {
+        "vix": 18.139999389648438,
+        "spy_drawdown": -0.08325840073366952,
+        "spy_return": 0.0913437610063772
+      },
+      "description": "Held SPY (+9.1%) when XLK would have returned +12.9%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2013-04-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLF",
+      "actual_return": 0.023609583015218538,
+      "optimal_return": 0.06096258501942864,
+      "opportunity_cost": 0.0373530020042101,
+      "market_context": {
+        "vix": 13.520000457763672,
+        "spy_drawdown": 0.0,
+        "spy_return": 0.023609583015218538
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.4% vs +6.1%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2025-04-30",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "XLK",
+      "actual_return": 0.06284489987557662,
+      "optimal_return": 0.09972849933581096,
+      "opportunity_cost": 0.03688359946023434,
+      "market_context": {
+        "vix": 24.700000762939453,
+        "spy_drawdown": -0.0925420167432256,
+        "spy_return": 0.06284489987557662
+      },
+      "description": "Held SPY (+6.3%) when XLK would have returned +10.0%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2015-05-31",
+      "failure_type": "bad_hold",
+      "asset_held": "SPY",
+      "optimal_asset": "DBC",
+      "actual_return": -0.020312259840277958,
+      "optimal_return": 0.01637495355099694,
+      "opportunity_cost": 0.0366872133912749,
+      "market_context": {
+        "vix": 13.84000015258789,
+        "spy_drawdown": -0.011053821908600159,
+        "spy_return": -0.020312259840277958
+      },
+      "description": "Held SPY which lost -2.0% while DBC gained +1.6%. Momentum signal was stale - trend had already reversed."
+    },
+    {
+      "date": "2024-08-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "EEM",
+      "actual_return": 0.021004438734591346,
+      "optimal_return": 0.05741300625248802,
+      "opportunity_cost": 0.03640856751789667,
+      "market_context": {
+        "vix": 15.0,
+        "spy_drawdown": -0.002088750783116544,
+        "spy_return": 0.021004438734591346
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.1% vs +5.7%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2017-02-28",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "EEM",
+      "actual_return": 0.0012498688193021135,
+      "optimal_return": 0.0368516185929626,
+      "opportunity_cost": 0.035601749773660485,
+      "market_context": {
+        "vix": 12.920000076293945,
+        "spy_drawdown": -0.00269919095631288,
+        "spy_return": 0.0012498688193021135
+      },
+      "description": "Entered SPY late, capturing only partial move (+0.1% vs +3.7%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2014-11-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": -0.002536428613276076,
+      "optimal_return": 0.032513847545787344,
+      "opportunity_cost": 0.03505027615906342,
+      "market_context": {
+        "vix": 13.329999923706055,
+        "spy_drawdown": -0.002118792625452004,
+        "spy_return": -0.002536428613276076
+      },
+      "description": "Entered SPY late, capturing only partial move (-0.3% vs +3.3%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2019-06-30",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLK",
+      "actual_return": 0.0,
+      "optimal_return": 0.03498208910076728,
+      "opportunity_cost": 0.03498208910076728,
+      "market_context": {
+        "vix": 15.079999923706055,
+        "spy_drawdown": -0.004849831755795342,
+        "spy_return": 0.01511944131437093
+      },
+      "description": "Was in defensive position (CASH) while XLK returned +3.5%. VIX was 15.079999923706055, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2020-11-30",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "EEM",
+      "actual_return": 0.037048207520307797,
+      "optimal_return": 0.07129459178466502,
+      "opportunity_cost": 0.03424638426435722,
+      "market_context": {
+        "vix": 20.56999969482422,
+        "spy_drawdown": -0.004427009770080259,
+        "spy_return": 0.037048207520307797
+      },
+      "description": "Held SPY (+3.7%) when EEM would have returned +7.1%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2018-07-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLK",
+      "actual_return": 0.03191988971570159,
+      "optimal_return": 0.06598985358641474,
+      "opportunity_cost": 0.03406996387071315,
+      "market_context": {
+        "vix": 12.829999923706055,
+        "spy_drawdown": -0.009961989779681879,
+        "spy_return": 0.03191988971570159
+      },
+      "description": "Entered SPY late, capturing only partial move (+3.2% vs +6.6%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2025-07-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLV",
+      "actual_return": 0.020519492148202145,
+      "optimal_return": 0.053668616970928174,
+      "opportunity_cost": 0.03314912482272603,
+      "market_context": {
+        "vix": 16.719999313354492,
+        "spy_drawdown": -0.007879392437544541,
+        "spy_return": 0.020519492148202145
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.1% vs +5.4%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2021-09-30",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": 0.07016336239379384,
+      "optimal_return": 0.1032826534498823,
+      "opportunity_cost": 0.03311929105608846,
+      "market_context": {
+        "vix": 23.139999389648438,
+        "spy_drawdown": -0.05003437934355448,
+        "spy_return": 0.07016336239379384
+      },
+      "description": "Held SPY (+7.0%) when XLE would have returned +10.3%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2023-07-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": -0.016251999846922716,
+      "optimal_return": 0.016460737768043243,
+      "opportunity_cost": 0.03271273761496596,
+      "market_context": {
+        "vix": 13.630000114440918,
+        "spy_drawdown": 0.0,
+        "spy_return": -0.016251999846922716
+      },
+      "description": "Entered SPY late, capturing only partial move (-1.6% vs +1.6%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2018-01-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLK",
+      "actual_return": -0.03636072818603775,
+      "optimal_return": -0.004091099844886648,
+      "opportunity_cost": 0.0322696283411511,
+      "market_context": {
+        "vix": 13.539999961853027,
+        "spy_drawdown": -0.016330187282005304,
+        "spy_return": -0.03636072818603775
+      },
+      "description": "Entered SPY late, capturing only partial move (-3.6% vs -0.4%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2015-04-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLV",
+      "actual_return": 0.012856357570702803,
+      "optimal_return": 0.04504277973635373,
+      "opportunity_cost": 0.03218642216565093,
+      "market_context": {
+        "vix": 14.550000190734863,
+        "spy_drawdown": -0.015072159324081347,
+        "spy_return": 0.012856357570702803
+      },
+      "description": "Entered SPY late, capturing only partial move (+1.3% vs +4.5%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2012-12-31",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "XLE",
+      "actual_return": 0.05119021528409573,
+      "optimal_return": 0.08303022279215444,
+      "opportunity_cost": 0.03184000750805871,
+      "market_context": {
+        "vix": 18.020000457763672,
+        "spy_drawdown": -0.020744771554390806,
+        "spy_return": 0.05119021528409573
+      },
+      "description": "Held SPY (+5.1%) when XLE would have returned +8.3%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2023-03-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLF",
+      "actual_return": 0.0,
+      "optimal_return": 0.03172611505847778,
+      "opportunity_cost": 0.03172611505847778,
+      "market_context": {
+        "vix": 18.700000762939453,
+        "spy_drawdown": -0.035290894589381394,
+        "spy_return": 0.015974830367952775
+      },
+      "description": "Was in defensive position (CASH) while XLF returned +3.2%. VIX was 18.700000762939453, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2012-07-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "DBC",
+      "actual_return": 0.025052373068948475,
+      "optimal_return": 0.05651382684983419,
+      "opportunity_cost": 0.03146145378088572,
+      "market_context": {
+        "vix": 18.93000030517578,
+        "spy_drawdown": -0.024086369796489593,
+        "spy_return": 0.025052373068948475
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.5% vs +5.7%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2013-03-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "EFA",
+      "actual_return": 0.019212630825177213,
+      "optimal_return": 0.05018643611070983,
+      "opportunity_cost": 0.03097380528553262,
+      "market_context": {
+        "vix": 12.699999809265137,
+        "spy_drawdown": 0.0,
+        "spy_return": 0.019212630825177213
+      },
+      "description": "Entered SPY late, capturing only partial move (+1.9% vs +5.0%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2014-02-28",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "EEM",
+      "actual_return": 0.00829569359263238,
+      "optimal_return": 0.03875382671713812,
+      "opportunity_cost": 0.030458133124505737,
+      "market_context": {
+        "vix": 14.0,
+        "spy_drawdown": 0.0,
+        "spy_return": 0.00829569359263238
+      },
+      "description": "Entered SPY late, capturing only partial move (+0.8% vs +3.9%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2014-06-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLK",
+      "actual_return": -0.013437559781633968,
+      "optimal_return": 0.016949332930505268,
+      "opportunity_cost": 0.030386892712139235,
+      "market_context": {
+        "vix": 11.569999694824219,
+        "spy_drawdown": -0.001122550194544436,
+        "spy_return": -0.013437559781633968
+      },
+      "description": "Entered SPY late, capturing only partial move (-1.3% vs +1.7%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2012-05-31",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "EFA",
+      "actual_return": 0.04058113604781188,
+      "optimal_return": 0.07043329209501192,
+      "opportunity_cost": 0.02985215604720004,
+      "market_context": {
+        "vix": 24.059999465942383,
+        "spy_drawdown": -0.07311030072478797,
+        "spy_return": 0.04058113604781188
+      },
+      "description": "Held SPY (+4.1%) when EFA would have returned +7.0%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2025-11-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLF",
+      "actual_return": 0.000797497311368911,
+      "optimal_return": 0.030591074912595273,
+      "opportunity_cost": 0.029793577601226362,
+      "market_context": {
+        "vix": 16.350000381469727,
+        "spy_drawdown": -0.005819120231094099,
+        "spy_return": 0.000797497311368911
+      },
+      "description": "Entered SPY late, capturing only partial move (+0.1% vs +3.1%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2022-11-30",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "GLD",
+      "actual_return": 0.0,
+      "optimal_return": 0.02930648566594085,
+      "opportunity_cost": 0.02930648566594085,
+      "market_context": {
+        "vix": 20.579999923706055,
+        "spy_drawdown": -0.10925569417235925,
+        "spy_return": -0.057628238270933
+      },
+      "description": "Was in defensive position (CASH) while GLD returned +2.9%. VIX was 20.579999923706055, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2014-09-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLV",
+      "actual_return": 0.023550560862057868,
+      "optimal_return": 0.052573834545025955,
+      "opportunity_cost": 0.029023273682968087,
+      "market_context": {
+        "vix": 16.309999465942383,
+        "spy_drawdown": -0.019219952997514445,
+        "spy_return": 0.023550560862057868
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.4% vs +5.3%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2018-06-30",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "XLV",
+      "actual_return": 0.03704623752586267,
+      "optimal_return": 0.0655406670661225,
+      "opportunity_cost": 0.028494429540259825,
+      "market_context": {
+        "vix": 16.09000015258789,
+        "spy_drawdown": -0.04532895989063579,
+        "spy_return": 0.03704623752586267
+      },
+      "description": "Held SPY (+3.7%) when XLV would have returned +6.6%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2010-08-31",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "EEM",
+      "actual_return": 0.08955464584220252,
+      "optimal_return": 0.1175738642539188,
+      "opportunity_cost": 0.028019218411716285,
+      "market_context": {
+        "vix": 26.049999237060547,
+        "spy_drawdown": -0.13134377521973462,
+        "spy_return": 0.08955464584220252
+      },
+      "description": "Held SPY (+9.0%) when EEM would have returned +11.8%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2018-08-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "DBC",
+      "actual_return": 0.005945730680981365,
+      "optimal_return": 0.03394711369150505,
+      "opportunity_cost": 0.028001383010523684,
+      "market_context": {
+        "vix": 12.859999656677246,
+        "spy_drawdown": -0.004014172761168888,
+        "spy_return": 0.005945730680981365
+      },
+      "description": "Entered SPY late, capturing only partial move (+0.6% vs +3.4%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2012-01-31",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "XLK",
+      "actual_return": 0.04340541907204343,
+      "optimal_return": 0.07103259453585231,
+      "opportunity_cost": 0.027627175463808884,
+      "market_context": {
+        "vix": 19.440000534057617,
+        "spy_drawdown": -0.01864267415837617,
+        "spy_return": 0.04340541907204343
+      },
+      "description": "Held SPY (+4.3%) when XLK would have returned +7.1%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2024-07-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLV",
+      "actual_return": 0.02336566124174788,
+      "optimal_return": 0.05059141072559137,
+      "opportunity_cost": 0.027225749483843487,
+      "market_context": {
+        "vix": 16.360000610351562,
+        "spy_drawdown": -0.02487323250027562,
+        "spy_return": 0.02336566124174788
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.3% vs +5.1%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2012-08-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "EEM",
+      "actual_return": 0.02535094803795568,
+      "optimal_return": 0.05218941200930294,
+      "opportunity_cost": 0.02683846397134726,
+      "market_context": {
+        "vix": 17.469999313354492,
+        "spy_drawdown": -0.007243803895588541,
+        "spy_return": 0.02535094803795568
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.5% vs +5.2%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2015-02-28",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": -0.015705855009953917,
+      "optimal_return": 0.010922331822358355,
+      "opportunity_cost": 0.026628186832312273,
+      "market_context": {
+        "vix": 13.34000015258789,
+        "spy_drawdown": -0.005429008341916841,
+        "spy_return": -0.015705855009953917
+      },
+      "description": "Entered SPY late, capturing only partial move (-1.6% vs +1.1%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2017-12-31",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "EEM",
+      "actual_return": 0.05635921989493764,
+      "optimal_return": 0.08297958877365064,
+      "opportunity_cost": 0.026620368878712997,
+      "market_context": {
+        "vix": 11.039999961853027,
+        "spy_drawdown": -0.004996098037312158,
+        "spy_return": 0.05635921989493764
+      },
+      "description": "Held SPY (+5.6%) when EEM would have returned +8.3%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2022-07-31",
+      "failure_type": "missed_opportunity",
+      "asset_held": "CASH",
+      "optimal_asset": "XLE",
+      "actual_return": 0.0,
+      "optimal_return": 0.02652393428588451,
+      "opportunity_cost": 0.02652393428588451,
+      "market_context": {
+        "vix": 21.329999923706055,
+        "spy_drawdown": -0.13115668926514368,
+        "spy_return": -0.04080201464407074
+      },
+      "description": "Was in defensive position (CASH) while XLE returned +2.7%. VIX was 21.329999923706055, suggesting fear was elevated but opportunity existed."
+    },
+    {
+      "date": "2017-04-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLK",
+      "actual_return": 0.014112840661669068,
+      "optimal_return": 0.039536573453457846,
+      "opportunity_cost": 0.025423732791788778,
+      "market_context": {
+        "vix": 10.819999694824219,
+        "spy_drawdown": -0.0027699114536864355,
+        "spy_return": 0.014112840661669068
+      },
+      "description": "Entered SPY late, capturing only partial move (+1.4% vs +4.0%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2021-03-31",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "DBC",
+      "actual_return": 0.05291025214859624,
+      "optimal_return": 0.07826620283918384,
+      "opportunity_cost": 0.025355950690587603,
+      "market_context": {
+        "vix": 19.399999618530273,
+        "spy_drawdown": 0.0,
+        "spy_return": 0.05291025214859624
+      },
+      "description": "Held SPY (+5.3%) when DBC would have returned +7.8%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2010-02-28",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "EFA",
+      "optimal_asset": "XLF",
+      "actual_return": 0.06385396192003956,
+      "optimal_return": 0.08898877206162847,
+      "opportunity_cost": 0.025134810141588915,
+      "market_context": {
+        "vix": 19.5,
+        "spy_drawdown": -0.03754542237550673,
+        "spy_return": 0.06087950645013329
+      },
+      "description": "Held EFA (+6.4%) when XLF would have returned +8.9%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2021-06-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "XLV",
+      "actual_return": 0.024412675394615224,
+      "optimal_return": 0.04922589502559882,
+      "opportunity_cost": 0.024813219630983596,
+      "market_context": {
+        "vix": 15.829999923706055,
+        "spy_drawdown": 0.0,
+        "spy_return": 0.024412675394615224
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.4% vs +4.9%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2013-02-28",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "XLV",
+      "actual_return": 0.037971169715645514,
+      "optimal_return": 0.06211455374928265,
+      "opportunity_cost": 0.02414338403363714,
+      "market_context": {
+        "vix": 15.510000228881836,
+        "spy_drawdown": -0.01070164365243964,
+        "spy_return": 0.037971169715645514
+      },
+      "description": "Held SPY (+3.8%) when XLV would have returned +6.2%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2017-01-31",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "XLV",
+      "actual_return": 0.03929142995248425,
+      "optimal_return": 0.06338660730822054,
+      "opportunity_cost": 0.024095177355736297,
+      "market_context": {
+        "vix": 11.989999771118164,
+        "spy_drawdown": -0.008886287079778454,
+        "spy_return": 0.03929142995248425
+      },
+      "description": "Held SPY (+3.9%) when XLV would have returned +6.3%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2011-11-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": 0.010448442607769337,
+      "optimal_return": 0.03444836026756093,
+      "opportunity_cost": 0.023999917659791592,
+      "market_context": {
+        "vix": 27.799999237060547,
+        "spy_drawdown": -0.07454694305106946,
+        "spy_return": 0.010448442607769337
+      },
+      "description": "Entered SPY late, capturing only partial move (+1.0% vs +3.4%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2011-10-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": -0.00406387210414938,
+      "optimal_return": 0.019890786742605027,
+      "opportunity_cost": 0.023954658846754406,
+      "market_context": {
+        "vix": 29.959999084472656,
+        "spy_drawdown": -0.0707706739144327,
+        "spy_return": -0.00406387210414938
+      },
+      "description": "Entered SPY late, capturing only partial move (-0.4% vs +2.0%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2015-01-31",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "XLK",
+      "actual_return": 0.05620460564840335,
+      "optimal_return": 0.07994922654928494,
+      "opportunity_cost": 0.023744620900881586,
+      "market_context": {
+        "vix": 20.969999313354492,
+        "spy_drawdown": -0.04441312659325758,
+        "spy_return": 0.05620460564840335
+      },
+      "description": "Held SPY (+5.6%) when XLK would have returned +8.0%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2015-06-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "TLT",
+      "actual_return": 0.022589627037544968,
+      "optimal_return": 0.04546035646563884,
+      "opportunity_cost": 0.022870729428093872,
+      "market_context": {
+        "vix": 18.229999542236328,
+        "spy_drawdown": -0.03114155364604243,
+        "spy_return": 0.022589627037544968
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.3% vs +4.5%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2013-06-30",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "GLD",
+      "actual_return": 0.05167692617730313,
+      "optimal_return": 0.0743010530498811,
+      "opportunity_cost": 0.022624126872577976,
+      "market_context": {
+        "vix": 16.860000610351562,
+        "spy_drawdown": -0.03530024805592025,
+        "spy_return": 0.05167692617730313
+      },
+      "description": "Held SPY (+5.2%) when GLD would have returned +7.4%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2012-10-31",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "EFA",
+      "actual_return": 0.005659699703993493,
+      "optimal_return": 0.027808817376105077,
+      "opportunity_cost": 0.022149117672111585,
+      "market_context": {
+        "vix": 18.600000381469727,
+        "spy_drawdown": -0.034878536570780994,
+        "spy_return": 0.005659699703993493
+      },
+      "description": "Entered SPY late, capturing only partial move (+0.6% vs +2.8%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2021-07-31",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "XLF",
+      "actual_return": 0.029759719325045175,
+      "optimal_return": 0.051478444668281,
+      "opportunity_cost": 0.021718725343235823,
+      "market_context": {
+        "vix": 18.239999771118164,
+        "spy_drawdown": -0.005691225218907636,
+        "spy_return": 0.029759719325045175
+      },
+      "description": "Held SPY (+3.0%) when XLF would have returned +5.1%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2016-11-30",
+      "failure_type": "late_entry",
+      "asset_held": "SPY",
+      "optimal_asset": "DBC",
+      "actual_return": 0.02027184226082346,
+      "optimal_return": 0.041420002490405006,
+      "opportunity_cost": 0.021148160229581547,
+      "market_context": {
+        "vix": 13.329999923706055,
+        "spy_drawdown": -0.005146163858979369,
+        "spy_return": 0.02027184226082346
+      },
+      "description": "Entered SPY late, capturing only partial move (+2.0% vs +4.1%). 12-month momentum lookback was too slow to catch the early move."
+    },
+    {
+      "date": "2014-10-31",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "XLK",
+      "actual_return": 0.027472081945672855,
+      "optimal_return": 0.04810011529609182,
+      "opportunity_cost": 0.02062803335041896,
+      "market_context": {
+        "vix": 14.029999732971191,
+        "spy_drawdown": 0.0,
+        "spy_return": 0.027472081945672855
+      },
+      "description": "Held SPY (+2.7%) when XLK would have returned +4.8%. Small momentum differences led to suboptimal asset selection."
+    },
+    {
+      "date": "2024-04-30",
+      "failure_type": "suboptimal_asset",
+      "asset_held": "SPY",
+      "optimal_asset": "XLK",
+      "actual_return": 0.050579651010779436,
+      "optimal_return": 0.07076999921286542,
+      "opportunity_cost": 0.020190348202085984,
+      "market_context": {
+        "vix": 15.649999618530273,
+        "spy_drawdown": -0.04050319277496117,
+        "spy_return": 0.050579651010779436
+      },
+      "description": "Held SPY (+5.1%) when XLK would have returned +7.1%. Small momentum differences led to suboptimal asset selection."
+    }
+  ]
+}

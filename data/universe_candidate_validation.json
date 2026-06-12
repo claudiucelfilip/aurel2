@@ -1,0 +1,515 @@
+{
+  "meta": {
+    "end_date": "2026-04-01",
+    "frequency": "quarterly",
+    "switch_threshold": 0.02,
+    "cash_rate": 0.0,
+    "pilot_entry_enabled": false
+  },
+  "periods": {
+    "15y": {
+      "start": "2010-01-01",
+      "end": "2026-04-01",
+      "rows": [
+        {
+          "name": "Robust_Quarterly_BASELINE",
+          "cagr": 0.15956383207173763,
+          "bench_cagr": 0.13412172282162316,
+          "alpha_cagr": 0.025442109250114475,
+          "strat_total": 1008.0444941989178,
+          "bench_total": 672.721871067049,
+          "alpha_total": 335.3226231318688,
+          "max_dd": 0.2390108302806721,
+          "sharpe": 0.9165565276421725,
+          "turnover": 0.7386248736097069,
+          "trades": 12
+        },
+        {
+          "name": "Robust_Quarterly_NO_TLT",
+          "cagr": 0.1661766776926068,
+          "bench_cagr": 0.13412172282162316,
+          "alpha_cagr": 0.03205495487098364,
+          "strat_total": 1115.2924581980762,
+          "bench_total": 672.721871067049,
+          "alpha_total": 442.5705871310272,
+          "max_dd": 0.19647890551680663,
+          "sharpe": 0.9983268630713372,
+          "turnover": 0.7386248736097069,
+          "trades": 12
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_IEF",
+          "cagr": 0.1661766776926068,
+          "bench_cagr": 0.13412172282162316,
+          "alpha_cagr": 0.03205495487098364,
+          "strat_total": 1115.2924581980762,
+          "bench_total": 672.721871067049,
+          "alpha_total": 442.5705871310272,
+          "max_dd": 0.19647890551680663,
+          "sharpe": 0.9983268630713372,
+          "turnover": 0.7386248736097069,
+          "trades": 12
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_SHY",
+          "cagr": 0.1661766776926068,
+          "bench_cagr": 0.13412172282162316,
+          "alpha_cagr": 0.03205495487098364,
+          "strat_total": 1115.2924581980762,
+          "bench_total": 672.721871067049,
+          "alpha_total": 442.5705871310272,
+          "max_dd": 0.19647890551680663,
+          "sharpe": 0.9983268630713372,
+          "turnover": 0.7386248736097069,
+          "trades": 12
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_AGG",
+          "cagr": 0.1661766776926068,
+          "bench_cagr": 0.13412172282162316,
+          "alpha_cagr": 0.03205495487098364,
+          "strat_total": 1115.2924581980762,
+          "bench_total": 672.721871067049,
+          "alpha_total": 442.5705871310272,
+          "max_dd": 0.19647890551680663,
+          "sharpe": 0.9983268630713372,
+          "turnover": 0.7386248736097069,
+          "trades": 12
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_TIP",
+          "cagr": 0.1661766776926068,
+          "bench_cagr": 0.13412172282162316,
+          "alpha_cagr": 0.03205495487098364,
+          "strat_total": 1115.2924581980762,
+          "bench_total": 672.721871067049,
+          "alpha_total": 442.5705871310272,
+          "max_dd": 0.19647890551680663,
+          "sharpe": 0.9983268630713372,
+          "turnover": 0.7386248736097069,
+          "trades": 12
+        }
+      ]
+    },
+    "10y": {
+      "start": "2015-01-01",
+      "end": "2026-04-01",
+      "rows": [
+        {
+          "name": "Robust_Quarterly_BASELINE",
+          "cagr": 0.21294332906531777,
+          "bench_cagr": 0.12710493880807694,
+          "alpha_cagr": 0.08583839025724083,
+          "strat_total": 776.9237890670579,
+          "bench_total": 284.1030948693805,
+          "alpha_total": 492.82069419767737,
+          "max_dd": 0.1753012085877533,
+          "sharpe": 1.099751013709906,
+          "turnover": 0.7112950340798443,
+          "trades": 8
+        },
+        {
+          "name": "Robust_Quarterly_NO_TLT",
+          "cagr": 0.21690384126653584,
+          "bench_cagr": 0.12710493880807694,
+          "alpha_cagr": 0.0897989024584589,
+          "strat_total": 809.672235963636,
+          "bench_total": 284.1030948693805,
+          "alpha_total": 525.5691410942554,
+          "max_dd": 0.1753012085877533,
+          "sharpe": 1.1605349245685297,
+          "turnover": 0.7112950340798443,
+          "trades": 8
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_IEF",
+          "cagr": 0.21690384126653584,
+          "bench_cagr": 0.12710493880807694,
+          "alpha_cagr": 0.0897989024584589,
+          "strat_total": 809.672235963636,
+          "bench_total": 284.1030948693805,
+          "alpha_total": 525.5691410942554,
+          "max_dd": 0.1753012085877533,
+          "sharpe": 1.1605349245685297,
+          "turnover": 0.7112950340798443,
+          "trades": 8
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_SHY",
+          "cagr": 0.21690384126653584,
+          "bench_cagr": 0.12710493880807694,
+          "alpha_cagr": 0.0897989024584589,
+          "strat_total": 809.672235963636,
+          "bench_total": 284.1030948693805,
+          "alpha_total": 525.5691410942554,
+          "max_dd": 0.1753012085877533,
+          "sharpe": 1.1605349245685297,
+          "turnover": 0.7112950340798443,
+          "trades": 8
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_AGG",
+          "cagr": 0.21690384126653584,
+          "bench_cagr": 0.12710493880807694,
+          "alpha_cagr": 0.0897989024584589,
+          "strat_total": 809.672235963636,
+          "bench_total": 284.1030948693805,
+          "alpha_total": 525.5691410942554,
+          "max_dd": 0.1753012085877533,
+          "sharpe": 1.1605349245685297,
+          "turnover": 0.7112950340798443,
+          "trades": 8
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_TIP",
+          "cagr": 0.21690384126653584,
+          "bench_cagr": 0.12710493880807694,
+          "alpha_cagr": 0.0897989024584589,
+          "strat_total": 809.672235963636,
+          "bench_total": 284.1030948693805,
+          "alpha_total": 525.5691410942554,
+          "max_dd": 0.1753012085877533,
+          "sharpe": 1.1605349245685297,
+          "turnover": 0.7112950340798443,
+          "trades": 8
+        }
+      ]
+    },
+    "5y": {
+      "start": "2020-01-01",
+      "end": "2026-04-01",
+      "rows": [
+        {
+          "name": "Robust_Quarterly_BASELINE",
+          "cagr": 0.3016048537521838,
+          "bench_cagr": 0.13459063143155348,
+          "alpha_cagr": 0.16701422232063035,
+          "strat_total": 419.0869218469902,
+          "bench_total": 120.10148229595443,
+          "alpha_total": 298.98543955103577,
+          "max_dd": 0.11331189308958146,
+          "sharpe": 1.4133594758638934,
+          "turnover": 0.8002848378615249,
+          "trades": 5
+        },
+        {
+          "name": "Robust_Quarterly_NO_TLT",
+          "cagr": 0.32789909222727887,
+          "bench_cagr": 0.13459063143155348,
+          "alpha_cagr": 0.1933084607957254,
+          "strat_total": 488.1765849005188,
+          "bench_total": 120.10148229595443,
+          "alpha_total": 368.07510260456434,
+          "max_dd": 0.11331189308958138,
+          "sharpe": 1.5304399788493337,
+          "turnover": 0.8002848378615249,
+          "trades": 5
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_IEF",
+          "cagr": 0.32789909222727887,
+          "bench_cagr": 0.13459063143155348,
+          "alpha_cagr": 0.1933084607957254,
+          "strat_total": 488.1765849005188,
+          "bench_total": 120.10148229595443,
+          "alpha_total": 368.07510260456434,
+          "max_dd": 0.11331189308958138,
+          "sharpe": 1.5304399788493337,
+          "turnover": 0.8002848378615249,
+          "trades": 5
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_SHY",
+          "cagr": 0.32789909222727887,
+          "bench_cagr": 0.13459063143155348,
+          "alpha_cagr": 0.1933084607957254,
+          "strat_total": 488.1765849005188,
+          "bench_total": 120.10148229595443,
+          "alpha_total": 368.07510260456434,
+          "max_dd": 0.11331189308958138,
+          "sharpe": 1.5304399788493337,
+          "turnover": 0.8002848378615249,
+          "trades": 5
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_AGG",
+          "cagr": 0.32789909222727887,
+          "bench_cagr": 0.13459063143155348,
+          "alpha_cagr": 0.1933084607957254,
+          "strat_total": 488.1765849005188,
+          "bench_total": 120.10148229595443,
+          "alpha_total": 368.07510260456434,
+          "max_dd": 0.11331189308958138,
+          "sharpe": 1.5304399788493337,
+          "turnover": 0.8002848378615249,
+          "trades": 5
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_TIP",
+          "cagr": 0.32789909222727887,
+          "bench_cagr": 0.13459063143155348,
+          "alpha_cagr": 0.1933084607957254,
+          "strat_total": 488.1765849005188,
+          "bench_total": 120.10148229595443,
+          "alpha_total": 368.07510260456434,
+          "max_dd": 0.11331189308958138,
+          "sharpe": 1.5304399788493337,
+          "turnover": 0.8002848378615249,
+          "trades": 5
+        }
+      ]
+    },
+    "1y": {
+      "start": "2025-04-01",
+      "end": "2026-04-01",
+      "rows": [
+        {
+          "name": "Robust_Quarterly_BASELINE",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157320706149638,
+          "alpha_cagr": 0.25362143629891576,
+          "strat_total": 43.48397683415077,
+          "bench_total": 18.143827863931783,
+          "alpha_total": 25.34014897021899,
+          "max_dd": 0.0,
+          "sharpe": 5.205078566807653,
+          "turnover": 1.0006849315068493,
+          "trades": 1
+        },
+        {
+          "name": "Robust_Quarterly_NO_TLT",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157320706149638,
+          "alpha_cagr": 0.25362143629891576,
+          "strat_total": 43.48397683415077,
+          "bench_total": 18.143827863931783,
+          "alpha_total": 25.34014897021899,
+          "max_dd": 0.0,
+          "sharpe": 5.205078566807653,
+          "turnover": 1.0006849315068493,
+          "trades": 1
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_IEF",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157320706149638,
+          "alpha_cagr": 0.25362143629891576,
+          "strat_total": 43.48397683415077,
+          "bench_total": 18.143827863931783,
+          "alpha_total": 25.34014897021899,
+          "max_dd": 0.0,
+          "sharpe": 5.205078566807653,
+          "turnover": 1.0006849315068493,
+          "trades": 1
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_SHY",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157320706149638,
+          "alpha_cagr": 0.25362143629891576,
+          "strat_total": 43.48397683415077,
+          "bench_total": 18.143827863931783,
+          "alpha_total": 25.34014897021899,
+          "max_dd": 0.0,
+          "sharpe": 5.205078566807653,
+          "turnover": 1.0006849315068493,
+          "trades": 1
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_AGG",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157320706149638,
+          "alpha_cagr": 0.25362143629891576,
+          "strat_total": 43.48397683415077,
+          "bench_total": 18.143827863931783,
+          "alpha_total": 25.34014897021899,
+          "max_dd": 0.0,
+          "sharpe": 5.205078566807653,
+          "turnover": 1.0006849315068493,
+          "trades": 1
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_TIP",
+          "cagr": 0.43519464336041214,
+          "bench_cagr": 0.18157320706149638,
+          "alpha_cagr": 0.25362143629891576,
+          "strat_total": 43.48397683415077,
+          "bench_total": 18.143827863931783,
+          "alpha_total": 25.34014897021899,
+          "max_dd": 0.0,
+          "sharpe": 5.205078566807653,
+          "turnover": 1.0006849315068493,
+          "trades": 1
+        }
+      ]
+    },
+    "1m": {
+      "start": "2026-03-01",
+      "end": "2026-04-01",
+      "rows": [
+        {
+          "name": "Robust_Quarterly_BASELINE",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "strat_total": 1.6482322691981022,
+          "bench_total": -4.2761396277243175,
+          "alpha_total": 5.92437189692242,
+          "max_dd": 0.0,
+          "sharpe": 0.0,
+          "turnover": 11.782258064516128,
+          "trades": 1
+        },
+        {
+          "name": "Robust_Quarterly_NO_TLT",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "strat_total": 1.6482322691981022,
+          "bench_total": -4.2761396277243175,
+          "alpha_total": 5.92437189692242,
+          "max_dd": 0.0,
+          "sharpe": 0.0,
+          "turnover": 11.782258064516128,
+          "trades": 1
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_IEF",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "strat_total": 1.6482322691981022,
+          "bench_total": -4.2761396277243175,
+          "alpha_total": 5.92437189692242,
+          "max_dd": 0.0,
+          "sharpe": 0.0,
+          "turnover": 11.782258064516128,
+          "trades": 1
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_SHY",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "strat_total": 1.6482322691981022,
+          "bench_total": -4.2761396277243175,
+          "alpha_total": 5.92437189692242,
+          "max_dd": 0.0,
+          "sharpe": 0.0,
+          "turnover": 11.782258064516128,
+          "trades": 1
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_AGG",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "strat_total": 1.6482322691981022,
+          "bench_total": -4.2761396277243175,
+          "alpha_total": 5.92437189692242,
+          "max_dd": 0.0,
+          "sharpe": 0.0,
+          "turnover": 11.782258064516128,
+          "trades": 1
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_TIP",
+          "cagr": 0.21241704572060804,
+          "bench_cagr": -0.4024487588870973,
+          "alpha_cagr": 0.6148658046077053,
+          "strat_total": 1.6482322691981022,
+          "bench_total": -4.2761396277243175,
+          "alpha_total": 5.92437189692242,
+          "max_dd": 0.0,
+          "sharpe": 0.0,
+          "turnover": 11.782258064516128,
+          "trades": 1
+        }
+      ]
+    },
+    "20y": {
+      "start": "2005-01-01",
+      "end": "2026-04-01",
+      "rows": [
+        {
+          "name": "Robust_Quarterly_BASELINE",
+          "cagr": 0.08898051432766074,
+          "bench_cagr": 0.10315725533081843,
+          "alpha_cagr": -0.014176741003157689,
+          "strat_total": 511.6724829181439,
+          "bench_total": 705.1242293378742,
+          "alpha_total": -193.45174641973034,
+          "max_dd": 0.6373979124097056,
+          "sharpe": 0.5061546557186634,
+          "turnover": 0.847229381443299,
+          "trades": 18
+        },
+        {
+          "name": "Robust_Quarterly_NO_TLT",
+          "cagr": 0.10013871065860269,
+          "bench_cagr": 0.10315725533081843,
+          "alpha_cagr": -0.0030185446722157394,
+          "strat_total": 659.592959015022,
+          "bench_total": 705.1242293378742,
+          "alpha_total": -45.531270322852265,
+          "max_dd": 0.5806081360216444,
+          "sharpe": 0.571441756177954,
+          "turnover": 0.847229381443299,
+          "trades": 18
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_IEF",
+          "cagr": 0.10013871065860269,
+          "bench_cagr": 0.10315725533081843,
+          "alpha_cagr": -0.0030185446722157394,
+          "strat_total": 659.592959015022,
+          "bench_total": 705.1242293378742,
+          "alpha_total": -45.531270322852265,
+          "max_dd": 0.5806081360216444,
+          "sharpe": 0.571441756177954,
+          "turnover": 0.847229381443299,
+          "trades": 18
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_SHY",
+          "cagr": 0.10013871065860269,
+          "bench_cagr": 0.10315725533081843,
+          "alpha_cagr": -0.0030185446722157394,
+          "strat_total": 659.592959015022,
+          "bench_total": 705.1242293378742,
+          "alpha_total": -45.531270322852265,
+          "max_dd": 0.5806081360216444,
+          "sharpe": 0.571441756177954,
+          "turnover": 0.847229381443299,
+          "trades": 18
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_AGG",
+          "cagr": 0.10013871065860269,
+          "bench_cagr": 0.10315725533081843,
+          "alpha_cagr": -0.0030185446722157394,
+          "strat_total": 659.592959015022,
+          "bench_total": 705.1242293378742,
+          "alpha_total": -45.531270322852265,
+          "max_dd": 0.5806081360216444,
+          "sharpe": 0.571441756177954,
+          "turnover": 0.847229381443299,
+          "trades": 18
+        },
+        {
+          "name": "Robust_Quarterly_TLT_TO_TIP",
+          "cagr": 0.10013871065860269,
+          "bench_cagr": 0.10315725533081843,
+          "alpha_cagr": -0.0030185446722157394,
+          "strat_total": 659.592959015022,
+          "bench_total": 705.1242293378742,
+          "alpha_total": -45.531270322852265,
+          "max_dd": 0.5806081360216444,
+          "sharpe": 0.571441756177954,
+          "turnover": 0.847229381443299,
+          "trades": 18
+        }
+      ]
+    }
+  }
+}

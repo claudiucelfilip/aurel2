@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.codex/
+
+# Environment
+.env
+.env.local
+docker/.env
+
+# Data
+*.db
+*.sqlite
+data/cache/
+data/price_cache/
+data/archive/
+data/backtest_results.json
+
+# Test artifacts
+.coverage
+
+# Logs
+logs/
+*.log
+
+# Worktrees
+.worktrees/
+
+# OS
+.DS_Store
+Thumbs.db

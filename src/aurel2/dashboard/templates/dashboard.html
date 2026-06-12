@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aurel2 - Portfolio Dashboard</title>
+    <meta http-equiv="refresh" content="60">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --green: #22c55e;
+            --red: #ef4444;
+            --yellow: #eab308;
+            --border: #334155;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1 { font-size: 1.6rem; font-weight: 600; }
+
+        .header-right { text-align: right; }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.green { background: var(--green); }
+        .status-dot.red { background: var(--red); }
+        .status-dot.yellow { background: var(--yellow); }
+
+        .date-info {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 12px;
+        }
+
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .stat-change {
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        .positive { color: var(--green); }
+        .negative { color: var(--red); }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+            margin-bottom: 20px;
+        }
+
+        .positions-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .positions-table th,
+        .positions-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .positions-table th {
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .positions-table td:last-child,
+        .positions-table th:last-child {
+            text-align: right;
+        }
+
+        .symbol {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .daemon-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            font-size: 0.85rem;
+        }
+
+        .daemon-info {
+            display: flex;
+            gap: 20px;
+            color: var(--text-muted);
+        }
+
+        .error-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--red);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--red);
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .empty-chart {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .pending-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 3px solid var(--yellow);
+        }
+
+        .pending-item .action-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-buy { background: rgba(34, 197, 94, 0.2); color: var(--green); }
+        .badge-sell { background: rgba(239, 68, 68, 0.2); color: var(--red); }
+        .badge-hold { background: rgba(148, 163, 184, 0.2); color: var(--text-muted); }
+
+        .pending-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .pending-actions a {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .btn-approve {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--green);
+            border: 1px solid var(--green);
+        }
+
+        .btn-reject {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--red);
+            border: 1px solid var(--red);
+        }
+
+        .period-select {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text);
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            outline: none;
+        }
+
+        .period-select:hover,
+        .period-select:focus {
+            border-color: var(--accent);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .status-executed { background: rgba(34, 197, 94, 0.15); color: var(--green); }
+        .status-finalized { background: rgba(59, 130, 246, 0.15); color: var(--accent); }
+        .status-pending { background: rgba(234, 179, 8, 0.15); color: var(--yellow); }
+        .status-rejected { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+        .status-hold { background: rgba(148, 163, 184, 0.1); color: var(--text-muted); }
+
+        .page-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+        }
+
+        .page-nav a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .page-nav a:hover { text-decoration: underline; }
+
+        .page-info { color: var(--text-muted); }
+
+        footer {
+            text-align: center;
+            padding: 16px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            margin-top: 30px;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Aurel2</h1>
+            <div class="header-right">
+                <div class="status">
+                    <span class="status-dot {% if connected %}green{% else %}red{% endif %}"></span>
+                    <span>Broker {% if connected %}Connected{% else %}Disconnected{% endif %}</span>
+                    {% if heartbeat %}
+                    <span style="margin-left: 12px;" class="status-dot {% if heartbeat.status == 'healthy' %}green{% else %}yellow{% endif %}"></span>
+                    <span>Daemon {% if heartbeat.status == 'healthy' %}Running{% else %}Stale{% endif %}</span>
+                    {% endif %}
+                </div>
+                <div class="date-info">{{ today.strftime('%b %d, %Y') }} · Auto-refresh 60s</div>
+            </div>
+        </header>
+
+        {% if error %}
+        <div class="error-box">{{ error }}</div>
+        {% endif %}
+
+        <!-- Account Summary -->
+        {% if account %}
+        <div class="grid" style="grid-template-columns: 1fr 1fr;">
+            <div class="card">
+                <div class="stat-value">${{ "{:,.0f}".format(account.total_value) }}</div>
+                <div class="stat-label">Net Liquidation</div>
+                {% if account.cash_balance != account.total_value %}
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">
+                    Cash: ${{ "{:,.0f}".format(account.cash_balance) }}
+                </div>
+                {% endif %}
+            </div>
+            <div class="card">
+                <div class="stat-value {% if account.unrealized_pnl >= 0 %}positive{% elif account.unrealized_pnl < 0 %}negative{% endif %}">
+                    {{ "{:+,.2f}".format(account.unrealized_pnl).replace("+", "+$").replace("-", "-$") }}
+                    <span style="font-size: 0.8rem; opacity: 0.8;">({{ "{:+.2f}".format(account.unrealized_pnl_pct) }}%)</span>
+                </div>
+                <div class="stat-label">P&L</div>
+            </div>
+        </div>
+        {% else %}
+        <div class="grid" style="grid-template-columns: 1fr;">
+            <div class="card">
+                <div class="stat-value">—</div>
+                <div class="stat-label">Not connected</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Performance Chart -->
+        <div class="card" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div class="card-title" style="margin-bottom: 0;">
+                    Portfolio Performance
+                    {% if first_trade_date %}
+                    <span style="font-weight: normal; font-size: 0.75rem; color: var(--text-muted);">
+                        (since {{ first_trade_date.strftime('%b %d, %Y') }})
+                    </span>
+                    {% endif %}
+                </div>
+                <select class="period-select" onchange="window.location='?period='+this.value">
+                    <option value="1d" {% if period == '1d' %}selected{% endif %}>1D</option>
+                    <option value="1w" {% if period == '1w' %}selected{% endif %}>1W</option>
+                    <option value="1m" {% if period == '1m' %}selected{% endif %}>1M</option>
+                    <option value="6m" {% if period == '6m' %}selected{% endif %}>6M</option>
+                    <option value="1y" {% if period == '1y' %}selected{% endif %}>1Y</option>
+                    <option value="5y" {% if period == '5y' %}selected{% endif %}>5Y</option>
+                </select>
+            </div>
+            {% if chart_data and chart_data.dates %}
+            <div class="chart-container">
+                <canvas id="performanceChart"></canvas>
+            </div>
+            <div style="display: flex; gap: 20px; margin-top: 12px; font-size: 0.8rem; color: var(--text-muted); flex-wrap: wrap;">
+                <span>Starting: ${{ "{:,.0f}".format(chart_data.starting_value) }}</span>
+                <span>Current: ${{ "{:,.0f}".format(chart_data.current_value) }}</span>
+                {% set gain = chart_data.current_value - chart_data.starting_value %}
+                {% set gain_pct = ((chart_data.current_value / chart_data.starting_value) - 1) * 100 if chart_data.starting_value else 0 %}
+                <span class="{% if gain >= 0 %}positive{% else %}negative{% endif %}">
+                    Aurel2: {{ "{:+,.2f}".format(gain).replace("+", "+$").replace("-", "-$") }} ({{ "{:+.1f}".format(gain_pct) }}%)
+                </span>
+                {% if chart_data.spy_benchmark and chart_data.spy_benchmark|length > 0 %}
+                {% set spy_last = chart_data.spy_benchmark[-1] %}
+                {% set spy_gain = spy_last - chart_data.starting_value %}
+                {% set spy_gain_pct = ((spy_last / chart_data.starting_value) - 1) * 100 if chart_data.starting_value else 0 %}
+                {% set alpha_pct = gain_pct - spy_gain_pct %}
+                <span class="{% if spy_gain >= 0 %}positive{% else %}negative{% endif %}">
+                    SPY: {{ "{:+,.2f}".format(spy_gain).replace("+", "+$").replace("-", "-$") }} ({{ "{:+.1f}".format(spy_gain_pct) }}%)
+                </span>
+                <span class="{% if alpha_pct >= 0 %}positive{% else %}negative{% endif %}">
+                    vs SPY: {{ "{:+.1f}".format(alpha_pct) }}%
+                </span>
+                {% endif %}
+                {% if chart_data.available_points < chart_data.requested_days %}
+                <span style="opacity: 0.8;">(showing available data: {{ chart_data.available_points }} points)</span>
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="empty-chart">
+                No chart data available
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Backtest Comparison -->
+        <div class="card" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div class="card-title" style="margin-bottom: 0;">Strategy Backtest vs SPY</div>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <div id="backtest-metrics" style="display: flex; gap: 12px; font-size: 0.75rem; color: var(--text-muted);"></div>
+                    <div id="backtest-meta" style="font-size: 0.75rem; color: var(--text-muted);"></div>
+                    <select class="period-select" id="backtest-toggle" onchange="if(backtestData) showBacktestPeriod(this.value)">
+                        <option value="20y">20Y</option>
+                        <option value="15y">15Y</option>
+                        <option value="10y" selected>10Y</option>
+                        <option value="5y">5Y</option>
+                        <option value="1y">1Y</option>
+                        <option value="1m">1M</option>
+                    </select>
+                </div>
+            </div>
+            <div class="chart-container" style="position: relative;">
+                <canvas id="backtestChart"></canvas>
+                <div id="backtest-loading" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.85rem;">
+                    Loading backtest...
+                </div>
+            </div>
+        </div>
+
+        <!-- Positions -->
+        <div class="card" style="margin-bottom: 20px;">
+            <div class="card-title">Positions</div>
+            {% if positions %}
+            <table class="positions-table">
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Shares</th>
+                        <th>Avg Cost</th>
+                        <th>Price</th>
+                        <th>Value</th>
+                        <th>P&L</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in positions %}
+                    <tr>
+                        <td class="symbol">{{ p.symbol }}</td>
+                        <td>{{ "{:,.0f}".format(p.shares) }}</td>
+                        <td>${{ "{:,.2f}".format(p.avg_cost) }}</td>
+                        <td>${{ "{:,.2f}".format(p.market_price) }}</td>
+                        <td>${{ "{:,.0f}".format(p.market_value) }}</td>
+                        <td class="{% if p.unrealized_pnl >= 0 %}positive{% else %}negative{% endif %}">
+                            {{ "{:+,.0f}".format(p.unrealized_pnl).replace("+", "+$").replace("-", "-$") }}
+                            <span style="font-size: 0.8rem; opacity: 0.8;">({{ "{:+.2f}".format(p.pnl_pct) }}%)</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div style="text-align: center; padding: 30px; color: var(--text-muted);">
+                No positions
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Pending Decisions -->
+        {% if pending_decisions %}
+        <div class="card" style="margin-bottom: 20px;">
+            <div class="card-title">
+                Pending Decisions
+                <span style="background: var(--yellow); color: #000; padding: 1px 6px; border-radius: 10px; font-size: 0.7rem; margin-left: 6px;">
+                    {{ pending_decisions | length }}
+                </span>
+            </div>
+            {% for d in pending_decisions %}
+            <div class="pending-item">
+                <div>
+                    <span class="action-badge badge-{{ d.action }}">{{ d.action }}</span>
+                    <strong style="margin-left: 6px;">{{ d.symbol or 'HOLD' }}</strong>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                        {% if d.time_remaining_mins > 0 %}
+                        {{ d.time_remaining_mins }}m remaining
+                        {% else %}
+                        Timed out
+                        {% endif %}
+                        · {{ "{:.0f}".format(d.confidence * 100) }}% confidence
+                    </div>
+                </div>
+                <div class="pending-actions">
+                    <a href="{{ d.approval_url }}?action=approve" class="btn-approve" target="_blank">Approve</a>
+                    <a href="{{ d.approval_url }}?action=reject" class="btn-reject" target="_blank">Reject</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Activity Log -->
+        <div class="card" style="margin-bottom: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <div class="card-title" style="margin-bottom: 0;">
+                    Activity
+                    <span style="font-weight: normal; font-size: 0.75rem; color: var(--text-muted);">
+                        {{ trade_history.total_decisions }} decisions · {{ trade_history.executed_trades }} executed
+                    </span>
+                </div>
+                {% if trade_history.total_pages > 1 %}
+                <div class="page-nav">
+                    {% if trade_history.page > 1 %}
+                    <a href="?period={{ period }}&page={{ trade_history.page - 1 }}">&laquo; Newer</a>
+                    {% endif %}
+                    <span class="page-info">{{ trade_history.page }} / {{ trade_history.total_pages }}</span>
+                    {% if trade_history.page < trade_history.total_pages %}
+                    <a href="?period={{ period }}&page={{ trade_history.page + 1 }}">Older &raquo;</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+            {% if trade_history and trade_history.all_decisions %}
+            <table class="positions-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Action</th>
+                        <th>Asset</th>
+                        <th>Status</th>
+                        <th>AI</th>
+                        <th style="text-align: right;">Account</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in trade_history.all_decisions %}
+                    <tr>
+                        <td style="white-space: nowrap;">{{ d.formatted_time }}</td>
+                        <td><span class="action-badge badge-{{ d.action }}">{{ d.action }}</span></td>
+                        <td class="symbol">{{ d.symbol or '—' }}</td>
+                        <td>
+                            {% if d.status == 'executed' %}
+                            <span class="status-badge status-executed">Executed</span>
+                            {% elif d.status == 'finalized' %}
+                            <span class="status-badge status-finalized">Finalized</span>
+                            {% elif d.status == 'failed' %}
+                            <span class="status-badge status-rejected">Failed</span>
+                            {% elif d.status == 'pending' %}
+                            <span class="status-badge status-pending">Pending</span>
+                            {% elif d.status == 'rejected' %}
+                            <span class="status-badge status-rejected">Rejected</span>
+                            {% elif d.status == 'hold' %}
+                            <span class="status-badge status-hold">Hold</span>
+                            {% else %}
+                            <span class="status-badge status-hold">—</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size: 0.8rem;">
+                            {% if d.ai_agrees %}
+                            <span style="color: var(--green);">Agreed</span>
+                            {% else %}
+                            <span style="color: var(--yellow);">Override</span>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">
+                                {{ d.deterministic_action | upper }} {{ d.deterministic_asset or '' }} → {{ d.ai_action | upper }} {{ d.ai_asset or '' }}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            {% if d.account_value_before %}
+                            ${{ "{:,.0f}".format(d.account_value_before) }}
+                            {% else %}
+                            —
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if d.status == 'executed' and d.shares %}
+                    <tr>
+                        <td></td>
+                        <td colspan="5" style="font-size: 0.75rem; color: var(--text-muted); padding-top: 0;">
+                            {{ "{:,.0f}".format(d.shares) }} shares @ ${{ "{:,.2f}".format(d.fill_price) }}
+                            {% if d.account_value_after %}
+                            · After: ${{ "{:,.0f}".format(d.account_value_after) }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% elif d.status == 'failed' and d.execution_error %}
+                    <tr>
+                        <td></td>
+                        <td colspan="5" style="font-size: 0.75rem; color: var(--red); padding-top: 0;">
+                            {{ d.execution_error }}
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div style="text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.85rem;">
+                No activity yet
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Daemon Status -->
+        {% if heartbeat %}
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-title">Daemon Status</div>
+            <div class="daemon-status">
+                <span class="status-dot {% if heartbeat.status == 'healthy' %}green{% else %}yellow{% endif %}"></span>
+                <span>{% if heartbeat.status == 'healthy' %}Running{% else %}Stale ({{ heartbeat.seconds_ago }}s ago){% endif %}</span>
+                <div class="daemon-info">
+                    {% if heartbeat.next_check %}
+                    <span>Next check: {{ heartbeat.next_check }}</span>
+                    {% endif %}
+                    {% if heartbeat.mode %}
+                    <span>Mode: {{ heartbeat.mode }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <footer>
+            Aurel2 Trading System · Paper Trading
+        </footer>
+    </div>
+
+    <script>
+        // ── Backtest comparison chart (async load, toggle 5Y/10Y) ────────
+        let backtestData = null;
+        let backtestChart = null;
+
+        fetch('/api/backtest-comparison')
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('backtest-loading').textContent = 'Backtest unavailable';
+                    return;
+                }
+                backtestData = data;
+                if (data._meta) {
+                    const strategy = data._meta.strategy || 'Strategy';
+                    const generatedAt = data._meta.generated_at || '';
+                    document.getElementById('backtest-meta').textContent =
+                        strategy + (generatedAt ? ' · as of ' + generatedAt : '');
+                }
+                showBacktestPeriod('10y');
+            })
+            .catch(() => {
+                document.getElementById('backtest-loading').textContent = 'Failed to load';
+            });
+
+        function showBacktestPeriod(period) {
+            const data = backtestData[period];
+            if (!data) return;
+
+            document.getElementById('backtest-loading').style.display = 'none';
+
+            // Update metrics
+            const m = data.metrics;
+            const periodMeta = data.period || {};
+            const alphaColor = m.alpha >= 0 ? '#22c55e' : '#ef4444';
+            document.getElementById('backtest-metrics').innerHTML =
+                '<span>CAGR <strong>' + m.cagr + '%</strong></span>' +
+                '<span>SPY <strong>' + m.benchmark_cagr + '%</strong></span>' +
+                '<span>Sharpe <strong>' + m.sharpe_ratio + '</strong></span>' +
+                '<span>Max DD <strong>-' + m.max_drawdown + '%</strong></span>' +
+                '<span style="color:' + alphaColor + '">CAGR Alpha <strong>' + (m.alpha >= 0 ? '+' : '') + m.alpha + '%</strong></span>';
+            if (periodMeta.start_date && periodMeta.end_date) {
+                document.getElementById('backtest-meta').textContent =
+                    (backtestData._meta?.strategy || 'Strategy') + ' · ' + periodMeta.start_date + ' to ' + periodMeta.end_date;
+            }
+
+            // Prepare data
+            const dates = data.portfolio.map(p => p.date);
+            const strategyVals = data.portfolio.map(p => p.value);
+            const benchMap = {};
+            data.benchmark.forEach(b => { benchMap[b.date] = b.value; });
+            let lastBench = data.benchmark.length > 0 ? data.benchmark[0].value : 10000;
+            const benchVals = dates.map(d => {
+                if (benchMap[d] !== undefined) lastBench = benchMap[d];
+                return lastBench;
+            });
+
+            // Destroy old chart and create new one
+            if (backtestChart) backtestChart.destroy();
+
+            const ctx = document.getElementById('backtestChart').getContext('2d');
+            backtestChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        {
+                            label: 'Strategy',
+                            data: strategyVals,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 0,
+                            borderWidth: 2,
+                        },
+                        {
+                            label: 'SPY (buy & hold)',
+                            data: benchVals,
+                            borderColor: '#94a3b8',
+                            backgroundColor: 'transparent',
+                            fill: false,
+                            tension: 0.3,
+                            pointRadius: 0,
+                            borderWidth: 1.5,
+                            borderDash: [5, 5],
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { color: '#94a3b8' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString()
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8', maxTicksLimit: 8 }
+                        },
+                        y: {
+                            grid: { color: '#334155' },
+                            ticks: {
+                                color: '#94a3b8',
+                                callback: (v) => '$' + (v/1000).toFixed(0) + 'k'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+
+    {% if chart_data and chart_data.dates %}
+    <script>
+        const chartData = {{ chart_data | tojson }};
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+
+        const datasets = [{
+            label: 'Aurel2',
+            data: chartData.portfolio,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 0,
+            borderWidth: 2.5,
+        }];
+
+        if (Array.isArray(chartData.spy_benchmark) && chartData.spy_benchmark.length > 0) {
+            datasets.push({
+                label: 'SPY (normalized)',
+                data: chartData.spy_benchmark,
+                borderColor: '#94a3b8',
+                backgroundColor: 'transparent',
+                fill: false,
+                tension: 0.25,
+                pointRadius: 0,
+                borderWidth: 1.8,
+                borderDash: [5, 5],
+            });
+        }
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.dates,
+                datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index',
+                },
+                plugins: {
+                    legend: {
+                        display: datasets.length > 1,
+                        labels: { color: '#94a3b8' }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => '$' + ctx.parsed.y.toLocaleString()
+                        }
+                    },
+                },
+                scales: {
+                    x: {
+                        grid: { color: '#334155' },
+                        ticks: { color: '#94a3b8', maxTicksLimit: 8 }
+                    },
+                    y: {
+                        grid: { color: '#334155' },
+                        ticks: {
+                            color: '#94a3b8',
+                            callback: (v) => '$' + v.toLocaleString()
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+    {% endif %}
+</body>
+</html>

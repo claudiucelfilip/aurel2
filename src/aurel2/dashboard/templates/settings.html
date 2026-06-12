@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aurel2 - Settings</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --green: #22c55e;
+            --red: #ef4444;
+            --yellow: #eab308;
+            --border: #334155;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container { max-width: 800px; margin: 0 auto; }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h1 { font-size: 1.8rem; font-weight: 600; }
+
+        nav a {
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-left: 20px;
+        }
+        nav a:hover { color: var(--text); }
+        nav a.active { color: var(--accent); }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-connected { background: rgba(34, 197, 94, 0.2); color: var(--green); }
+        .status-disconnected { background: rgba(239, 68, 68, 0.2); color: var(--red); }
+        .status-pending { background: rgba(234, 179, 8, 0.2); color: var(--yellow); }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        input, select, button {
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text);
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        button {
+            background: var(--accent);
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+        button:hover { opacity: 0.9; }
+
+        .btn-secondary {
+            background: var(--bg);
+            border: 1px solid var(--border);
+        }
+
+        .info-box {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 3px solid var(--accent);
+            padding: 16px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .info-box h4 {
+            margin-bottom: 8px;
+            color: var(--accent);
+        }
+
+        .info-box p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+
+        .info-box code {
+            background: var(--bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .warning-box {
+            background: rgba(234, 179, 8, 0.1);
+            border-left: 3px solid var(--yellow);
+            padding: 16px;
+            margin: 16px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .warning-box h4 {
+            margin-bottom: 8px;
+            color: var(--yellow);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 40px;
+            border-top: 1px solid var(--border);
+        }
+
+        .broker-features {
+            display: flex;
+            gap: 24px;
+            margin-top: 16px;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .feature-yes { color: var(--green); }
+        .feature-no { color: var(--red); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Aurel2</h1>
+            <nav>
+                <a href="/">Dashboard</a>
+                <a href="/backtest">Backtest</a>
+                <a href="/settings" class="active">Settings</a>
+            </nav>
+        </header>
+
+        <!-- Alpaca Connection -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Alpaca Markets</div>
+                <span class="status status-disconnected" id="broker-status">Disconnected</span>
+            </div>
+
+            <div class="info-box">
+                <h4>Full Trading Automation</h4>
+                <p>Alpaca provides commission-free trading with fractional share support via REST API.</p>
+                <div class="broker-features">
+                    <div class="feature feature-yes">✓ Auto-execute trades</div>
+                    <div class="feature feature-yes">✓ Portfolio sync</div>
+                    <div class="feature feature-yes">✓ Live prices</div>
+                    <div class="feature feature-yes">✓ Fractional shares</div>
+                </div>
+            </div>
+
+            <div class="info-box">
+                <h4>Configuration</h4>
+                <p>Set these environment variables:</p>
+                <p><code>APCA_API_KEY_ID</code> - Your Alpaca API key</p>
+                <p><code>APCA_API_SECRET_KEY</code> - Your Alpaca API secret</p>
+            </div>
+        </div>
+
+        <!-- Tax Settings -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">Tax Settings (Romania)</div>
+            </div>
+
+            <div class="info-box">
+                <h4>Romanian Capital Gains Tax</h4>
+                <p>Via Alpaca (foreign broker):</p>
+                <p>• Any holding period: <strong>16%</strong> on net annual gains</p>
+            </div>
+
+            <div class="form-group">
+                <label>Preferred Broker</label>
+                <select id="preferred-broker">
+                    <option value="alpaca">Alpaca Markets (16% tax, can offset losses)</option>
+                </select>
+            </div>
+
+            <button class="btn-secondary" onclick="saveSettings()">Save Preferences</button>
+        </div>
+
+        <footer>
+            Aurel2 · Tax-Optimized Dual Momentum
+        </footer>
+    </div>
+
+    <script>
+        function saveSettings() {
+            const broker = document.getElementById('preferred-broker').value;
+            localStorage.setItem('preferred-broker', broker);
+            alert('Settings saved');
+        }
+
+        // Load saved settings
+        document.addEventListener('DOMContentLoaded', () => {
+            const broker = localStorage.getItem('preferred-broker');
+            if (broker) {
+                document.getElementById('preferred-broker').value = broker;
+            }
+        });
+    </script>
+</body>
+</html>
