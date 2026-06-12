@@ -1,5 +1,12 @@
 # Aurel2
 
+[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-dashboard-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Docker](https://img.shields.io/badge/Docker-deployable-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Tests](https://img.shields.io/badge/pytest-covered-0A9EDC?logo=pytest&logoColor=white)](https://docs.pytest.org/)
+[![Broker](https://img.shields.io/badge/Alpaca-paper%20trading-00A651)](https://alpaca.markets/)
+[![Mode](https://img.shields.io/badge/mode-research%20software-555555)](#safety-note)
+
 Aurel2 is a systematic equity trading research platform built around rules-first portfolio rotation, broker integration, and operational guardrails. It started as a dual-momentum allocator and grew into a broader testbed for multi-strategy decisioning, live daemon monitoring, paper-trading workflows, and explainable trade approval.
 
 This repository is a public portfolio snapshot. It is intended to show architecture, research process, and implementation quality, not to provide financial advice or a ready-to-run trading product.
