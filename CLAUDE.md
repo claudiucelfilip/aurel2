@@ -6,33 +6,49 @@
 
 ## Critical Context
 
-### This is a CLOUD-DEPLOYED trading system
+### This is a DUMBO-DEPLOYED trading system
 
-- **Production runs on a VPS** (Hetzner CX22), NOT locally
-- Services run as **Docker containers** via `docker-compose`
+- **Production runs on Dumbo** (Claudiu's Intel Touch Bar MacBook), NOT on this control machine
+- Services run as **Docker containers** via Docker/Colima
 - Local execution is for **development/testing only**
 - **NEVER run aurel2 processes directly on the host** — only via Docker containers. No `python -m aurel2.cli ...` outside of Docker. All instances must be managed through `docker compose`.
+- The old VPS path layout is preserved on Dumbo for compatibility: `/root` is a symlink to `/Users/claudiu/vps-root`, so `/root/aurel2` and `/Users/claudiu/vps-root/aurel2` are the same Dumbo checkout.
+- The Hetzner VPS (`46.225.75.110`) is deprecated. Do not use it for active Aurel2 work unless Claudiu explicitly asks to inspect old state.
 
 ### Deployment Location
 
 ```
-Server IP: 46.225.75.110 (Hetzner CX22)
-SSH: ssh root@46.225.75.110
-Path: /opt/aurel2/
-Config: /opt/aurel2/docker/.env
-Logs: docker compose logs -f aurel2
-Dashboard: http://46.225.75.110:8080
+Host: Dumbo
+SSH: ssh 100.122.64.94
+Repo path: /root/aurel2
+Real repo path: /Users/claudiu/vps-root/aurel2
+Logs: docker logs --tail 200 aurel2-live-runner
+Dashboard: http://127.0.0.1:8080 on Dumbo, public route https://aurel2.clawdiu.org/
 ```
 
-**IMPORTANT: Always check cloud first, not localhost!**
+**IMPORTANT: Always check Dumbo first, not the deprecated VPS and not this control machine!**
 
-**CRITICAL: All `docker compose` commands MUST be run from `/opt/aurel2/docker/`** — NEVER from `/root/aurel2/docker/`. The `.env` file with Alpaca credentials only exists at `/opt/aurel2/docker/.env`. Running compose from the wrong directory will recreate containers without credentials.
+**CRITICAL: Run production Docker commands only against the active Dumbo deployment.** Do not recreate containers from a repo checkout that lacks the runtime `.env` file.
 
 ### When User Says "Services Are Down"
 
-1. **Check if they mean cloud or local** - production is cloud
-2. **For cloud issues**: `cd /opt/aurel2/docker && docker compose ps`
-3. **For local testing**: Check processes with `ps aux | grep aurel2`
+1. **Check if they mean Dumbo or the control machine** - production is Dumbo
+2. **For production issues**: SSH to Dumbo and inspect Docker/Colima containers
+3. **For local testing only**: Check processes with `ps aux | grep aurel2`
+
+### Weekly Strategy Research
+
+Weekly strategy experiments must not run directly in `/root/aurel2`.
+
+Use the disposable workspace helper:
+
+```bash
+python3 /root/aurel2/scripts/weekly_strategy_workspace.py create --repo /root/aurel2
+python3 /root/aurel2/scripts/weekly_strategy_workspace.py run --worktree <worktree> -- python3 scripts/<backtest>.py
+python3 /root/aurel2/scripts/weekly_strategy_workspace.py finalize --worktree <worktree> --cleanup
+```
+
+Backtest failures inside the disposable workspace are research outcomes to report. They should not dirty the protected checkout or make the weekly cron stop without a useful summary.
 
 ## Key Files by Task
 
@@ -61,37 +77,36 @@ Dashboard: http://46.225.75.110:8080
 
 ## Common Operations
 
-### Restart Cloud Services
+### Restart Production Services On Dumbo
 ```bash
-ssh root@SERVER_IP
-cd /opt/aurel2/docker
-docker compose restart aurel2
+ssh 100.122.64.94
+docker ps --format 'table {{.Names}}\t{{.Status}}'
+docker restart aurel2-live-runner
 ```
 
-### View Cloud Logs
+### View Production Logs On Dumbo
 ```bash
-ssh root@SERVER_IP
-cd /opt/aurel2/docker
-docker compose logs -f aurel2
+ssh 100.122.64.94
+docker logs --tail 200 aurel2-live-runner
 ```
 
-### Check Cloud Health
+### Check Production Health
 ```bash
-ssh root@SERVER_IP
-docker compose exec aurel2 cat /root/.aurel2/heartbeat.json
+ssh 100.122.64.94
+docker exec aurel2-live-runner cat /root/.aurel2/heartbeat.json
 ```
 
 ### Deploy Code Changes
 ```bash
-# Since Claude runs ON the VPS, deploy locally (no SSH needed):
+# Since the agent runs on Dumbo, deploy locally there (no VPS SSH needed):
 ./scripts/deploy.sh
-# This runs tests, syncs to /opt/aurel2/, and rebuilds aurel2 + dashboard containers
-# NEVER use docker compose from /root/aurel2/docker/ — it lacks the .env with Alpaca credentials
+# This runs tests and rebuilds the active Aurel2 + dashboard containers
+# NEVER recreate production containers from a checkout that lacks the runtime .env
 ```
 
 ### Publish Backtests Without Restarting The Daemon (Safe During An Active Paper Run)
 ```bash
-# Regenerates data/backtest_comparison.json and copies it to /opt/aurel2/data/
+# Regenerates data/backtest_comparison.json and publishes it to the active deployment data directory
 # without syncing code/config or restarting any containers.
 bash scripts/publish_backtests_only.sh
 ```
@@ -108,7 +123,7 @@ python -m aurel2.cli dashboard
 
 ```
 ┌─────────────────────────────────────────┐
-│           CLOUD VPS (Docker)            │
+│              DUMBO (Docker)             │
 │                                         │
 │  Alpaca API ◄─── Aurel2 Daemon          │
 │  (REST)          (live --paper)         │
@@ -161,12 +176,12 @@ The AI evaluator uses Claude Code CLI (`claude -p "prompt"`). To authenticate:
 
 1. **SSH into the container**:
    ```bash
-   ssh root@SERVER_IP -t "docker exec -it aurel2-trading-aurel2-1 bash"
+   ssh 100.122.64.94 -t "docker exec -it aurel2-trading-aurel2-1 bash"
    ```
 
 2. **Run `claude` and complete browser login** (follow the URL it gives you)
 
-3. **Credentials are stored in** `/root/.claude/.credentials.json` (mounted from host at `/opt/aurel2/docker/claude-config/`)
+3. **Credentials are stored in** `/root/.claude/.credentials.json` inside the container's mounted Claude config
 
 **Important notes:**
 - The `~/.claude` volume must be **writable** (not `:ro`) for CLI to work
