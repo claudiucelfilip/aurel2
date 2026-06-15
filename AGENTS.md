@@ -21,7 +21,10 @@ If these conflict with generic defaults, follow these files for this repo.
 - Do not use the deprecated VPS (`46.225.75.110`) for active Aurel2 work unless
   explicitly asked to inspect old state.
 - Do not run Aurel2 production processes directly on the host.
-- For production Docker actions, target the active Dumbo containers/deployment directory.
+- For production Docker actions, target the active Dumbo containers. The live
+  runner bind-mounts `/root/aurel2/config` and `/root/aurel2/src`; `/opt/aurel2`
+  remains the synced deployment copy and holds runtime files such as
+  `/opt/aurel2/docker/.env`.
 
 ## Weekly Strategy Research
 

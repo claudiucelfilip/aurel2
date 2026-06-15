@@ -22,13 +22,16 @@ Host: Dumbo
 SSH: ssh 100.122.64.94
 Repo path: /root/aurel2
 Real repo path: /Users/claudiu/vps-root/aurel2
+Synced deployment copy: /opt/aurel2
+Runtime env: /opt/aurel2/docker/.env
+Live runner mounts: /root/aurel2/config and /root/aurel2/src
 Logs: docker logs --tail 200 aurel2-live-runner
 Dashboard: http://127.0.0.1:8080 on Dumbo, public route https://aurel2.clawdiu.org/
 ```
 
 **IMPORTANT: Always check Dumbo first, not the deprecated VPS and not this control machine!**
 
-**CRITICAL: Run production Docker commands only against the active Dumbo deployment.** Do not recreate containers from a repo checkout that lacks the runtime `.env` file.
+**CRITICAL: Run production Docker commands only against the active Dumbo deployment.** Do not recreate containers from a checkout that lacks `/opt/aurel2/docker/.env`.
 
 ### When User Says "Services Are Down"
 
@@ -100,13 +103,13 @@ docker exec aurel2-live-runner cat /root/.aurel2/heartbeat.json
 ```bash
 # Since the agent runs on Dumbo, deploy locally there (no VPS SSH needed):
 ./scripts/deploy.sh
-# This runs tests and rebuilds the active Aurel2 + dashboard containers
-# NEVER recreate production containers from a checkout that lacks the runtime .env
+# This syncs to /opt/aurel2 and rebuilds the active Aurel2 + dashboard containers
+# NEVER recreate production containers from a checkout that lacks /opt/aurel2/docker/.env
 ```
 
 ### Publish Backtests Without Restarting The Daemon (Safe During An Active Paper Run)
 ```bash
-# Regenerates data/backtest_comparison.json and publishes it to the active deployment data directory
+# Regenerates data/backtest_comparison.json and publishes it to /opt/aurel2/data/
 # without syncing code/config or restarting any containers.
 bash scripts/publish_backtests_only.sh
 ```
