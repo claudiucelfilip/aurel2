@@ -190,6 +190,76 @@ def append_memory(record: dict[str, Any]) -> None:
         handle.write(json.dumps(record, sort_keys=True) + "\n")
 
 
+def build_divergence_flags(
+    *,
+    last_day_return_pct: float | None,
+    expected_daily_std_pct: float,
+    rolling_7d_drawdown_pct: float,
+    expected_rolling_7d_dd_p95_pct: float,
+    loss_streak_sessions: int,
+    rolling_7d_return_pct: float | None,
+    momentum_context: dict[str, Any],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    flags: list[dict[str, Any]] = []
+    observations: list[dict[str, Any]] = []
+
+    # Require 4+ of the last 5 days down. The old ">2" (3 of 5) fired on ~31% of
+    # normal weeks by chance — pure noise for a momentum strategy that routinely
+    # has mixed down-days. 4 of 5 is a genuine losing bias (~19% by chance), and
+    # magnitude is already covered by the rolling-drawdown and daily-loss rules.
+    if loss_streak_sessions >= 4:
+        flags.append(
+            {
+                "rule": "losses_at_least_4_of_last_5",
+                "observed": loss_streak_sessions,
+                "threshold": 4,
+            }
+        )
+    if expected_rolling_7d_dd_p95_pct < 0 and rolling_7d_drawdown_pct < expected_rolling_7d_dd_p95_pct:
+        flags.append(
+            {
+                "rule": "rolling_7d_drawdown_below_p95",
+                "observed_pct": round(rolling_7d_drawdown_pct, 4),
+                "threshold_pct": expected_rolling_7d_dd_p95_pct,
+            }
+        )
+
+    daily_loss_threshold_pct = expected_daily_std_pct * 1.5
+    if (
+        last_day_return_pct is None
+        or expected_daily_std_pct <= 0
+        or last_day_return_pct >= 0
+        or abs(last_day_return_pct) <= daily_loss_threshold_pct
+    ):
+        return flags, observations
+
+    daily_loss = {
+        "rule": "daily_loss_gt_1_5x_expected_std",
+        "observed_pct": round(last_day_return_pct, 4),
+        "threshold_pct": round(daily_loss_threshold_pct, 4),
+    }
+
+    # A single down day in an otherwise healthy 7-day window is expected strategy
+    # volatility, especially while the held asset is still the momentum leader.
+    # Page only when the daily loss is severe by itself, or when it lines up with
+    # sustained damage / a stale holding concern.
+    severe_single_day_loss = abs(last_day_return_pct) > expected_daily_std_pct * 2.5
+    negative_rolling_window = rolling_7d_return_pct is not None and rolling_7d_return_pct < 0
+    stale_holding = momentum_context.get("verdict") == "current_holding_is_not_momentum_leader"
+    if severe_single_day_loss or negative_rolling_window or stale_holding:
+        flags.append(daily_loss)
+    else:
+        observations.append(
+            {
+                **daily_loss,
+                "suppressed": True,
+                "reason": "isolated_daily_loss_with_positive_context",
+            }
+        )
+
+    return flags, observations
+
+
 def build_operator_summary(
     status: str,
     current_holding: str | None,
@@ -279,39 +349,15 @@ def main() -> int:
         or 0.0
     )
 
-    flags: list[dict[str, Any]] = []
-    # Require 4+ of the last 5 days down. The old ">2" (3 of 5) fired on ~31% of
-    # normal weeks by chance — pure noise for a momentum strategy that routinely
-    # has mixed down-days. 4 of 5 is a genuine losing bias (~19% by chance), and
-    # magnitude is already covered by the rolling-drawdown and daily-move rules.
-    if len(negative_recent_returns) >= 4:
-        flags.append(
-            {
-                "rule": "losses_at_least_4_of_last_5",
-                "observed": len(negative_recent_returns),
-                "threshold": 4,
-            }
-        )
-    if expected_rolling_7d_dd_p95_pct < 0 and rolling_7d_drawdown_pct < expected_rolling_7d_dd_p95_pct:
-        flags.append(
-            {
-                "rule": "rolling_7d_drawdown_below_p95",
-                "observed_pct": round(rolling_7d_drawdown_pct, 4),
-                "threshold_pct": expected_rolling_7d_dd_p95_pct,
-            }
-        )
-    if (
-        last_day_return_pct is not None
-        and expected_daily_std_pct > 0
-        and abs(last_day_return_pct) > expected_daily_std_pct * 1.5
-    ):
-        flags.append(
-            {
-                "rule": "daily_move_gt_1_5x_expected_std",
-                "observed_pct": round(last_day_return_pct, 4),
-                "threshold_pct": round(expected_daily_std_pct * 1.5, 4),
-            }
-        )
+    flags, observations = build_divergence_flags(
+        last_day_return_pct=last_day_return_pct,
+        expected_daily_std_pct=expected_daily_std_pct,
+        rolling_7d_drawdown_pct=rolling_7d_drawdown_pct,
+        expected_rolling_7d_dd_p95_pct=expected_rolling_7d_dd_p95_pct,
+        loss_streak_sessions=len(negative_recent_returns),
+        rolling_7d_return_pct=rolling_7d_return_pct,
+        momentum_context=momentum_context,
+    )
 
     record = {
         "bot": "Aurel2",
@@ -339,6 +385,7 @@ def main() -> int:
         "expected_rolling_7d_dd_p95_pct": expected_rolling_7d_dd_p95_pct,
         "momentum_context": momentum_context,
         "flags": flags,
+        "observations": observations,
     }
     record["operator_summary"] = build_operator_summary(
         status=record["status"],
