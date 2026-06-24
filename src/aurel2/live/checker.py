@@ -510,6 +510,8 @@ class Checker:
 
         for name, strategy in self.strategies.items():
             try:
+                if hasattr(strategy, "current_holding"):
+                    strategy.current_holding = current_asset_class
                 signal = strategy.generate_signal(
                     prices=prices,
                     calc_date=calc_date,
