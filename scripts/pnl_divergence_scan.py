@@ -147,6 +147,84 @@ def build_momentum_context(entry: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def normalize_action(value: Any) -> str | None:
+    if value is None:
+        return None
+    action = str(value).strip().lower()
+    return action or None
+
+
+def signal_aligns_with_target(signal: dict[str, Any], target_symbol: str | None) -> bool | None:
+    action = normalize_action(signal.get("action"))
+    asset_symbol = signal.get("asset_symbol")
+    asset_symbol = str(asset_symbol) if asset_symbol else None
+    if action is None or target_symbol is None:
+        return None
+    if action == "hold":
+        return True
+    if action in {"buy", "rotate"}:
+        return asset_symbol == target_symbol
+    if action == "sell":
+        return False
+    return None
+
+
+def build_strategy_signal_context(
+    entry: dict[str, Any],
+    *,
+    decision_symbol: str | None,
+    current_holding: str | None,
+) -> dict[str, Any]:
+    strategy_signals = entry.get("strategy_signals") or {}
+    context: dict[str, Any] = {}
+    for strategy_name, raw_signal in strategy_signals.items():
+        if not isinstance(raw_signal, dict):
+            continue
+        action = normalize_action(raw_signal.get("action"))
+        asset_symbol = raw_signal.get("asset_symbol")
+        asset_symbol = str(asset_symbol) if asset_symbol else None
+        confidence = safe_float(raw_signal.get("confidence"))
+        context[str(strategy_name)] = {
+            "action": action,
+            "asset_symbol": asset_symbol,
+            "confidence": round(confidence, 4) if confidence is not None else None,
+            "aligns_with_decision_symbol": signal_aligns_with_target(raw_signal, decision_symbol),
+            "aligns_with_current_holding": signal_aligns_with_target(raw_signal, current_holding),
+        }
+    return context
+
+
+def build_strategy_alignment_summary(strategy_signal_context: dict[str, Any]) -> dict[str, Any]:
+    total = 0
+    aligned_with_decision = 0
+    aligned_with_holding = 0
+    disagreeing_with_decision: list[str] = []
+    disagreeing_with_holding: list[str] = []
+
+    for strategy_name, signal in strategy_signal_context.items():
+        if not isinstance(signal, dict):
+            continue
+        total += 1
+        decision_alignment = signal.get("aligns_with_decision_symbol")
+        holding_alignment = signal.get("aligns_with_current_holding")
+        if decision_alignment is True:
+            aligned_with_decision += 1
+        elif decision_alignment is False:
+            disagreeing_with_decision.append(strategy_name)
+        if holding_alignment is True:
+            aligned_with_holding += 1
+        elif holding_alignment is False:
+            disagreeing_with_holding.append(strategy_name)
+
+    return {
+        "total_strategies": total,
+        "aligned_with_decision_symbol": aligned_with_decision,
+        "aligned_with_current_holding": aligned_with_holding,
+        "disagreeing_with_decision_symbol": disagreeing_with_decision,
+        "disagreeing_with_current_holding": disagreeing_with_holding,
+    }
+
+
 def recent_account_values(points: list[Point]) -> list[dict[str, Any]]:
     return [{"date": point.date, "value": round(point.value, 2)} for point in points]
 
@@ -268,6 +346,7 @@ def build_operator_summary(
     rolling_7d_pnl: float,
     rolling_7d_drawdown_pct: float,
     momentum_context: dict[str, Any],
+    strategy_alignment_summary: dict[str, Any],
 ) -> str:
     holding = current_holding or "unknown holding"
     action = latest_action or "unknown action"
@@ -285,17 +364,35 @@ def build_operator_summary(
     else:
         momentum_text = "Momentum context was not available in the latest journal entry."
 
+    total_strategies = int(strategy_alignment_summary.get("total_strategies") or 0)
+    if total_strategies > 0:
+        aligned = int(strategy_alignment_summary.get("aligned_with_decision_symbol") or 0)
+        disagreeing = strategy_alignment_summary.get("disagreeing_with_decision_symbol") or []
+        if disagreeing:
+            strategy_text = (
+                f" Strategy vote alignment: {aligned}/{total_strategies} match the decision; "
+                f"diverging sleeves: {', '.join(disagreeing)}."
+            )
+        else:
+            strategy_text = (
+                f" Strategy vote alignment: all {total_strategies}/{total_strategies} sleeves "
+                "match the decision."
+            )
+    else:
+        strategy_text = ""
+
     if status == "divergence":
         return (
             f"Aurel2 paper PnL divergence: latest action is {action} while holding {holding}. "
             f"The scan saw {loss_streak_sessions} losing sessions in the last 5, "
             f"rolling 7-day PnL {rolling_7d_pnl}, and rolling drawdown "
-            f"{round(rolling_7d_drawdown_pct, 4)}%. {momentum_text} "
+            f"{round(rolling_7d_drawdown_pct, 4)}%. {momentum_text}"
+            f"{strategy_text} "
             "This scan checks account PnL only; it does not by itself prove an execution outage."
         )
     return (
         f"Aurel2 paper PnL scan is OK: latest action is {action} while holding {holding}. "
-        f"Rolling 7-day PnL is {rolling_7d_pnl}. {momentum_text}"
+        f"Rolling 7-day PnL is {rolling_7d_pnl}. {momentum_text}{strategy_text}"
     )
 
 
@@ -339,6 +436,12 @@ def main() -> int:
     decision_symbol = latest_entry.get("decision_symbol") or latest_entry.get("symbol")
     decision_symbol = str(decision_symbol) if decision_symbol else None
     momentum_context = build_momentum_context(latest_entry)
+    strategy_signal_context = build_strategy_signal_context(
+        latest_entry,
+        decision_symbol=decision_symbol,
+        current_holding=current_holding,
+    )
+    strategy_alignment_summary = build_strategy_alignment_summary(strategy_signal_context)
 
     expected_daily_std_pct = float(
         paper_realized.get("daily_std_pct") or paper_run.get("daily_std_pct") or 0.0
@@ -376,6 +479,8 @@ def main() -> int:
         "latest_action": latest_action,
         "decision_symbol": decision_symbol,
         "loss_streak_sessions": len(negative_recent_returns),
+        "strategy_signal_context": strategy_signal_context,
+        "strategy_alignment_summary": strategy_alignment_summary,
         "recent_account_values": recent_account_values(recent),
         "recent_account_returns": recent_account_returns(recent),
         "rolling_7d_pnl": rolling_7d_pnl,
@@ -395,6 +500,7 @@ def main() -> int:
         rolling_7d_pnl=rolling_7d_pnl,
         rolling_7d_drawdown_pct=rolling_7d_drawdown_pct,
         momentum_context=momentum_context,
+        strategy_alignment_summary=strategy_alignment_summary,
     )
     if os.environ.get("AUREL2_PNL_SCAN_NO_APPEND") != "1":
         append_memory(record)

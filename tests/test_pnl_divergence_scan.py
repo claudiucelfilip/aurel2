@@ -20,6 +20,64 @@ def stale_holding_context() -> dict[str, str]:
     return {"verdict": "current_holding_is_not_momentum_leader"}
 
 
+def test_build_strategy_signal_context_marks_alignment():
+    entry = {
+        "strategy_signals": {
+            "dual_momentum": {"action": "buy", "asset_symbol": "XLK", "confidence": 0.91},
+            "mean_reversion": {"action": "buy", "asset_symbol": "EEM", "confidence": 0.62},
+            "multi_timeframe": {"action": "hold", "asset_symbol": "XLK", "confidence": 0.55},
+        }
+    }
+
+    context = scan.build_strategy_signal_context(
+        entry,
+        decision_symbol="XLK",
+        current_holding="XLK",
+    )
+
+    assert context == {
+        "dual_momentum": {
+            "action": "buy",
+            "asset_symbol": "XLK",
+            "confidence": 0.91,
+            "aligns_with_decision_symbol": True,
+            "aligns_with_current_holding": True,
+        },
+        "mean_reversion": {
+            "action": "buy",
+            "asset_symbol": "EEM",
+            "confidence": 0.62,
+            "aligns_with_decision_symbol": False,
+            "aligns_with_current_holding": False,
+        },
+        "multi_timeframe": {
+            "action": "hold",
+            "asset_symbol": "XLK",
+            "confidence": 0.55,
+            "aligns_with_decision_symbol": True,
+            "aligns_with_current_holding": True,
+        },
+    }
+
+
+def test_build_strategy_alignment_summary_counts_disagreement():
+    summary = scan.build_strategy_alignment_summary(
+        {
+            "dual_momentum": {"aligns_with_decision_symbol": True, "aligns_with_current_holding": True},
+            "mean_reversion": {"aligns_with_decision_symbol": False, "aligns_with_current_holding": False},
+            "multi_timeframe": {"aligns_with_decision_symbol": True, "aligns_with_current_holding": True},
+        }
+    )
+
+    assert summary == {
+        "total_strategies": 3,
+        "aligned_with_decision_symbol": 2,
+        "aligned_with_current_holding": 2,
+        "disagreeing_with_decision_symbol": ["mean_reversion"],
+        "disagreeing_with_current_holding": ["mean_reversion"],
+    }
+
+
 def test_isolated_daily_loss_is_observation_not_alert_flag():
     flags, observations = scan.build_divergence_flags(
         last_day_return_pct=-3.2796,
