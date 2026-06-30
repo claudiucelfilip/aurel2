@@ -1,0 +1,153 @@
+{
+  "generated_at": "2026-06-30",
+  "periods": [
+    {
+      "end": "2026-06-30",
+      "name": "1m",
+      "start": "2026-05-30"
+    }
+  ],
+  "question": "How do earlier sell/rotation trigger hypotheses compare to current Aurel2?",
+  "rows": [
+    {
+      "alpha_cagr_pct": -25.397,
+      "cagr_pct": -47.1524,
+      "delta_vs_baseline_cagr_pct": 0.0,
+      "delta_vs_baseline_dd_pct": 0.0,
+      "final_value": 9473.1,
+      "max_drawdown_pct": 10.8874,
+      "period": "1m",
+      "sharpe": -1.3307,
+      "spy_cagr_pct": -21.7553,
+      "total_return_pct": -5.269,
+      "trades": 1,
+      "variant": "baseline_live"
+    },
+    {
+      "alpha_cagr_pct": -25.397,
+      "cagr_pct": -47.1524,
+      "delta_vs_baseline_cagr_pct": 0.0,
+      "delta_vs_baseline_dd_pct": 0.0,
+      "final_value": 9473.1,
+      "max_drawdown_pct": 10.8874,
+      "period": "1m",
+      "sharpe": -1.3307,
+      "spy_cagr_pct": -21.7553,
+      "total_return_pct": -5.269,
+      "trades": 1,
+      "variant": "rotate_on_any_leader"
+    },
+    {
+      "alpha_cagr_pct": -25.397,
+      "cagr_pct": -47.1524,
+      "delta_vs_baseline_cagr_pct": 0.0,
+      "delta_vs_baseline_dd_pct": 0.0,
+      "final_value": 9473.1,
+      "max_drawdown_pct": 10.8874,
+      "period": "1m",
+      "sharpe": -1.3307,
+      "spy_cagr_pct": -21.7553,
+      "total_return_pct": -5.269,
+      "trades": 1,
+      "variant": "rotate_after_1pp_lead"
+    },
+    {
+      "alpha_cagr_pct": -25.397,
+      "cagr_pct": -47.1524,
+      "delta_vs_baseline_cagr_pct": 0.0,
+      "delta_vs_baseline_dd_pct": 0.0,
+      "final_value": 9473.1,
+      "max_drawdown_pct": 10.8874,
+      "period": "1m",
+      "sharpe": -1.3307,
+      "spy_cagr_pct": -21.7553,
+      "total_return_pct": -5.269,
+      "trades": 1,
+      "variant": "easy_defensive_exit"
+    },
+    {
+      "alpha_cagr_pct": -25.397,
+      "cagr_pct": -47.1524,
+      "delta_vs_baseline_cagr_pct": 0.0,
+      "delta_vs_baseline_dd_pct": 0.0,
+      "final_value": 9473.1,
+      "max_drawdown_pct": 10.8874,
+      "period": "1m",
+      "sharpe": -1.3307,
+      "spy_cagr_pct": -21.7553,
+      "total_return_pct": -5.269,
+      "trades": 1,
+      "variant": "cash_hurdle_2pct"
+    },
+    {
+      "alpha_cagr_pct": -25.397,
+      "cagr_pct": -47.1524,
+      "delta_vs_baseline_cagr_pct": 0.0,
+      "delta_vs_baseline_dd_pct": 0.0,
+      "final_value": 9473.1,
+      "max_drawdown_pct": 10.8874,
+      "period": "1m",
+      "sharpe": -1.3307,
+      "spy_cagr_pct": -21.7553,
+      "total_return_pct": -5.269,
+      "trades": 1,
+      "variant": "weighted_three_sleeves"
+    }
+  ],
+  "variants": [
+    {
+      "cash_rate": 0.0,
+      "defensive_to_equity_threshold": 0.05,
+      "dm_primary": true,
+      "equity_to_defensive_threshold": 0.15,
+      "hypothesis": "Current live-equivalent DM-primary config.",
+      "name": "baseline_live",
+      "switch_threshold": 0.02
+    },
+    {
+      "cash_rate": 0.0,
+      "defensive_to_equity_threshold": 0.05,
+      "dm_primary": true,
+      "equity_to_defensive_threshold": 0.15,
+      "hypothesis": "Sell/switch as soon as any non-held asset leads at all.",
+      "name": "rotate_on_any_leader",
+      "switch_threshold": 0.0
+    },
+    {
+      "cash_rate": 0.0,
+      "defensive_to_equity_threshold": 0.05,
+      "dm_primary": true,
+      "equity_to_defensive_threshold": 0.15,
+      "hypothesis": "Sell/switch when a same-category leader beats current by 1 percentage point.",
+      "name": "rotate_after_1pp_lead",
+      "switch_threshold": 0.01
+    },
+    {
+      "cash_rate": 0.0,
+      "defensive_to_equity_threshold": 0.05,
+      "dm_primary": true,
+      "equity_to_defensive_threshold": 0.02,
+      "hypothesis": "Leave equities for defensive assets after a 2 percentage point advantage instead of 15.",
+      "name": "easy_defensive_exit",
+      "switch_threshold": 0.02
+    },
+    {
+      "cash_rate": 0.02,
+      "defensive_to_equity_threshold": 0.05,
+      "dm_primary": true,
+      "equity_to_defensive_threshold": 0.15,
+      "hypothesis": "Require held assets to beat a 2 percent cash hurdle.",
+      "name": "cash_hurdle_2pct",
+      "switch_threshold": 0.02
+    },
+    {
+      "cash_rate": 0.0,
+      "defensive_to_equity_threshold": 0.05,
+      "dm_primary": false,
+      "equity_to_defensive_threshold": 0.15,
+      "hypothesis": "Let all three sleeves choose the final action instead of DM-primary mode.",
+      "name": "weighted_three_sleeves",
+      "switch_threshold": 0.02
+    }
+  ]
+}
