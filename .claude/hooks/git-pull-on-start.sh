@@ -4,6 +4,9 @@
 # instead of silently proceeding on stale state.
 cd "$(git -C "$(dirname "$0")/../.." rev-parse --show-toplevel 2>/dev/null)" || exit 0
 
+# Activate the tracked git hooks (post-commit auto-push) for this clone.
+bash scripts/install-git-hooks.sh >/dev/null 2>&1 || true
+
 BRANCH="$(git branch --show-current 2>/dev/null)" || exit 0
 [ -z "$BRANCH" ] && exit 0
 

@@ -1,0 +1,28 @@
+#!/bin/bash
+# Auto-push after every commit so a commit never lingers local and becomes a
+# diverged branch (this repo is worked on from two machines by AI agents).
+# If the push is rejected because the remote moved, rebase onto it and retry once.
+#
+# Runs in the background and never blocks or fails the commit.
+# Set AUREL2_NO_AUTOPUSH=1 to skip (e.g. mid-rebase batch work).
+
+[ -n "${AUREL2_NO_AUTOPUSH:-}" ] && exit 0
+[ -n "${GIT_REBASE_TODO:-}" ] && exit 0   # don't fire during a rebase replay
+
+# Detached HEAD or no upstream -> nothing to push to.
+BRANCH="$(git branch --show-current 2>/dev/null)" || exit 0
+[ -z "$BRANCH" ] && exit 0
+git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' >/dev/null 2>&1 || exit 0
+
+(
+    git push --quiet 2>/dev/null && exit 0
+    # Rejected: likely diverged. Fetch, rebase, retry once.
+    git fetch --quiet origin "$BRANCH" 2>/dev/null || exit 0
+    if git pull --rebase --autostash --quiet 2>/dev/null; then
+        git push --quiet 2>/dev/null || true
+    else
+        git rebase --abort 2>/dev/null || true
+    fi
+) >/dev/null 2>&1 &
+
+exit 0

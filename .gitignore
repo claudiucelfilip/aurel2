@@ -43,3 +43,6 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+
+# uv resolver lockfile — not tracked (per Claudiu)
+uv.lock
