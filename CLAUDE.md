@@ -198,6 +198,14 @@ The advisor (`src/aurel2/agent/advisor.py`) has built-in guardrails:
 - After 3 consecutive AI failures, AI evaluation is skipped for 1 hour
 - System continues operating on deterministic strategies without AI
 
+## Git Sync — never diverge
+
+This repo is worked on from two machines (local Mac + Dumbo), both by AI agents. Divergence happens when one machine commits without the other pulling. To prevent it:
+
+- **Pull before you start.** `git pull --rebase --autostash` on the current branch. The session-start hook does this; if it warned about divergence, reconcile before doing new work.
+- **Push immediately after every commit** — do not leave a commit local. If the push is rejected (remote moved), `git pull --rebase` then push again.
+- **Never end a turn with an unpushed commit or a diverged branch.** If you can't reconcile, say so explicitly in your report.
+
 ## Don't Forget
 
 - **Broker is Alpaca Markets** — REST API, no gateway process needed

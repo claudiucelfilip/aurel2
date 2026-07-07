@@ -49,6 +49,17 @@ If these conflict with generic defaults, follow these files for this repo.
 - Claude `PostToolUse` backtest deploy hook is mirrored by:
   - After successful backtest commands that update `data/backtest_comparison.json`, run `bash scripts/deploy.sh`
 
+## Git Sync — Never Diverge
+
+This repo is worked on from two machines (local Mac + Dumbo), both by AI agents.
+Divergence happens when one machine commits without the other pulling. Prevent it:
+
+- Pull before starting: `git pull --rebase --autostash` on the current branch.
+- Push immediately after every commit. If the push is rejected because the remote
+  moved, `git pull --rebase` then push again. Never leave a commit local.
+- Never end a turn with an unpushed commit or a diverged branch. If you cannot
+  reconcile, state that explicitly in your report.
+
 ## Workflow Notes
 
 - Keep this file and `CLAUDE.md` aligned when deployment or operations rules change.
