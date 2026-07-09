@@ -1,0 +1,87 @@
+{
+  "arm": "lt_core_history",
+  "windows": {
+    "AI Bull 23-26": {
+      "actual_start": "2023-01-03",
+      "actual_end": "2026-01-30",
+      "cagr": 0.17267,
+      "total_return": 0.631883,
+      "max_drawdown": 0.261784,
+      "sharpe": 0.950798,
+      "switches": 71,
+      "final_value": 16318.83,
+      "alpha_vs_spy": -0.057423,
+      "spy_cagr": 0.230093,
+      "start": "2023-01-01",
+      "end": "2026-02-01"
+    },
+    "Rate Hike Bear": {
+      "actual_start": "2022-01-03",
+      "actual_end": "2022-12-30",
+      "cagr": 0.195067,
+      "total_return": 0.192592,
+      "max_drawdown": 0.317912,
+      "sharpe": 0.752963,
+      "switches": 25,
+      "final_value": 11925.92,
+      "alpha_vs_spy": 0.383505,
+      "spy_cagr": -0.188438,
+      "start": "2022-01-01",
+      "end": "2022-12-31"
+    },
+    "COVID V-shape": {
+      "actual_start": "2020-03-23",
+      "actual_end": "2021-12-31",
+      "cagr": 0.110607,
+      "total_return": 0.204564,
+      "max_drawdown": 0.213903,
+      "sharpe": 0.531553,
+      "switches": 53,
+      "final_value": 12045.64,
+      "alpha_vs_spy": -0.443456,
+      "spy_cagr": 0.554063,
+      "start": "2020-03-23",
+      "end": "2022-01-01"
+    },
+    "Full 15y": {
+      "actual_start": "2010-01-04",
+      "actual_end": "2026-01-30",
+      "cagr": 0.071531,
+      "total_return": 2.035387,
+      "max_drawdown": 0.317912,
+      "sharpe": 0.457944,
+      "switches": 367,
+      "final_value": 30353.87,
+      "alpha_vs_spy": -0.067815,
+      "spy_cagr": 0.139346,
+      "start": "2010-01-01",
+      "end": "2026-02-01"
+    },
+    "Last 12m": {
+      "actual_start": "2025-07-07",
+      "actual_end": "2026-07-07",
+      "cagr": 0.501922,
+      "total_return": 0.501504,
+      "max_drawdown": 0.132288,
+      "sharpe": 1.808548,
+      "switches": 17,
+      "final_value": 15015.04,
+      "alpha_vs_spy": 0.283746,
+      "spy_cagr": 0.218175,
+      "start": "2025-07-07",
+      "end": "2026-07-07"
+    }
+  },
+  "notes": [
+    "LT-core (daily_runner.py deterministic core, symbol_bias/regime_bias forced to {}) replayed over the same named regime windows used by scripts/backtest_lookback.py's 12-month-lookback config, for comparison against Aurel2 dual-momentum results in data/lookback_and_vote_2026_07_07.json (exp1_lookback_sweep).",
+    "Window dates for 'AI Bull 23-26' (as 'AI Bull'), 'Rate Hike Bear', 'COVID V-shape', and 'Full 15y' copied verbatim from scripts/backtest_lookback.py PERIODS (2023-01-01/2026-02-01, 2022-01-01/2022-12-31, 2020-03-23/2022-01-01, 2010-01-01/2026-02-01).",
+    "'Last 12m' has no discoverable generating script (grepped scripts/ for the literal string 'Last 12m' with no hits) \u2014 inferred as 2025-07-07 to 2026-07-07, the 12 months ending on lookback_and_vote_2026_07_07.json's generation date. This is an assumption, not a verified match.",
+    "Each window starts independently with $10,000 cash (not chained across windows); first BUY deploys 99% of cash, matching daily_runner.py's buying_power * 0.99 notional logic.",
+    "CAGR: (final_value/initial_capital)^(1/years) - 1, years = (actual_last_day - actual_first_day).days / 365.25. Sharpe: daily returns, rf=0, annualized with sqrt(252). Both match the convention in src/aurel2/engine/backtest.py's BacktestEngine.calculate_metrics() (used by backtest_lookback.py) for daily-cadence snapshots.",
+    "'switches' counts every BUY/SELL fill (a rotation = 1 SELL + 1 BUY = 2), matching lt_core_replay.py's n_trades convention \u2014 not directly comparable to exp1_lookback_sweep's 'switches' field without checking that sweep's own counting convention, which wasn't in scope here.",
+    "Trades execute at the decision day's close (same convention as lt_core_replay.py): features/regime/score for day D use bars through D's close, and any BUY/SELL fills at D's close.",
+    "Data: yfinance daily auto-adjusted closes. All 8 WATCHLIST tickers (SPY, QQQ, GLD, TLT, IWM, EFA, EEM, XLE) have data back to at least 2009-01-02, so 'Full 15y' (starting 2010-01-01) runs with the complete watchlist \u2014 no ticker was dropped for any window.",
+    "Each window's data fetch starts 220 trading days before the window start to warm build_features()'s 80-bar minimum lookback (150-day figure in lt_core_replay.py's docstring is a conservative description of the same warmup; 220 trading days is comfortably generous either way).",
+    "Functions (build_features, infer_regime, conviction_score, choose_target, WATCHLIST, RISK_ASSETS, DEFENSIVE, threshold constants) imported verbatim from /Users/claudiu/.openclaw/workspace/live-trader/daily_runner.py via exec of the source, identically to lt_core_replay.py."
+  ]
+}
