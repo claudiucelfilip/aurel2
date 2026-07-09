@@ -1,0 +1,2587 @@
+{
+  "window": {
+    "start": "2026-02-11",
+    "end": "2026-07-08"
+  },
+  "baseline_a2": {
+    "final_return_pct": 12.0933,
+    "max_drawdown_pct": 18.2367,
+    "sharpe": 1.0096,
+    "n_trades": 2
+  },
+  "a2_plus_ai": {
+    "final_return_pct": 12.0933,
+    "max_drawdown_pct": 18.2367,
+    "sharpe": 1.0096,
+    "n_trades": 2
+  },
+  "delta": {
+    "final_return_pct": 0.0,
+    "max_drawdown_pct": 0.0,
+    "n_trades": 0
+  },
+  "weekly_ai_tilts": [
+    {
+      "date": "2026-02-11",
+      "regime_view": "mixed",
+      "symbol_bias": {
+        "GLD": -0.02,
+        "XLE": 0.015
+      },
+      "confidence": 0.4,
+      "reasoning": "GLD's 1m momentum is decelerating hard (20d changes flipped negative in the last 4 sessions after huge prior gains) and it's already -6.76% off its 12m high while the held position has 0 days, suggesting a stretched, reversing trend rather than fresh strength. XLE shows the most consistent broad-based acceleration (1m > 3m > 12m all positive and rising) while defensive/bond signals stay muted, so risk is genuinely mixed rather than clearly on or off."
+    },
+    {
+      "date": "2026-02-16",
+      "regime_view": "mixed",
+      "symbol_bias": {
+        "GLD": -0.015
+      },
+      "confidence": 0.55,
+      "reasoning": "GLD's 12m momentum is extreme (73.7%) and the position is already 6.7% off its high after a sharp 5-day pullback embedded in the last_20d series, suggesting the trend is stretched and vulnerable to further mean reversion even though the deterministic signal still says hold. Equities show weak/negative 1m momentum (SPY -1.4%, XLK -4.2%, XLF -5.1%) against strong non-US and commodity momentum (EFA, EEM, XLE, GLD), a mixed regime that argues for trimming conviction on the extended GLD position rather than adding to it."
+    },
+    {
+      "date": "2026-02-23",
+      "regime_view": "mixed",
+      "symbol_bias": {
+        "GLD": -0.01
+      },
+      "confidence": 0.4,
+      "reasoning": "GLD's 12m momentum is extreme (73%) with a recent stretch of sharp single-day drawdowns (-10.3%, -4.0%, -3.5%, -3.1%) and the current position is already 12 days in with a -5.5% drawdown from highs, suggesting a stretched, volatile trade rather than a clean trend. Equities and international/EM show broad positive breadth (SPY, EFA, EEM all green across 1m/3m/12m) while tech and financials lag, so this reads as rotation/mixed rather than a clear risk-on or risk-off regime."
+    },
+    {
+      "date": "2026-03-02",
+      "regime_view": "mixed",
+      "symbol_bias": {
+        "GLD": -0.01,
+        "XLE": 0.01
+      },
+      "confidence": 0.4,
+      "reasoning": "GLD's 12m momentum is extreme (83.7%) and the position is already 19 days held with a pullback from highs, while its last-20d returns show sharp two-way swings suggesting exhaustion rather than clean trend continuation. XLE shows the most consistent broad-based strength across 1m/3m/12m windows without the same parabolic extension, making it the more durable momentum name right now."
+    },
+    {
+      "date": "2026-03-09",
+      "regime_view": "mixed",
+      "symbol_bias": {
+        "GLD": -0.01,
+        "XLE": 0.015,
+        "DBC": 0.01
+      },
+      "confidence": 0.4,
+      "reasoning": "GLD's 1m momentum has decayed sharply from a strong 3m/12m base while the position sits in a drawdown from its high, suggesting fading trend strength even though the deterministic signal still holds; XLE and DBC show accelerating short-term momentum (5.46%/13.44% 1m) consistent with a commodity-led risk-on pocket amid broad equity weakness (SPY/EFA/EEM/XLK/XLF all negative 1m)."
+    },
+    {
+      "date": "2026-03-16",
+      "regime_view": "mixed",
+      "symbol_bias": {
+        "GLD": -0.01,
+        "DBC": 0.015
+      },
+      "confidence": 0.35,
+      "reasoning": "GLD's 12m momentum is extreme (67%) and it's already 33 days held with a -7% drawdown from its high, so the strongest trend is showing fatigue while DBC has fresh, broad-based strength across 1m/3m/12m with no drawdown signal. This is a mild tilt only \u2014 the deterministic system's 3/3 hold consensus on GLD is the dominant signal and should not be overridden."
+    },
+    {
+      "date": "2026-03-23",
+      "regime_view": "risk_off",
+      "symbol_bias": {
+        "GLD": -0.015,
+        "DBC": 0.02
+      },
+      "confidence": 0.55,
+      "reasoning": "Broad risk assets (SPY, EFA, EEM, XLK, XLV) show negative 1m momentum with SPY's 20d vol still moderate but drawdowns widening across equities and even bonds (AGG, IEF, TIP negative last several days), suggesting a broad risk-off tilt rather than isolated rotation. GLD is the current 40-day held position but its 1m momentum has turned sharply negative (-14.1%) and it's down 16.6% from its 12m high while DBC shows the strongest and most persistent momentum across all horizons (1m/3m/12m all positive and accelerating), warranting a small negative tilt on GLD and small positive tilt on DBC without overriding the deterministic hold."
+    },
+    {
+      "date": "2026-03-30",
+      "regime_view": "risk_off",
+      "symbol_bias": {},
+      "confidence": 0.3,
+      "reasoning": "SPY/EFA/XLK/XLV are all down 6-14% over 1m with negative 3m momentum, while GLD (current position) has itself broken down -14.3% over 1m despite strong 12m trend, and is at a 47-day hold with -16.4% drawdown from its high. Data is too mixed for a confident tilt (deterministic system already sees a 2/3 hold with disagreement) so deferring to the mechanical signal rather than adding directional bias."
+    },
+    {
+      "date": "2026-04-06",
+      "regime_view": "mixed",
+      "symbol_bias": {
+        "GLD": -0.015,
+        "XLE": 0.01
+      },
+      "confidence": 0.4,
+      "reasoning": "GLD's 1m momentum has collapsed to -9.3% with a 13.4% drawdown from its 12m high while still being the held position after 54 days, suggesting the prior gold trend is breaking down. XLE remains the only asset with strongly positive 1m, 3m, and 12m momentum aligned together, indicating a genuine uptrend still intact."
+    },
+    {
+      "date": "2026-04-13",
+      "regime_view": "mixed",
+      "symbol_bias": {
+        "GLD": -0.02,
+        "XLE": -0.015
+      },
+      "confidence": 0.45,
+      "reasoning": "GLD's 1m momentum has flipped sharply negative (-5.1%) after a strong 12m run and the position is 61 days held with an 11.9% drawdown from its high, suggesting fading trend strength despite the deterministic system's hold signal. Broader risk assets (SPY, EFA, EEM, XLK, IJS) show healthy positive 1m and 3m momentum while XLE's 1m has also turned negative (-0.67%) against a large 3m gain, hinting at rotation out of the prior leaders rather than a clean risk-off regime.'"
+    },
+    {
+      "date": "2026-04-20",
+      "regime_view": "risk_on",
+      "symbol_bias": {
+        "XLK": 0.015,
+        "GLD": -0.01
+      },
+      "confidence": 0.55,
+      "reasoning": "Broad risk assets (XLK, EEM, EFA, IJS) show strong synchronized 1m/3m/12m momentum with recent daily returns turning positive after a mid-window dip, consistent with the deterministic hold signal on XLK. GLD's 1m momentum has decelerated versus its 12m trend while equities reaccelerate, suggesting a mild rotation away from the safe-haven that argues for a small trim rather than a large override."
+    },
+    {
+      "date": "2026-04-27",
+      "regime_view": "risk_on",
+      "symbol_bias": {
+        "XLK": 0.02,
+        "XLE": -0.015
+      },
+      "confidence": 0.55,
+      "reasoning": "Tech (XLK) shows the strongest and most consistent momentum across 1m/3m/12m with a broad-based recent 20d run, supporting the current held position. XLE's 1m momentum is sharply negative despite strong 3m/12m, signaling fading energy strength that argues against chasing it."
+    },
+    {
+      "date": "2026-05-04",
+      "regime_view": "risk_on",
+      "symbol_bias": {
+        "XLK": 0.015
+      },
+      "confidence": 0.55,
+      "reasoning": "XLK shows strong, broad-based momentum across all three horizons (1m/3m/12m all positive and accelerating) with 18 days held and zero drawdown from highs, and the deterministic system already holds it with majority agreement. Breadth confirms risk-on (SPY, EEM, IJS, DBC all positive across horizons) so a small continuation tilt on the held position is warranted rather than a defensive stance."
+    },
+    {
+      "date": "2026-05-11",
+      "regime_view": "risk_on",
+      "symbol_bias": {
+        "XLK": 0.02,
+        "EEM": 0.015,
+        "GLD": -0.015
+      },
+      "confidence": 0.55,
+      "reasoning": "Tech and EM show broad, consistent multi-timeframe momentum (XLK 1m/3m/12m all strongly positive; EEM accelerating into 1m) that supports staying with the current XLK hold. GLD's 1m/3m momentum has turned negative despite strong 12m, suggesting a stalling trend not worth chasing."
+    },
+    {
+      "date": "2026-05-18",
+      "regime_view": "mixed",
+      "symbol_bias": {
+        "XLK": 0.015,
+        "DBC": 0.02,
+        "GLD": -0.02
+      },
+      "confidence": 0.55,
+      "reasoning": "XLK and DBC show strong, broadening 1m/3m/12m momentum with no sign of exhaustion in the last-20d series, supporting a mild long tilt on the held position and the top commodity trend. GLD's momentum has decayed sharply (1m -6.4%, 3m -8.9%) despite a still-positive 12m read, and rates (IEF/AGG) are softening too, so this isn't a clean risk-on tape \u2014 a small fade on gold fits better than a broad risk stance."
+    },
+    {
+      "date": "2026-05-25",
+      "regime_view": "risk_on",
+      "symbol_bias": {
+        "XLK": 0.02,
+        "XLE": 0.01,
+        "GLD": -0.015
+      },
+      "confidence": 0.55,
+      "reasoning": "XLK leads on 1m/3m/12m momentum with broad participation across cyclicals (XLE, EEM, IJS) and no drawdown in the held position, supporting a mild bullish tilt on the current hold. GLD's -4.5% 1m and -12.6% 3m momentum breakdown argues against any safe-haven rotation right now."
+    },
+    {
+      "date": "2026-06-01",
+      "regime_view": "risk_on",
+      "symbol_bias": {
+        "XLK": 0.02
+      },
+      "confidence": 0.6,
+      "reasoning": "XLK leads across 1m/3m/12m momentum, is top-ranked, and the held position shows zero drawdown after 46 days with a majority-agree hold signal. Low SPY volatility (9.76%) and broad positive short-term returns across risk assets (SPY, EEM, EFA) support staying tilted risk-on rather than adding new positions."
+    },
+    {
+      "date": "2026-06-08",
+      "regime_view": "mixed",
+      "symbol_bias": {
+        "XLK": -0.02,
+        "GLD": -0.02,
+        "EEM": -0.015
+      },
+      "confidence": 0.55,
+      "reasoning": "The last observation is a broad, high-magnitude single-day drop across nearly every asset (XLK -6.7%, EEM -6.5%, SPY -2.6%, GLD -3.7%) with GLD's 1m/3m momentum already deeply negative, suggesting a risk-off shock rather than isolated noise, while the held XLK position is 53 days in and 9% off its high. Confidence is moderate since this is one data point that could be a single bad print rather than a regime shift, so bias stays small and tilts away from the most-damaged names rather than overriding the deterministic hold."
+    },
+    {
+      "date": "2026-06-15",
+      "regime_view": "risk_on",
+      "symbol_bias": {
+        "XLK": 0.01
+      },
+      "confidence": 0.55,
+      "reasoning": "XLK leads 12m momentum (55.4%) with strong recent 20d prints and the deterministic system unanimously holds it, so the -6.8% drawdown looks like a pullback within an intact uptrend rather than a reversal. Gold and DBC weakness alongside broad equity/EM strength (EEM, EFA, IJS all positive) signals risk-on, not a defensive rotation."
+    },
+    {
+      "date": "2026-06-22",
+      "regime_view": "risk_on",
+      "symbol_bias": {
+        "XLK": 0.01
+      },
+      "confidence": 0.55,
+      "reasoning": "XLK leads 12m momentum with strong 1m/3m follow-through and recent daily returns are positive, supporting the existing hold; the current position is 67 days in with only a modest -3.4% drawdown from highs, showing the uptrend is intact but stretched enough to keep bias small. Cross-asset picture is mixed (defensive GLD/XLE/DBC weak, EEM/IJS/SPY firm), so a small tilt rather than a strong one is warranted."
+    },
+    {
+      "date": "2026-06-29",
+      "regime_view": "mixed",
+      "symbol_bias": {
+        "XLK": -0.015,
+        "GLD": -0.02,
+        "XLF": 0.01
+      },
+      "confidence": 0.55,
+      "reasoning": "XLK's 1m return has turned sharply negative (-5.1%) after a 74-day hold that's now -8.5% off its 12m high, while defensive/value areas (XLV, XLF, IJS) show positive 1m momentum, suggesting rotation out of the prior leadership trade. GLD and DBC show steep 1m breakdowns (-10.4%, -9.9%) arguing against a commodity/inflation hedge tilt despite still-positive 12m trends."
+    },
+    {
+      "date": "2026-07-06",
+      "regime_view": "mixed",
+      "symbol_bias": {
+        "XLK": -0.015,
+        "XLE": -0.02
+      },
+      "confidence": 0.55,
+      "reasoning": "XLK's 1m momentum has collapsed to +0.28% despite strong 3m/12m, and the held position is 81 days in with an 8.8% drawdown from its 12m high, signaling fading leadership after a long hold. XLE shows negative momentum across all horizons (1m/3m negative, 12m fading), confirming a genuine breakdown rather than noise."
+    }
+  ],
+  "ai_tilted_decisions": [
+    {
+      "date": "2026-02-11",
+      "action": "buy",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on BUY action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.02,
+        "XLE": 0.015
+      }
+    },
+    {
+      "date": "2026-02-12",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.02,
+        "XLE": 0.015
+      }
+    },
+    {
+      "date": "2026-02-13",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.02,
+        "XLE": 0.015
+      }
+    },
+    {
+      "date": "2026-02-16",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.015
+      }
+    },
+    {
+      "date": "2026-02-17",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.015
+      }
+    },
+    {
+      "date": "2026-02-18",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.015
+      }
+    },
+    {
+      "date": "2026-02-19",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.015
+      }
+    },
+    {
+      "date": "2026-02-20",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.015
+      }
+    },
+    {
+      "date": "2026-02-23",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01
+      }
+    },
+    {
+      "date": "2026-02-24",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01
+      }
+    },
+    {
+      "date": "2026-02-25",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01
+      }
+    },
+    {
+      "date": "2026-02-26",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01
+      }
+    },
+    {
+      "date": "2026-02-27",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01
+      }
+    },
+    {
+      "date": "2026-03-02",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01,
+        "XLE": 0.01
+      }
+    },
+    {
+      "date": "2026-03-03",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01,
+        "XLE": 0.01
+      }
+    },
+    {
+      "date": "2026-03-04",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01,
+        "XLE": 0.01
+      }
+    },
+    {
+      "date": "2026-03-05",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01,
+        "XLE": 0.01
+      }
+    },
+    {
+      "date": "2026-03-06",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01,
+        "XLE": 0.01
+      }
+    },
+    {
+      "date": "2026-03-09",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01,
+        "XLE": 0.015,
+        "DBC": 0.01
+      }
+    },
+    {
+      "date": "2026-03-10",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01,
+        "XLE": 0.015,
+        "DBC": 0.01
+      }
+    },
+    {
+      "date": "2026-03-11",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01,
+        "XLE": 0.015,
+        "DBC": 0.01
+      }
+    },
+    {
+      "date": "2026-03-12",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01,
+        "XLE": 0.015,
+        "DBC": 0.01
+      }
+    },
+    {
+      "date": "2026-03-13",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01,
+        "XLE": 0.015,
+        "DBC": 0.01
+      }
+    },
+    {
+      "date": "2026-03-16",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01,
+        "DBC": 0.015
+      }
+    },
+    {
+      "date": "2026-03-17",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01,
+        "DBC": 0.015
+      }
+    },
+    {
+      "date": "2026-03-18",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01,
+        "DBC": 0.015
+      }
+    },
+    {
+      "date": "2026-03-19",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01,
+        "DBC": 0.015
+      }
+    },
+    {
+      "date": "2026-03-20",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)",
+      "active_regime": "mixed",
+      "active_bias": {
+        "GLD": -0.01,
+        "DBC": 0.015
+      }
+    },
+    {
+      "date": "2026-03-23",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)",
+      "active_regime": "risk_off",
+      "active_bias": {
+        "GLD": -0.015,
+        "DBC": 0.02
+      }
+    },
+    {
+      "date": "2026-03-24",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)",
+      "active_regime": "risk_off",
+      "active_bias": {
+        "GLD": -0.015,
+        "DBC": 0.02
+      }
+    },
+    {
+      "date": "2026-03-25",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)",
+      "active_regime": "risk_off",
+      "active_bias": {
+        "GLD": -0.015,
+        "DBC": 0.02
+      }
+    },
+    {
+      "date": "2026-03-26",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)",
+      "active_regime": "risk_off",
+      "active_bias": {
+        "GLD": -0.015,
+        "DBC": 0.02
+      }
+    },
+    {
+      "date": "2026-03-27",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)",
+      "active_regime": "risk_off",
+      "active_bias": {
+        "GLD": -0.015,
+        "DBC": 0.02
+      }
+    },
+    {
+      "date": "2026-03-30",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)",
+      "active_regime": "risk_off",
+      "active_bias": {}
+    },
+    {
+      "date": "2026-03-31",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)",
+      "active_regime": "risk_off",
+      "active_bias": {}
+    },
+    {
+      "date": "2026-04-01",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)",
+      "active_regime": "risk_off",
+      "active_bias": {}
+    },
+    {
+      "date": "2026-04-02",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)",
+      "active_regime": "risk_off",
+      "active_bias": {}
+    },
+    {
+      "date": "2026-04-03",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)",
+      "active_regime": "risk_off",
+      "active_bias": {}
+    },
+    {
+      "date": "2026-04-06",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_off",
+      "active_bias": {
+        "GLD": -0.015,
+        "XLE": 0.01
+      }
+    },
+    {
+      "date": "2026-04-07",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_off",
+      "active_bias": {
+        "GLD": -0.015,
+        "XLE": 0.01
+      }
+    },
+    {
+      "date": "2026-04-08",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_off",
+      "active_bias": {
+        "GLD": -0.015,
+        "XLE": 0.01
+      }
+    },
+    {
+      "date": "2026-04-09",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_off",
+      "active_bias": {
+        "GLD": -0.015,
+        "XLE": 0.01
+      }
+    },
+    {
+      "date": "2026-04-10",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_off",
+      "active_bias": {
+        "GLD": -0.015,
+        "XLE": 0.01
+      }
+    },
+    {
+      "date": "2026-04-13",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_off",
+      "active_bias": {
+        "GLD": -0.02,
+        "XLE": -0.015
+      }
+    },
+    {
+      "date": "2026-04-14",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_off",
+      "active_bias": {
+        "GLD": -0.02,
+        "XLE": -0.015
+      }
+    },
+    {
+      "date": "2026-04-15",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_off",
+      "active_bias": {
+        "GLD": -0.02,
+        "XLE": -0.015
+      }
+    },
+    {
+      "date": "2026-04-16",
+      "action": "buy",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on BUY action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_off",
+      "active_bias": {
+        "GLD": -0.02,
+        "XLE": -0.015
+      }
+    },
+    {
+      "date": "2026-04-17",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_off",
+      "active_bias": {
+        "GLD": -0.02,
+        "XLE": -0.015
+      }
+    },
+    {
+      "date": "2026-04-20",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.015,
+        "GLD": -0.01
+      }
+    },
+    {
+      "date": "2026-04-21",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.015,
+        "GLD": -0.01
+      }
+    },
+    {
+      "date": "2026-04-22",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.015,
+        "GLD": -0.01
+      }
+    },
+    {
+      "date": "2026-04-23",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.015,
+        "GLD": -0.01
+      }
+    },
+    {
+      "date": "2026-04-24",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.015,
+        "GLD": -0.01
+      }
+    },
+    {
+      "date": "2026-04-27",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02,
+        "XLE": -0.015
+      }
+    },
+    {
+      "date": "2026-04-28",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02,
+        "XLE": -0.015
+      }
+    },
+    {
+      "date": "2026-04-29",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02,
+        "XLE": -0.015
+      }
+    },
+    {
+      "date": "2026-04-30",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02,
+        "XLE": -0.015
+      }
+    },
+    {
+      "date": "2026-05-01",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02,
+        "XLE": -0.015
+      }
+    },
+    {
+      "date": "2026-05-04",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.015
+      }
+    },
+    {
+      "date": "2026-05-05",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.015
+      }
+    },
+    {
+      "date": "2026-05-06",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.015
+      }
+    },
+    {
+      "date": "2026-05-07",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.015
+      }
+    },
+    {
+      "date": "2026-05-08",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.015
+      }
+    },
+    {
+      "date": "2026-05-11",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02,
+        "EEM": 0.015,
+        "GLD": -0.015
+      }
+    },
+    {
+      "date": "2026-05-12",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02,
+        "EEM": 0.015,
+        "GLD": -0.015
+      }
+    },
+    {
+      "date": "2026-05-13",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02,
+        "EEM": 0.015,
+        "GLD": -0.015
+      }
+    },
+    {
+      "date": "2026-05-14",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02,
+        "EEM": 0.015,
+        "GLD": -0.015
+      }
+    },
+    {
+      "date": "2026-05-15",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02,
+        "EEM": 0.015,
+        "GLD": -0.015
+      }
+    },
+    {
+      "date": "2026-05-18",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.015,
+        "DBC": 0.02,
+        "GLD": -0.02
+      }
+    },
+    {
+      "date": "2026-05-19",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.015,
+        "DBC": 0.02,
+        "GLD": -0.02
+      }
+    },
+    {
+      "date": "2026-05-20",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.015,
+        "DBC": 0.02,
+        "GLD": -0.02
+      }
+    },
+    {
+      "date": "2026-05-21",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.015,
+        "DBC": 0.02,
+        "GLD": -0.02
+      }
+    },
+    {
+      "date": "2026-05-22",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.015,
+        "DBC": 0.02,
+        "GLD": -0.02
+      }
+    },
+    {
+      "date": "2026-05-25",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02,
+        "XLE": 0.01,
+        "GLD": -0.015
+      }
+    },
+    {
+      "date": "2026-05-26",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02,
+        "XLE": 0.01,
+        "GLD": -0.015
+      }
+    },
+    {
+      "date": "2026-05-27",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02,
+        "XLE": 0.01,
+        "GLD": -0.015
+      }
+    },
+    {
+      "date": "2026-05-28",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02,
+        "XLE": 0.01,
+        "GLD": -0.015
+      }
+    },
+    {
+      "date": "2026-05-29",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02,
+        "XLE": 0.01,
+        "GLD": -0.015
+      }
+    },
+    {
+      "date": "2026-06-01",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02
+      }
+    },
+    {
+      "date": "2026-06-02",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02
+      }
+    },
+    {
+      "date": "2026-06-03",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02
+      }
+    },
+    {
+      "date": "2026-06-04",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02
+      }
+    },
+    {
+      "date": "2026-06-05",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.02
+      }
+    },
+    {
+      "date": "2026-06-08",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": -0.02,
+        "GLD": -0.02,
+        "EEM": -0.015
+      }
+    },
+    {
+      "date": "2026-06-09",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": -0.02,
+        "GLD": -0.02,
+        "EEM": -0.015
+      }
+    },
+    {
+      "date": "2026-06-10",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": -0.02,
+        "GLD": -0.02,
+        "EEM": -0.015
+      }
+    },
+    {
+      "date": "2026-06-11",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": -0.02,
+        "GLD": -0.02,
+        "EEM": -0.015
+      }
+    },
+    {
+      "date": "2026-06-12",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": -0.02,
+        "GLD": -0.02,
+        "EEM": -0.015
+      }
+    },
+    {
+      "date": "2026-06-15",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.01
+      }
+    },
+    {
+      "date": "2026-06-16",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.01
+      }
+    },
+    {
+      "date": "2026-06-17",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.01
+      }
+    },
+    {
+      "date": "2026-06-18",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.01
+      }
+    },
+    {
+      "date": "2026-06-19",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.01
+      }
+    },
+    {
+      "date": "2026-06-22",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.01
+      }
+    },
+    {
+      "date": "2026-06-23",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.01
+      }
+    },
+    {
+      "date": "2026-06-24",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.01
+      }
+    },
+    {
+      "date": "2026-06-25",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.01
+      }
+    },
+    {
+      "date": "2026-06-26",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": 0.01
+      }
+    },
+    {
+      "date": "2026-06-29",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": -0.015,
+        "GLD": -0.02,
+        "XLF": 0.01
+      }
+    },
+    {
+      "date": "2026-06-30",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": -0.015,
+        "GLD": -0.02,
+        "XLF": 0.01
+      }
+    },
+    {
+      "date": "2026-07-01",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": -0.015,
+        "GLD": -0.02,
+        "XLF": 0.01
+      }
+    },
+    {
+      "date": "2026-07-02",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": -0.015,
+        "GLD": -0.02,
+        "XLF": 0.01
+      }
+    },
+    {
+      "date": "2026-07-03",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": -0.015,
+        "GLD": -0.02,
+        "XLF": 0.01
+      }
+    },
+    {
+      "date": "2026-07-06",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": -0.015,
+        "XLE": -0.02
+      }
+    },
+    {
+      "date": "2026-07-07",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": -0.015,
+        "XLE": -0.02
+      }
+    },
+    {
+      "date": "2026-07-08",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)",
+      "active_regime": "risk_on",
+      "active_bias": {
+        "XLK": -0.015,
+        "XLE": -0.02
+      }
+    }
+  ],
+  "ai_tilted_daily_equity": [
+    {
+      "date": "2026-02-11",
+      "equity": 99.9,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-12",
+      "equity": 96.4306,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-13",
+      "equity": 98.8297,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-16",
+      "equity": 98.8297,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-17",
+      "equity": 95.7492,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-18",
+      "equity": 97.9026,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-19",
+      "equity": 98.176,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-20",
+      "equity": 100.1115,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-23",
+      "equity": 102.8161,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-24",
+      "equity": 101.3911,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-25",
+      "equity": 101.1369,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-26",
+      "equity": 102.0043,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-27",
+      "equity": 103.3437,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-02",
+      "equity": 104.6789,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-03",
+      "equity": 100.009,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-04",
+      "equity": 100.7908,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-05",
+      "equity": 99.5796,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-06",
+      "equity": 101.1561,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-09",
+      "equity": 100.9468,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-10",
+      "equity": 102.0854,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-11",
+      "equity": 101.7394,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-12",
+      "equity": 99.7398,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-13",
+      "equity": 98.4494,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-16",
+      "equity": 98.3619,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-17",
+      "equity": 98.114,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-18",
+      "equity": 95.01,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-19",
+      "equity": 91.0942,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-20",
+      "equity": 88.3105,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-23",
+      "equity": 86.3152,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-24",
+      "equity": 86.3345,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-25",
+      "equity": 88.9322,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-26",
+      "equity": 85.5889,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-27",
+      "equity": 88.5925,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-30",
+      "equity": 88.5669,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-31",
+      "equity": 91.923,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-01",
+      "equity": 93.5317,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-02",
+      "equity": 91.735,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-03",
+      "equity": 91.735,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-06",
+      "equity": 91.3591,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-07",
+      "equity": 92.2478,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-08",
+      "equity": 92.8288,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-09",
+      "equity": 93.5509,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-10",
+      "equity": 93.3843,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-13",
+      "equity": 93.0061,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-14",
+      "equity": 95.0848,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-15",
+      "equity": 94.0957,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-16",
+      "equity": 93.8265,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-17",
+      "equity": 95.2646,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-20",
+      "equity": 95.3942,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-21",
+      "equity": 95.4745,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-22",
+      "equity": 97.5729,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-23",
+      "equity": 96.1842,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-24",
+      "equity": 98.8876,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-27",
+      "equity": 99.1036,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-28",
+      "equity": 97.4248,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-29",
+      "equity": 98.2025,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-30",
+      "equity": 98.4432,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-01",
+      "equity": 99.9059,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-04",
+      "equity": 100.017,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-05",
+      "equity": 102.2266,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-06",
+      "equity": 104.9423,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-07",
+      "equity": 104.7324,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-08",
+      "equity": 108.3307,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-11",
+      "equity": 109.7873,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-12",
+      "equity": 108.1332,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-13",
+      "equity": 109.1516,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-14",
+      "equity": 110.7872,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-15",
+      "equity": 108.7874,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-18",
+      "equity": 107.6148,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-19",
+      "equity": 106.9235,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-20",
+      "equity": 109.3306,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-21",
+      "equity": 110.2317,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-22",
+      "equity": 111.3365,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-25",
+      "equity": 111.3365,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-26",
+      "equity": 114.2682,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-27",
+      "equity": 113.8299,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-28",
+      "equity": 115.3236,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-29",
+      "equity": 117.8973,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-01",
+      "equity": 120.8228,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-02",
+      "equity": 122.335,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-03",
+      "equity": 121.1129,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-04",
+      "equity": 119.2243,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-05",
+      "equity": 111.2809,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-08",
+      "equity": 113.6756,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-09",
+      "equity": 111.571,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-10",
+      "equity": 109.0158,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-11",
+      "equity": 113.077,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-12",
+      "equity": 114.0583,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-15",
+      "equity": 118.3725,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-16",
+      "equity": 115.0705,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-17",
+      "equity": 114.6755,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-18",
+      "equity": 118.1565,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-19",
+      "equity": 118.1565,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-22",
+      "equity": 118.7361,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-23",
+      "equity": 113.8174,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-24",
+      "equity": 113.1129,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-25",
+      "equity": 114.0522,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-26",
+      "equity": 111.9141,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-29",
+      "equity": 114.5713,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-30",
+      "equity": 117.7289,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-01",
+      "equity": 114.701,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-02",
+      "equity": 111.5928,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-03",
+      "equity": 111.5928,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-06",
+      "equity": 113.4343,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-07",
+      "equity": 110.7215,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-08",
+      "equity": 112.0933,
+      "holding": "XLK"
+    }
+  ],
+  "baseline_daily_equity": [
+    {
+      "date": "2026-02-11",
+      "equity": 99.9,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-12",
+      "equity": 96.4306,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-13",
+      "equity": 98.8297,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-16",
+      "equity": 98.8297,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-17",
+      "equity": 95.7492,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-18",
+      "equity": 97.9026,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-19",
+      "equity": 98.176,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-20",
+      "equity": 100.1115,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-23",
+      "equity": 102.8161,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-24",
+      "equity": 101.3911,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-25",
+      "equity": 101.1369,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-26",
+      "equity": 102.0043,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-27",
+      "equity": 103.3437,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-02",
+      "equity": 104.6789,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-03",
+      "equity": 100.009,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-04",
+      "equity": 100.7908,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-05",
+      "equity": 99.5796,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-06",
+      "equity": 101.1561,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-09",
+      "equity": 100.9468,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-10",
+      "equity": 102.0854,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-11",
+      "equity": 101.7394,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-12",
+      "equity": 99.7398,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-13",
+      "equity": 98.4494,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-16",
+      "equity": 98.3619,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-17",
+      "equity": 98.114,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-18",
+      "equity": 95.01,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-19",
+      "equity": 91.0942,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-20",
+      "equity": 88.3105,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-23",
+      "equity": 86.3152,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-24",
+      "equity": 86.3345,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-25",
+      "equity": 88.9322,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-26",
+      "equity": 85.5889,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-27",
+      "equity": 88.5925,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-30",
+      "equity": 88.5669,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-31",
+      "equity": 91.923,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-01",
+      "equity": 93.5317,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-02",
+      "equity": 91.735,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-03",
+      "equity": 91.735,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-06",
+      "equity": 91.3591,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-07",
+      "equity": 92.2478,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-08",
+      "equity": 92.8288,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-09",
+      "equity": 93.5509,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-10",
+      "equity": 93.3843,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-13",
+      "equity": 93.0061,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-14",
+      "equity": 95.0848,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-15",
+      "equity": 94.0957,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-16",
+      "equity": 93.8265,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-17",
+      "equity": 95.2646,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-20",
+      "equity": 95.3942,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-21",
+      "equity": 95.4745,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-22",
+      "equity": 97.5729,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-23",
+      "equity": 96.1842,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-24",
+      "equity": 98.8876,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-27",
+      "equity": 99.1036,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-28",
+      "equity": 97.4248,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-29",
+      "equity": 98.2025,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-30",
+      "equity": 98.4432,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-01",
+      "equity": 99.9059,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-04",
+      "equity": 100.017,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-05",
+      "equity": 102.2266,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-06",
+      "equity": 104.9423,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-07",
+      "equity": 104.7324,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-08",
+      "equity": 108.3307,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-11",
+      "equity": 109.7873,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-12",
+      "equity": 108.1332,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-13",
+      "equity": 109.1516,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-14",
+      "equity": 110.7872,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-15",
+      "equity": 108.7874,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-18",
+      "equity": 107.6148,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-19",
+      "equity": 106.9235,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-20",
+      "equity": 109.3306,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-21",
+      "equity": 110.2317,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-22",
+      "equity": 111.3365,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-25",
+      "equity": 111.3365,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-26",
+      "equity": 114.2682,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-27",
+      "equity": 113.8299,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-28",
+      "equity": 115.3236,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-29",
+      "equity": 117.8973,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-01",
+      "equity": 120.8228,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-02",
+      "equity": 122.335,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-03",
+      "equity": 121.1129,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-04",
+      "equity": 119.2243,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-05",
+      "equity": 111.2809,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-08",
+      "equity": 113.6756,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-09",
+      "equity": 111.571,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-10",
+      "equity": 109.0158,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-11",
+      "equity": 113.077,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-12",
+      "equity": 114.0583,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-15",
+      "equity": 118.3725,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-16",
+      "equity": 115.0705,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-17",
+      "equity": 114.6755,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-18",
+      "equity": 118.1565,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-19",
+      "equity": 118.1565,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-22",
+      "equity": 118.7361,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-23",
+      "equity": 113.8174,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-24",
+      "equity": 113.1129,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-25",
+      "equity": 114.0522,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-26",
+      "equity": 111.9141,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-29",
+      "equity": 114.5713,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-30",
+      "equity": 117.7289,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-01",
+      "equity": 114.701,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-02",
+      "equity": 111.5928,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-03",
+      "equity": 111.5928,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-06",
+      "equity": 113.4343,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-07",
+      "equity": 110.7215,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-08",
+      "equity": 112.0933,
+      "holding": "XLK"
+    }
+  ],
+  "claw_calibration": [
+    {
+      "date": "2026-02-20",
+      "claw_action": "GLD -> EEM",
+      "ai_tilt_week": "2026-02-16",
+      "ai_regime_view": "mixed",
+      "ai_symbol_bias": {
+        "GLD": -0.015
+      },
+      "ai_reasoning": "GLD's 12m momentum is extreme (73.7%) and the position is already 6.7% off its high after a sharp 5-day pullback embedded in the last_20d series, suggesting the trend is stretched and vulnerable to further mean reversion even though the deterministic signal still says hold. Equities show weak/negative 1m momentum (SPY -1.4%, XLK -4.2%, XLF -5.1%) against strong non-US and commodity momentum (EFA, EEM, XLE, GLD), a mixed regime that argues for trimming conviction on the extended GLD position rather than adding to it.",
+      "agreement": "neutral"
+    },
+    {
+      "date": "2026-02-27",
+      "claw_action": "EEM -> XLE",
+      "ai_tilt_week": "2026-02-23",
+      "ai_regime_view": "mixed",
+      "ai_symbol_bias": {
+        "GLD": -0.01
+      },
+      "ai_reasoning": "GLD's 12m momentum is extreme (73%) with a recent stretch of sharp single-day drawdowns (-10.3%, -4.0%, -3.5%, -3.1%) and the current position is already 12 days in with a -5.5% drawdown from highs, suggesting a stretched, volatile trade rather than a clean trend. Equities and international/EM show broad positive breadth (SPY, EFA, EEM all green across 1m/3m/12m) while tech and financials lag, so this reads as rotation/mixed rather than a clear risk-on or risk-off regime.",
+      "agreement": "neutral"
+    },
+    {
+      "date": "2026-03-02",
+      "claw_action": "XLE -> GLD",
+      "ai_tilt_week": "2026-03-02",
+      "ai_regime_view": "mixed",
+      "ai_symbol_bias": {
+        "GLD": -0.01,
+        "XLE": 0.01
+      },
+      "ai_reasoning": "GLD's 12m momentum is extreme (83.7%) and the position is already 19 days held with a pullback from highs, while its last-20d returns show sharp two-way swings suggesting exhaustion rather than clean trend continuation. XLE shows the most consistent broad-based strength across 1m/3m/12m windows without the same parabolic extension, making it the more durable momentum name right now.",
+      "agreement": "disagree"
+    },
+    {
+      "date": "2026-03-11",
+      "claw_action": "GLD -> XLE",
+      "ai_tilt_week": "2026-03-09",
+      "ai_regime_view": "mixed",
+      "ai_symbol_bias": {
+        "GLD": -0.01,
+        "XLE": 0.015,
+        "DBC": 0.01
+      },
+      "ai_reasoning": "GLD's 1m momentum has decayed sharply from a strong 3m/12m base while the position sits in a drawdown from its high, suggesting fading trend strength even though the deterministic signal still holds; XLE and DBC show accelerating short-term momentum (5.46%/13.44% 1m) consistent with a commodity-led risk-on pocket amid broad equity weakness (SPY/EFA/EEM/XLK/XLF all negative 1m).",
+      "agreement": "agree"
+    },
+    {
+      "date": "2026-04-10",
+      "claw_action": "XLE -> EEM",
+      "ai_tilt_week": "2026-04-06",
+      "ai_regime_view": "mixed",
+      "ai_symbol_bias": {
+        "GLD": -0.015,
+        "XLE": 0.01
+      },
+      "ai_reasoning": "GLD's 1m momentum has collapsed to -9.3% with a 13.4% drawdown from its 12m high while still being the held position after 54 days, suggesting the prior gold trend is breaking down. XLE remains the only asset with strongly positive 1m, 3m, and 12m momentum aligned together, indicating a genuine uptrend still intact.",
+      "agreement": "neutral"
+    },
+    {
+      "date": "2026-04-23",
+      "claw_action": "EEM -> QQQ",
+      "ai_tilt_week": "2026-04-20",
+      "ai_regime_view": "risk_on",
+      "ai_symbol_bias": {
+        "XLK": 0.015,
+        "GLD": -0.01
+      },
+      "ai_reasoning": "Broad risk assets (XLK, EEM, EFA, IJS) show strong synchronized 1m/3m/12m momentum with recent daily returns turning positive after a mid-window dip, consistent with the deterministic hold signal on XLK. GLD's 1m momentum has decelerated versus its 12m trend while equities reaccelerate, suggesting a mild rotation away from the safe-haven that argues for a small trim rather than a large override.",
+      "agreement": "agree (regime_view risk_on favors equity rotation)"
+    },
+    {
+      "date": "2026-06-12",
+      "claw_action": "QQQ -> IWM",
+      "ai_tilt_week": "2026-06-08",
+      "ai_regime_view": "mixed",
+      "ai_symbol_bias": {
+        "XLK": -0.02,
+        "GLD": -0.02,
+        "EEM": -0.015
+      },
+      "ai_reasoning": "The last observation is a broad, high-magnitude single-day drop across nearly every asset (XLK -6.7%, EEM -6.5%, SPY -2.6%, GLD -3.7%) with GLD's 1m/3m momentum already deeply negative, suggesting a risk-off shock rather than isolated noise, while the held XLK position is 53 days in and 9% off its high. Confidence is moderate since this is one data point that could be a single bad print rather than a regime shift, so bias stays small and tilts away from the most-damaged names rather than overriding the deterministic hold.",
+      "agreement": "neutral"
+    },
+    {
+      "date": "2026-06-29",
+      "claw_action": "IWM sell",
+      "ai_tilt_week": "2026-06-29",
+      "ai_regime_view": "mixed",
+      "ai_symbol_bias": {
+        "XLK": -0.015,
+        "GLD": -0.02,
+        "XLF": 0.01
+      },
+      "ai_reasoning": "XLK's 1m return has turned sharply negative (-5.1%) after a 74-day hold that's now -8.5% off its 12m high, while defensive/value areas (XLV, XLF, IJS) show positive 1m momentum, suggesting rotation out of the prior leadership trade. GLD and DBC show steep 1m breakdowns (-10.4%, -9.9%) arguing against a commodity/inflation hedge tilt despite still-positive 12m trends.",
+      "agreement": "neutral (sell/exit, no single favored symbol)"
+    },
+    {
+      "date": "2026-07-07",
+      "claw_action": "XLK buy",
+      "ai_tilt_week": "2026-07-06",
+      "ai_regime_view": "mixed",
+      "ai_symbol_bias": {
+        "XLK": -0.015,
+        "XLE": -0.02
+      },
+      "ai_reasoning": "XLK's 1m momentum has collapsed to +0.28% despite strong 3m/12m, and the held position is 81 days in with an 8.8% drawdown from its 12m high, signaling fading leadership after a long hold. XLE shows negative momentum across all horizons (1m/3m negative, 12m fading), confirming a genuine breakdown rather than noise.",
+      "agreement": "disagree"
+    }
+  ],
+  "cli_stats": {
+    "n_calls_planned": 22,
+    "n_live_calls": 22,
+    "n_cache_hits": 0,
+    "total_latency_s": 475.5,
+    "avg_live_latency_s": 21.6,
+    "max_latency_s": 49.1
+  },
+  "notes": [
+    "Tilt mechanism: symbol_bias is injected by scaling the biased symbol's price on the decision date so momentum_12m shifts by exactly the bias amount, clamped to +/-0.03; DualMomentumStrategy.generate_signal and the orchestrator run completely unmodified on the adjusted price series -- no strategy logic was reimplemented.",
+    "regime_view risk_off sets DM thresholds to (equity_to_defensive=0.02, defensive_to_equity=0.15); risk_on sets (0.15, 0.05, the live default); mixed leaves the previously active thresholds in place.",
+    "Tilts persist from one weekly decision day until the next (applied to every daily rebalance date in between), per the task spec.",
+    "Context pack is built from the BASELINE (no-AI) replay's own daily holding/decision log, not from the AI-tilted run -- the AI always sees the mechanical strategy's own state, never its own prior tilts feeding back into its next context (avoids a self-reinforcing loop in this replay).",
+    "Price-only context is a real limitation: it omits news, macro releases, and cross-asset flows an informed discretionary overlay would use live -- expect this to understate a genuinely informed overlay's value.",
+    "Single regime cycle (Feb-Jul 2026, broadly risk-on) -- directional evidence only, not a generalization claim.",
+    "Every AI call is the `claude` CLI in non-interactive print mode (claude -p ... --model sonnet --output-format json), never the anthropic SDK; cutoff (Jan 2026) is strictly before the window start."
+  ]
+}
