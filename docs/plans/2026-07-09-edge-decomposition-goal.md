@@ -72,6 +72,13 @@ Mixed verdicts combine branches. Most likely per current evidence: LT-core worse
 - The four-system merge (follow-on goal; aurel3 fits as idea-feed into the winner, aurel2-crypto inherits the verdict later).
 - Building the AI overlay before the decomposition says to.
 
+## Phase 2 non-negotiables (added 2026-07-09, after Phase 1 findings)
+
+1. **One wiring, shared by live and backtest.** Purge or quarantine dormant config paths (REGIME_WEIGHTS/weighted-vote, calm-hold, min-hold, pilot entry, unwired robust_quarterly strategies — experiment remnants). Whatever survives lives behind a single canonical config artifact loaded by BOTH the live checker and the backtest engine. The live universe/thresholds hardcoded in `checker.py` vs the divergent `config/default.yaml` is exactly the split to eliminate.
+2. **Continuous fidelity guard.** The Phase-1 actual-vs-replay diff becomes a scheduled weekly job: replay the last N live decision days through the backtest engine, alert via ntfy on any divergence. Backtest≠live must be structurally unable to persist unnoticed.
+3. **Promotion path.** A winning variant ships as a change to the shared config/code path (never a backtest-script-only construct), passes the fidelity guard, then earns real money via the 6–8-week paper parallel run against live-trader.
+4. **Overlay containment.** The AI overlay's only write-surface is a schema-validated, capped, versioned tilt interface; it cannot introduce decision logic, place orders, or touch config. (Lesson from Claw's unauthorized, untracked `daily_runner.py`.)
+
 ## Done means
 
 1. Decomposition report exists with attribution table, divergence log, and a stated verdict + confidence.
