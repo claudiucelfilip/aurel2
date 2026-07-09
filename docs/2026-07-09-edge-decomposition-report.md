@@ -23,26 +23,28 @@ LT-actual final equity reconstruction (+18.99%) validated against 58 journal sna
 ## The three decision numbers
 
 1. **(LT-actual − LT-core) = the AI layer's worth: +8.9pts full window, +12.8pts in era 2.** The hypothesis holds — the AI layer is real alpha, and it is the only thing in the study that beat QQQ.
-2. **(LT-core vs A2-replay) = which core is better: era-dependent, neither dominates.** Full window A2 wins (+12.2 vs +10.2), but era 1 LT-core won huge (+12.0 vs −8.0) and era 2 A2 won huge (+19.9 vs +2.2).
+2. **(LT-core vs A2-replay) = which core is better: era-dependent, neither dominates.** Full window A2 wins (+12.2 vs +10.2), but era 1 LT-core won clearly (+7.9 vs −6.4) and era 2 A2 won huge (+19.9 vs +2.2).
 3. **(A2-actual vs A2-replay) = fidelity: clean.** Zero decision divergences over the entire real overlap (2026-05-07 → 2026-07-08). The replay drove the actual production `BacktestEngine` + orchestrator classes. No backtest-vs-live bug exists in this window. Caveat: overlap is 2 months / 2 trades.
 
 ## The era discovery
 
 live-trader's deterministic engine (`daily_runner.py`) **did not exist until ~2026-04-01**. Journal entries before then carry free-text LLM reasoning — Feb–Mar was pure AI discretion. Claw itself converged on "deterministic core + AI tilt" after two mediocre discretionary months.
 
+Eras share the 04-01 boundary point, so each arm's eras compound exactly to its full-window return:
+
 | Era | LT-actual | LT-core | A2-replay | SPY | QQQ |
 |---|---|---|---|---|---|
-| Era 1 (02-11→03-31, choppy) | +6.7% | +12.0% | **−8.0%** | −5.8% | −5.7% |
+| Era 1 (02-11→04-01, choppy) | +3.6% | **+7.9%** | −6.4% | −5.1% | −4.6% |
 | Era 2 (04-01→07-08, bull) | +15.0% | +2.2% | **+19.9%** | +14.4% | +21.6% |
 
 Readings:
-- **In each era a different core won.** Fast rotation (LT-core) won the chop; slow momentum (A2) won the bull and got destroyed in the chop (−8% while the market fell −5.8%, on its way to its −18.2% max DD).
-- **The AI's measurable value is regime robustness, not raw alpha.** LT-actual was never the era winner but was solidly positive in both eras — that consistency (+6.7, +15.0, max DD only −7%) is what made it the only arm to beat QQQ over the full window, with lower drawdown.
+- **In each era a different core won.** Fast rotation (LT-core) won the chop; slow momentum (A2) won the bull and got hurt in the chop (−6.4% while the market fell ~5%, on its way to its −18.2% max DD).
+- **The AI's measurable value is regime robustness, not raw alpha.** LT-actual was never the era winner but was solidly positive in both eras — that consistency (+3.6, +15.0, max DD only −7%) is what made it the only arm to beat QQQ over the full window, with lower drawdown.
 - **The "embarrassing hold" was right.** Aurel2's code did +19.9% in era 2 and beat SPY/QQQ 3x over in its real paper window (+7.0% vs ~+2.3% from 05-07). The perceived missed opportunity does not survive the numbers. Aurel2's real weakness is era-1-style chop (deep drawdowns), not the bull-market holds.
 
 ## Attribution detail (LT-actual, 38 trades)
 
-`algo`=12, `manual`=16, `unknown`=10.
+`algo`=12, `manual`=16, `unknown`=10. Per era: pure_ai (Feb–Mar) algo=8/manual=8/unknown=6; algo_plus_tilt (Apr–Jul) algo=4/manual=8/unknown=4 — manual interventions did not decrease after the engine arrived.
 - The six clean algo rotations: GLD→EEM (02-20), EEM→XLE (02-27), XLE→GLD (03-02), GLD→XLE (03-11), XLE→EEM (04-10), EEM→QQQ (04-23).
 - **The entire Jun 12 – Jul 7 tail is manual** (SELL QQQ/BUY IWM, SELL IWM, BUY XLK) — broker-reconcile backfills with zero journaled reasoning; XLK is outside the 8-symbol watchlist.
 - Tilt attribution is impossible historically: `discretionary_tilt.json` is not versioned (0 hits in 132 commits); only the current snapshot exists.
@@ -56,7 +58,7 @@ Readings:
 
 - ~5 months, one macro backdrop, 38 trades (16 manual, 10 unknown) — directional evidence, not proof.
 - LT-core replay uses yfinance closes and trade-at-close convention; live ran intraday on Alpaca IEX data.
-- Era 1 "LT-core" is counterfactual — the engine didn't exist yet.
+- Era 1 "LT-core" is counterfactual — the engine didn't exist yet. The 04-01 cutover is itself fuzzy: engine-style HOLD narration appears in the journal from ~03-14, two weeks before engine-placed trades.
 
 ## Verdict → Branch A, with Branch C's test folded in
 
