@@ -1,0 +1,1604 @@
+{
+  "arm": "a2_replay",
+  "window": {
+    "start": "2026-02-11",
+    "end": "2026-07-08"
+  },
+  "start_equity": 100.0,
+  "daily_equity": [
+    {
+      "date": "2026-02-11",
+      "equity": 99.9,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-12",
+      "equity": 96.4306,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-13",
+      "equity": 98.8297,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-16",
+      "equity": 98.8297,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-17",
+      "equity": 95.7492,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-18",
+      "equity": 97.9026,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-19",
+      "equity": 98.176,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-20",
+      "equity": 100.1115,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-23",
+      "equity": 102.8161,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-24",
+      "equity": 101.3911,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-25",
+      "equity": 101.1369,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-26",
+      "equity": 102.0043,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-27",
+      "equity": 103.3437,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-02",
+      "equity": 104.6789,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-03",
+      "equity": 100.009,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-04",
+      "equity": 100.7908,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-05",
+      "equity": 99.5796,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-06",
+      "equity": 101.1561,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-09",
+      "equity": 100.9468,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-10",
+      "equity": 102.0854,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-11",
+      "equity": 101.7394,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-12",
+      "equity": 99.7398,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-13",
+      "equity": 98.4494,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-16",
+      "equity": 98.3619,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-17",
+      "equity": 98.114,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-18",
+      "equity": 95.01,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-19",
+      "equity": 91.0942,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-20",
+      "equity": 88.3105,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-23",
+      "equity": 86.3152,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-24",
+      "equity": 86.3345,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-25",
+      "equity": 88.9322,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-26",
+      "equity": 85.5889,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-27",
+      "equity": 88.5925,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-30",
+      "equity": 88.5669,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-31",
+      "equity": 91.923,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-01",
+      "equity": 93.5317,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-02",
+      "equity": 91.735,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-03",
+      "equity": 91.735,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-06",
+      "equity": 91.3591,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-07",
+      "equity": 92.2478,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-08",
+      "equity": 92.8288,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-09",
+      "equity": 93.5509,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-10",
+      "equity": 93.3843,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-13",
+      "equity": 93.0061,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-14",
+      "equity": 95.0848,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-15",
+      "equity": 94.0957,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-04-16",
+      "equity": 93.8265,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-17",
+      "equity": 95.2646,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-20",
+      "equity": 95.3942,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-21",
+      "equity": 95.4745,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-22",
+      "equity": 97.5729,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-23",
+      "equity": 96.1842,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-24",
+      "equity": 98.8876,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-27",
+      "equity": 99.1036,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-28",
+      "equity": 97.4248,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-29",
+      "equity": 98.2025,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-04-30",
+      "equity": 98.4432,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-01",
+      "equity": 99.9059,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-04",
+      "equity": 100.017,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-05",
+      "equity": 102.2266,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-06",
+      "equity": 104.9423,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-07",
+      "equity": 104.7324,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-08",
+      "equity": 108.3307,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-11",
+      "equity": 109.7873,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-12",
+      "equity": 108.1332,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-13",
+      "equity": 109.1516,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-14",
+      "equity": 110.7872,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-15",
+      "equity": 108.7874,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-18",
+      "equity": 107.6148,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-19",
+      "equity": 106.9235,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-20",
+      "equity": 109.3306,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-21",
+      "equity": 110.2317,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-22",
+      "equity": 111.3365,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-25",
+      "equity": 111.3365,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-26",
+      "equity": 114.2682,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-27",
+      "equity": 113.8299,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-28",
+      "equity": 115.3236,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-29",
+      "equity": 117.8973,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-01",
+      "equity": 120.8228,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-02",
+      "equity": 122.335,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-03",
+      "equity": 121.1129,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-04",
+      "equity": 119.2243,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-05",
+      "equity": 111.2809,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-08",
+      "equity": 113.6756,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-09",
+      "equity": 111.571,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-10",
+      "equity": 109.0158,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-11",
+      "equity": 113.077,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-12",
+      "equity": 114.0583,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-15",
+      "equity": 118.3725,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-16",
+      "equity": 115.0705,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-17",
+      "equity": 114.6755,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-18",
+      "equity": 118.1565,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-19",
+      "equity": 118.1565,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-22",
+      "equity": 118.7361,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-23",
+      "equity": 113.8174,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-24",
+      "equity": 113.1129,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-25",
+      "equity": 114.0522,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-26",
+      "equity": 111.9141,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-29",
+      "equity": 114.5713,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-30",
+      "equity": 117.7289,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-01",
+      "equity": 114.701,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-02",
+      "equity": 111.5928,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-03",
+      "equity": 111.5928,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-06",
+      "equity": 113.4343,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-07",
+      "equity": 110.7215,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-08",
+      "equity": 112.0933,
+      "holding": "XLK"
+    }
+  ],
+  "decisions": [
+    {
+      "date": "2026-02-11",
+      "action": "buy",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on BUY action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-02-12",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-02-13",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-02-16",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-02-17",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-02-18",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-02-19",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-02-20",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-02-23",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-02-24",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-02-25",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-02-26",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-02-27",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-03-02",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-03-03",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-03-04",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-03-05",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-03-06",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-03-09",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-03-10",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-03-11",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-03-12",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-03-13",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-03-16",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-03-17",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-03-18",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-03-19",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)"
+    },
+    {
+      "date": "2026-03-20",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)"
+    },
+    {
+      "date": "2026-03-23",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)"
+    },
+    {
+      "date": "2026-03-24",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)"
+    },
+    {
+      "date": "2026-03-25",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)"
+    },
+    {
+      "date": "2026-03-26",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)"
+    },
+    {
+      "date": "2026-03-27",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)"
+    },
+    {
+      "date": "2026-03-30",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)"
+    },
+    {
+      "date": "2026-03-31",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)"
+    },
+    {
+      "date": "2026-04-01",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)"
+    },
+    {
+      "date": "2026-04-02",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)"
+    },
+    {
+      "date": "2026-04-03",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[SIDEWAYS] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:30%, mean_reversion:40%, multi_timeframe:30%)"
+    },
+    {
+      "date": "2026-04-06",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-04-07",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-04-08",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-04-09",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-04-10",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-04-13",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-04-14",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-04-15",
+      "action": "hold",
+      "symbol": "GLD",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-04-16",
+      "action": "buy",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on BUY action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-04-17",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-04-20",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-04-21",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-04-22",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-04-23",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-04-24",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-04-27",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-04-28",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-04-29",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-04-30",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-01",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-04",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-05",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-06",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-07",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-08",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-11",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-12",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-13",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-14",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-15",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-18",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-19",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-20",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-21",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-22",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-25",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-26",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-27",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-28",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-05-29",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-01",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-02",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (2/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-03",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-04",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-05",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-08",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-09",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-10",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-11",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-12",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-15",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-16",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-17",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-18",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-19",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-22",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-23",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-24",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-25",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-26",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-29",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-06-30",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-07-01",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-07-02",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-07-03",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-07-06",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-07-07",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    },
+    {
+      "date": "2026-07-08",
+      "action": "hold",
+      "symbol": "XLK",
+      "reason": "[BULL] Majority agree on HOLD action (3/3 strategies, weights: dual_momentum:50%, mean_reversion:15%, multi_timeframe:35%)"
+    }
+  ],
+  "final_return_pct": 12.0933,
+  "max_drawdown_pct": 18.2367,
+  "n_trades": 2,
+  "notes": [
+    "Fidelity diff: 59 total divergent dates, all in 2026-02-11..2026-05-06 (before the paper account's first trade \u2014 actual arm is flat cash there by construction, so this is expected, not a bug). 0 divergences from 2026-05-07 (paper account's actual inception) onward \u2014 replay and actual holdings match exactly for the entire real overlap period.",
+    "Replays the exact live decision path via aurel2.engine.backtest.BacktestEngine, configured identically to checker.py / generate_comparison_json: no-TLT universe, DualMomentumStrategy(lookback_months=12, switch_threshold=0.02, pilot_entry_enabled=False), orchestrator calm_market_hold_threshold=0.0, min_hold_enabled=False, use_ai=False, daily cadence.",
+    "Price data: CachedPriceProvider (Yahoo Finance, auto-adjusted closes).",
+    "No reimplementation of strategy/orchestrator logic \u2014 engine components are the actual production classes; only trade bookkeeping (equity curve construction) is inlined here to capture a full daily decision log, which BacktestEngine.run() does not expose.",
+    "0.1% transaction cost per trade, same as BacktestEngine default.",
+    "Trades executed at same-day decision-date close (no next-day fill lag)."
+  ],
+  "fidelity_diff": [
+    {
+      "date": "2026-02-11",
+      "replay_decision": "buy",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-02-12",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-02-13",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-02-17",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-02-18",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-02-19",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-02-20",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-02-23",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-02-24",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-02-25",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-02-26",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-02-27",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-02",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-03",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-04",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-05",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-06",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-09",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-10",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-11",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-12",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-13",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-16",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-17",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-18",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-19",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-20",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-23",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-24",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-25",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-26",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-27",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-30",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-03-31",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-01",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-02",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-06",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-07",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-08",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-09",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-10",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-13",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-14",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-15",
+      "replay_decision": "hold",
+      "replay_holding": "GLD",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-16",
+      "replay_decision": "buy",
+      "replay_holding": "XLK",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-17",
+      "replay_decision": "hold",
+      "replay_holding": "XLK",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-20",
+      "replay_decision": "hold",
+      "replay_holding": "XLK",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-21",
+      "replay_decision": "hold",
+      "replay_holding": "XLK",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-22",
+      "replay_decision": "hold",
+      "replay_holding": "XLK",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-23",
+      "replay_decision": "hold",
+      "replay_holding": "XLK",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-24",
+      "replay_decision": "hold",
+      "replay_holding": "XLK",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-27",
+      "replay_decision": "hold",
+      "replay_holding": "XLK",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-28",
+      "replay_decision": "hold",
+      "replay_holding": "XLK",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-29",
+      "replay_decision": "hold",
+      "replay_holding": "XLK",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-04-30",
+      "replay_decision": "hold",
+      "replay_holding": "XLK",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-05-01",
+      "replay_decision": "hold",
+      "replay_holding": "XLK",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-05-04",
+      "replay_decision": "hold",
+      "replay_holding": "XLK",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-05-05",
+      "replay_decision": "hold",
+      "replay_holding": "XLK",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    },
+    {
+      "date": "2026-05-06",
+      "replay_decision": "hold",
+      "replay_holding": "XLK",
+      "actual_holding": "CASH",
+      "note": "replay holding diverges from paper-account holding on this date"
+    }
+  ]
+}

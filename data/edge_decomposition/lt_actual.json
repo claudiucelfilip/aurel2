@@ -1,0 +1,1550 @@
+{
+  "arm": "lt_actual",
+  "window": {
+    "start": "2026-02-11",
+    "end": "2026-07-08"
+  },
+  "era_cutover": "2026-04-01",
+  "start_equity": 100.0,
+  "daily_equity": [
+    {
+      "date": "2026-02-11",
+      "equity": 99.9219,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-12",
+      "equity": 96.5132,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-13",
+      "equity": 99.0747,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-17",
+      "equity": 95.9865,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-18",
+      "equity": 98.1452,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-19",
+      "equity": 98.4194,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-02-20",
+      "equity": 100.3597,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-02-23",
+      "equity": 99.2621,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-02-24",
+      "equity": 100.805,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-02-25",
+      "equity": 101.9025,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-02-26",
+      "equity": 100.9482,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-02-27",
+      "equity": 100.3906,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-02",
+      "equity": 100.8076,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-03",
+      "equity": 96.3104,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-04",
+      "equity": 97.0633,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-05",
+      "equity": 95.8968,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-06",
+      "equity": 97.4151,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-09",
+      "equity": 97.2135,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-10",
+      "equity": 98.31,
+      "holding": "GLD"
+    },
+    {
+      "date": "2026-03-11",
+      "equity": 98.3044,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-12",
+      "equity": 99.2187,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-13",
+      "equity": 99.5465,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-16",
+      "equity": 99.8916,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-17",
+      "equity": 100.944,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-18",
+      "equity": 100.806,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-19",
+      "equity": 104.232,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-20",
+      "equity": 104.1528,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-23",
+      "equity": 105.396,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-24",
+      "equity": 107.5298,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-25",
+      "equity": 105.4259,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-26",
+      "equity": 107.0795,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-27",
+      "equity": 108.8897,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-30",
+      "equity": 107.8453,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-31",
+      "equity": 106.6269,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-04-01",
+      "equity": 103.503,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-04-02",
+      "equity": 106.5659,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-04-06",
+      "equity": 107.3374,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-04-07",
+      "equity": 108.1987,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-04-08",
+      "equity": 104.4128,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-04-09",
+      "equity": 103.1209,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-04-10",
+      "equity": 101.7445,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-13",
+      "equity": 102.6013,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-14",
+      "equity": 104.567,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-15",
+      "equity": 104.4998,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-16",
+      "equity": 104.9198,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-17",
+      "equity": 106.919,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-20",
+      "equity": 106.1462,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-21",
+      "equity": 104.5838,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-22",
+      "equity": 106.4822,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-23",
+      "equity": 105.0411,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-04-24",
+      "equity": 107.0503,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-04-27",
+      "equity": 107.1067,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-04-28",
+      "equity": 106.0296,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-04-29",
+      "equity": 106.6778,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-04-30",
+      "equity": 107.6727,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-01",
+      "equity": 108.7063,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-04",
+      "equity": 108.5015,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-05",
+      "equity": 109.9092,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-06",
+      "equity": 112.1925,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-07",
+      "equity": 112.0587,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-08",
+      "equity": 114.6854,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-11",
+      "equity": 115.0176,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-12",
+      "equity": 114.0421,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-13",
+      "equity": 115.2466,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-14",
+      "equity": 116.0657,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-15",
+      "equity": 114.3146,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-18",
+      "equity": 113.8228,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-19",
+      "equity": 113.1213,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-20",
+      "equity": 114.995,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-21",
+      "equity": 115.2143,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-22",
+      "equity": 115.7029,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-26",
+      "equity": 117.7573,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-27",
+      "equity": 117.6234,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-28",
+      "equity": 118.6151,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-29",
+      "equity": 119.0521,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-01",
+      "equity": 119.7664,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-02",
+      "equity": 120.3179,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-03",
+      "equity": 120.0034,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-04",
+      "equity": 119.4229,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-05",
+      "equity": 113.6905,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-08",
+      "equity": 115.4659,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-09",
+      "equity": 114.1372,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-10",
+      "equity": 111.8571,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-11",
+      "equity": 115.6352,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-12",
+      "equity": 115.5742,
+      "holding": "IWM"
+    },
+    {
+      "date": "2026-06-15",
+      "equity": 116.5103,
+      "holding": "IWM"
+    },
+    {
+      "date": "2026-06-16",
+      "equity": 115.5055,
+      "holding": "IWM"
+    },
+    {
+      "date": "2026-06-17",
+      "equity": 114.6421,
+      "holding": "IWM"
+    },
+    {
+      "date": "2026-06-18",
+      "equity": 116.8832,
+      "holding": "IWM"
+    },
+    {
+      "date": "2026-06-22",
+      "equity": 117.8997,
+      "holding": "IWM"
+    },
+    {
+      "date": "2026-06-23",
+      "equity": 116.7772,
+      "holding": "IWM"
+    },
+    {
+      "date": "2026-06-24",
+      "equity": 117.3149,
+      "holding": "IWM"
+    },
+    {
+      "date": "2026-06-25",
+      "equity": 118.1862,
+      "holding": "IWM"
+    },
+    {
+      "date": "2026-06-26",
+      "equity": 118.5473,
+      "holding": "IWM"
+    },
+    {
+      "date": "2026-06-29",
+      "equity": 117.8723,
+      "holding": "cash"
+    },
+    {
+      "date": "2026-06-30",
+      "equity": 117.8723,
+      "holding": "cash"
+    },
+    {
+      "date": "2026-07-01",
+      "equity": 117.8723,
+      "holding": "cash"
+    },
+    {
+      "date": "2026-07-02",
+      "equity": 117.8723,
+      "holding": "cash"
+    },
+    {
+      "date": "2026-07-06",
+      "equity": 117.8723,
+      "holding": "cash"
+    },
+    {
+      "date": "2026-07-07",
+      "equity": 117.5645,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-08",
+      "equity": 118.9879,
+      "holding": "XLK"
+    }
+  ],
+  "trades": [
+    {
+      "date": "2026-02-11",
+      "era": "pure_ai",
+      "timestamp": "2026-02-11 19:30:26.749196+00:00",
+      "action": "BUY",
+      "symbol": "GLD",
+      "qty": "0.209895",
+      "notional": null,
+      "fill_price": 468.002,
+      "order_id": "1df654ff-48de-43ab-9b6e-14956ddf998b",
+      "source": "alpaca_backfill",
+      "reason": null,
+      "attribution": "manual",
+      "evidence": "source=alpaca_backfill, no reasoning field logged; not produced by daily_runner's normal decision path"
+    },
+    {
+      "date": "2026-02-13",
+      "era": "pure_ai",
+      "timestamp": "2026-02-13 15:01:24.975263+00:00",
+      "action": "BUY",
+      "symbol": "GLD",
+      "qty": "0.004265",
+      "notional": null,
+      "fill_price": 459.198,
+      "order_id": "209cd2eb-3a09-450a-ba37-6b2cf907ca9c",
+      "source": "alpaca_backfill",
+      "reason": null,
+      "attribution": "manual",
+      "evidence": "source=alpaca_backfill, no reasoning field logged; not produced by daily_runner's normal decision path"
+    },
+    {
+      "date": "2026-02-20",
+      "era": "pure_ai",
+      "timestamp": "2026-02-20T20:32:00.671958+00:00",
+      "action": "SELL",
+      "symbol": "GLD",
+      "qty": "0.21416",
+      "notional": null,
+      "fill_price": null,
+      "order_id": "ef936560-9a65-4990-9014-8ba2caecda05",
+      "source": null,
+      "reason": "Rotating to EEM: GLD momentum deceleration (20d: +2.1% vs +9.7% on Feb 12)",
+      "attribution": "algo",
+      "evidence": "journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-02-20",
+      "era": "pure_ai",
+      "timestamp": "2026-02-20T20:32:03.351916+00:00",
+      "action": "BUY",
+      "symbol": "EEM",
+      "qty": null,
+      "notional": 99.1584,
+      "fill_price": null,
+      "order_id": "459ac78c-dbe8-4155-9d98-c9b2b106e309",
+      "source": null,
+      "reason": "Clean momentum: +5.3% 20d, +15.9% 60d. Diversifying from gold-only exposure.",
+      "attribution": "algo",
+      "evidence": "journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-02-27",
+      "era": "pure_ai",
+      "timestamp": "2026-02-27T20:31:42.740815+00:00",
+      "action": "SELL",
+      "symbol": "EEM",
+      "qty": "1.593238857",
+      "notional": null,
+      "fill_price": null,
+      "order_id": "66a389f9-cfb1-4516-ac6c-d8a2a78b5321",
+      "source": null,
+      "reason": "Rotating to XLE: energy sector reversal confirmed (60d: -38% \u2192 +26.6%)",
+      "attribution": "algo",
+      "evidence": "journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-02-27",
+      "era": "pure_ai",
+      "timestamp": "2026-02-27T20:31:45.500119+00:00",
+      "action": "BUY",
+      "symbol": "XLE",
+      "qty": null,
+      "notional": 99.7029,
+      "fill_price": null,
+      "order_id": "1d73707b-2ac0-4f49-95f1-b8ba13a560aa",
+      "source": null,
+      "reason": "Energy sector momentum confirmed: +10.9% 20d, +26.6% 60d. Score 37.5 vs EEM 19.3.",
+      "attribution": "algo",
+      "evidence": "journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-03-02",
+      "era": "pure_ai",
+      "timestamp": "2026-03-02T20:32:21.507143+00:00",
+      "action": "SELL",
+      "symbol": "XLE",
+      "qty": "1.779467409",
+      "notional": null,
+      "fill_price": null,
+      "order_id": "e760e9cc-a0ef-40ec-aa7d-c8ae4594e47a",
+      "source": null,
+      "reason": "XLE 60d momentum collapsed to -36.8% (was +26.6% on Feb 27). The 'energy reversal' was a head fake.",
+      "attribution": "algo",
+      "evidence": "journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-03-02",
+      "era": "pure_ai",
+      "timestamp": "2026-03-02T20:32:23.963486+00:00",
+      "action": "BUY",
+      "symbol": "GLD",
+      "qty": null,
+      "notional": 101.2869,
+      "fill_price": null,
+      "order_id": "7d03f3be-1a9d-42b8-84fb-a980805ca987",
+      "source": null,
+      "reason": "GLD dominant #1: score 36.5 vs XLE -25.2 (61.7pt gap). Strong dual momentum: +9.92% 20d, +26.61% 60d.",
+      "attribution": "algo",
+      "evidence": "journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-03-11",
+      "era": "pure_ai",
+      "timestamp": "2026-03-11T19:30:59.070841+00:00",
+      "action": "SELL",
+      "symbol": "GLD",
+      "qty": "0.206417718",
+      "notional": null,
+      "fill_price": null,
+      "order_id": "a1326ca3-fd0a-498c-b24a-4b36f6f3eee9",
+      "source": null,
+      "reason": "Momentum rotation: GLD 20d/60d = +2.88%/+20.95% now trails XLE +6.08%/+23.65%; GLD momentum decelerating while energy leadership is strengthening.",
+      "attribution": "algo",
+      "evidence": "journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-03-11",
+      "era": "pure_ai",
+      "timestamp": "2026-03-11T19:31:01.601323+00:00",
+      "action": "BUY",
+      "symbol": "XLE",
+      "qty": null,
+      "notional": 98.95,
+      "fill_price": null,
+      "order_id": "97990202-feb1-41c3-b7c1-bcb55931a58c",
+      "source": null,
+      "reason": "Allocate to strongest cross-horizon momentum among watchlist (XLE +6.08% 20d, +23.65% 60d) with broad risk assets weak; rotate from GLD to improve expected trend capture.",
+      "attribution": "algo",
+      "evidence": "journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-03-19",
+      "era": "pure_ai",
+      "timestamp": "2026-03-19 15:04:45.153000+00:00",
+      "action": "SELL",
+      "symbol": "XLE",
+      "qty": "1.741832136",
+      "notional": null,
+      "fill_price": 59.4732,
+      "order_id": "656b2c78-6686-46a6-868a-b9f0fdc89288",
+      "source": "alpaca_backfill",
+      "reason": null,
+      "attribution": "manual",
+      "evidence": "source=alpaca_backfill, no reasoning field logged; not produced by daily_runner's normal decision path"
+    },
+    {
+      "date": "2026-03-19",
+      "era": "pure_ai",
+      "timestamp": "2026-03-19 15:04:45.449558+00:00",
+      "action": "BUY",
+      "symbol": "GLD",
+      "qty": "0.239752",
+      "notional": null,
+      "fill_price": 423.742,
+      "order_id": "ff062e63-1dda-4805-83ce-e3275bbfb188",
+      "source": "alpaca_backfill",
+      "reason": null,
+      "attribution": "manual",
+      "evidence": "source=alpaca_backfill, no reasoning field logged; not produced by daily_runner's normal decision path"
+    },
+    {
+      "date": "2026-03-19",
+      "era": "pure_ai",
+      "timestamp": "2026-03-19T19:30:43.327066+00:00",
+      "action": "SELL",
+      "symbol": "GLD",
+      "qty": "0.239752",
+      "notional": null,
+      "fill_price": null,
+      "order_id": "79d38002-3ba0-4e3b-b5fa-2c14a9b95ea2",
+      "source": null,
+      "reason": "Rotation to XLE: GLD momentum deteriorated (-7.2% 20d, score -2.7) while XLE leads strongly (+7.3% 20d, +33.8% 60d, score 41.1).",
+      "attribution": "unknown",
+      "evidence": "same UTC-day round trip: an unjournaled broker-reconcile leg was reversed later the same day by a normal journaled leg; the agent's own HOLD/status rows show it believed the position never changed across this pair -- looks like a duplicate/erroneous order pair, not a considered rotation. journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-03-19",
+      "era": "pure_ai",
+      "timestamp": "2026-03-19T19:30:47.055995+00:00",
+      "action": "BUY",
+      "symbol": "XLE",
+      "qty": null,
+      "notional": 103.37,
+      "fill_price": null,
+      "order_id": "20b06761-478d-44ed-a7df-9abb93546aa8",
+      "source": null,
+      "reason": "Deploying capital to strongest relative momentum leader XLE; broad equities weak/risk-off while energy shows durable 20d+60d strength.",
+      "attribution": "unknown",
+      "evidence": "same UTC-day round trip: an unjournaled broker-reconcile leg was reversed later the same day by a normal journaled leg; the agent's own HOLD/status rows show it believed the position never changed across this pair -- looks like a duplicate/erroneous order pair, not a considered rotation. journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-03-20",
+      "era": "pure_ai",
+      "timestamp": "2026-03-20 15:05:58.175000+00:00",
+      "action": "SELL",
+      "symbol": "XLE",
+      "qty": "1.746468878",
+      "notional": null,
+      "fill_price": 60.0433,
+      "order_id": "70b42164-30bb-4006-b69f-ce7638169a52",
+      "source": "alpaca_backfill",
+      "reason": null,
+      "attribution": "manual",
+      "evidence": "source=alpaca_backfill, no reasoning field logged; not produced by daily_runner's normal decision path"
+    },
+    {
+      "date": "2026-03-20",
+      "era": "pure_ai",
+      "timestamp": "2026-03-20 15:05:58.476824+00:00",
+      "action": "BUY",
+      "symbol": "GLD",
+      "qty": "0.244775",
+      "notional": null,
+      "fill_price": 419.806,
+      "order_id": "cb9db501-2ced-4798-a0ab-50a6da96910d",
+      "source": "alpaca_backfill",
+      "reason": null,
+      "attribution": "manual",
+      "evidence": "source=alpaca_backfill, no reasoning field logged; not produced by daily_runner's normal decision path"
+    },
+    {
+      "date": "2026-03-20",
+      "era": "pure_ai",
+      "timestamp": "2026-03-20T19:30:52.628468+00:00",
+      "action": "SELL",
+      "symbol": "GLD",
+      "qty": "0.244775",
+      "notional": null,
+      "fill_price": null,
+      "order_id": "8f971abb-28bd-4fc9-90c7-139a0d492552",
+      "source": null,
+      "reason": "Rotate GLD->XLE: GLD momentum weak (20d -11.8%, 5d -10.3%) while XLE leads (20d +8.6%, 60d +34.8%) amid broad equity weakness; improve relative strength exposure.",
+      "attribution": "unknown",
+      "evidence": "same UTC-day round trip: an unjournaled broker-reconcile leg was reversed later the same day by a normal journaled leg; the agent's own HOLD/status rows show it believed the position never changed across this pair -- looks like a duplicate/erroneous order pair, not a considered rotation. journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-03-20",
+      "era": "pure_ai",
+      "timestamp": "2026-03-20T19:30:53.381566+00:00",
+      "action": "BUY",
+      "symbol": "XLE",
+      "qty": null,
+      "notional": 103.91,
+      "fill_price": null,
+      "order_id": "ccb3acf8-4e25-44b4-b3c1-f5f1a88892b3",
+      "source": null,
+      "reason": "Rotate GLD->XLE: GLD momentum weak (20d -11.8%, 5d -10.3%) while XLE leads (20d +8.6%, 60d +34.8%) amid broad equity weakness; improve relative strength exposure.",
+      "attribution": "unknown",
+      "evidence": "same UTC-day round trip: an unjournaled broker-reconcile leg was reversed later the same day by a normal journaled leg; the agent's own HOLD/status rows show it believed the position never changed across this pair -- looks like a duplicate/erroneous order pair, not a considered rotation. journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-03-25",
+      "era": "pure_ai",
+      "timestamp": "2026-03-25 15:02:49.258000+00:00",
+      "action": "SELL",
+      "symbol": "XLE",
+      "qty": "1.74497884",
+      "notional": null,
+      "fill_price": 60.6908,
+      "order_id": "b0ef35cf-9231-40f1-a844-6da9bf43dd7b",
+      "source": "alpaca_backfill",
+      "reason": null,
+      "attribution": "manual",
+      "evidence": "source=alpaca_backfill, no reasoning field logged; not produced by daily_runner's normal decision path"
+    },
+    {
+      "date": "2026-03-25",
+      "era": "pure_ai",
+      "timestamp": "2026-03-25 15:02:49.557122+00:00",
+      "action": "BUY",
+      "symbol": "GLD",
+      "qty": "0.247611",
+      "notional": null,
+      "fill_price": 419.202,
+      "order_id": "2ed02b2b-4a43-45fd-bcf9-0ecdf666dbbb",
+      "source": "alpaca_backfill",
+      "reason": null,
+      "attribution": "manual",
+      "evidence": "source=alpaca_backfill, no reasoning field logged; not produced by daily_runner's normal decision path"
+    },
+    {
+      "date": "2026-03-25",
+      "era": "pure_ai",
+      "timestamp": "2026-03-25T19:30:40.446344+00:00",
+      "action": "SELL",
+      "symbol": "GLD",
+      "qty": "0.247611",
+      "notional": null,
+      "fill_price": null,
+      "order_id": "ee7dad63-98ec-4fdf-87f0-222b468fdb21",
+      "source": null,
+      "reason": "Rotation: GLD momentum deteriorated (20d -12.4%, score -8.3) while energy leadership is strong; reallocating to stronger trend asset.",
+      "attribution": "unknown",
+      "evidence": "same UTC-day round trip: an unjournaled broker-reconcile leg was reversed later the same day by a normal journaled leg; the agent's own HOLD/status rows show it believed the position never changed across this pair -- looks like a duplicate/erroneous order pair, not a considered rotation. journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-03-25",
+      "era": "pure_ai",
+      "timestamp": "2026-03-25T19:30:49.446631+00:00",
+      "action": "BUY",
+      "symbol": "XLE",
+      "qty": null,
+      "notional": 105.5,
+      "fill_price": null,
+      "order_id": "26b87840-e059-40e2-9a50-3b05947e07ab",
+      "source": null,
+      "reason": "Best relative strength in universe: XLE 20d +10.7%, 60d +36.1% (score 46.8), far ahead of broad market and defensives; aligns with current sector rotation into energy.",
+      "attribution": "unknown",
+      "evidence": "same UTC-day round trip: an unjournaled broker-reconcile leg was reversed later the same day by a normal journaled leg; the agent's own HOLD/status rows show it believed the position never changed across this pair -- looks like a duplicate/erroneous order pair, not a considered rotation. journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-04-01",
+      "era": "algo_plus_tilt",
+      "timestamp": "2026-04-01 14:05:00.154000+00:00",
+      "action": "SELL",
+      "symbol": "XLE",
+      "qty": "1.737826975",
+      "notional": null,
+      "fill_price": 59.2732,
+      "order_id": "c29566bf-3b68-4cb7-80e5-28301894fc5a",
+      "source": "alpaca_backfill",
+      "reason": null,
+      "attribution": "manual",
+      "evidence": "source=alpaca_backfill, no reasoning field logged; not produced by daily_runner's normal decision path"
+    },
+    {
+      "date": "2026-04-01",
+      "era": "algo_plus_tilt",
+      "timestamp": "2026-04-01 14:05:00.462906+00:00",
+      "action": "BUY",
+      "symbol": "GLD",
+      "qty": "0.231784",
+      "notional": null,
+      "fill_price": 435.678,
+      "order_id": "50eb4a42-22ef-43d9-82b8-80381203abd9",
+      "source": "alpaca_backfill",
+      "reason": null,
+      "attribution": "manual",
+      "evidence": "source=alpaca_backfill, no reasoning field logged; not produced by daily_runner's normal decision path"
+    },
+    {
+      "date": "2026-04-01",
+      "era": "algo_plus_tilt",
+      "timestamp": "2026-04-01T15:27:17.347712+00:00",
+      "action": "SELL",
+      "symbol": "GLD",
+      "qty": "0.231784",
+      "notional": null,
+      "fill_price": null,
+      "order_id": "d5f692fe-540f-4399-936b-e0988e91d9b7",
+      "source": null,
+      "reason": "Discretionary rotation: GLD(-3.67) -> XLE(5.32), edge 8.99, regime=mixed.",
+      "attribution": "unknown",
+      "evidence": "same UTC-day round trip: an unjournaled broker-reconcile leg was reversed later the same day by a normal journaled leg; the agent's own HOLD/status rows show it believed the position never changed across this pair -- looks like a duplicate/erroneous order pair, not a considered rotation. journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-04-01",
+      "era": "algo_plus_tilt",
+      "timestamp": "2026-04-01T15:27:18.108030+00:00",
+      "action": "BUY",
+      "symbol": "XLE",
+      "qty": null,
+      "notional": 102.92039999999999,
+      "fill_price": null,
+      "order_id": "a6390de2-aca7-43c1-8e35-86032517b35d",
+      "source": null,
+      "reason": "Conviction leader XLE. trend=7.08, risk_penalty=1.76, regime_adj=0.00.",
+      "attribution": "unknown",
+      "evidence": "same UTC-day round trip: an unjournaled broker-reconcile leg was reversed later the same day by a normal journaled leg; the agent's own HOLD/status rows show it believed the position never changed across this pair -- looks like a duplicate/erroneous order pair, not a considered rotation. journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-04-02",
+      "era": "algo_plus_tilt",
+      "timestamp": "2026-04-02T14:01:14.187000+00:00",
+      "action": "SELL",
+      "symbol": "XLE",
+      "qty": "1.74387475",
+      "notional": null,
+      "fill_price": 60.3232,
+      "order_id": "2ccdcbf9-4e85-4e0c-97a2-8656329f91ad",
+      "source": "broker_reconcile",
+      "reason": null,
+      "attribution": "manual",
+      "evidence": "source=broker_reconcile, no reasoning field logged; not produced by daily_runner's normal decision path"
+    },
+    {
+      "date": "2026-04-02",
+      "era": "algo_plus_tilt",
+      "timestamp": "2026-04-02T14:01:14.486540+00:00",
+      "action": "BUY",
+      "symbol": "GLD",
+      "qty": "0.241904",
+      "notional": null,
+      "fill_price": 426.156,
+      "order_id": "906e2292-5d8d-42f7-84ce-c41929423196",
+      "source": "broker_reconcile",
+      "reason": null,
+      "attribution": "manual",
+      "evidence": "source=broker_reconcile, no reasoning field logged; not produced by daily_runner's normal decision path"
+    },
+    {
+      "date": "2026-04-02",
+      "era": "algo_plus_tilt",
+      "timestamp": "2026-04-02T19:31:08.332267+00:00",
+      "action": "SELL",
+      "symbol": "GLD",
+      "qty": "0.241904",
+      "notional": null,
+      "fill_price": null,
+      "order_id": "c3be6da8-218f-4fc8-bb8e-30029fe6cdd6",
+      "source": null,
+      "reason": "Rotate out of GLD: momentum deterioration (20d -8.07%) and loss of leadership; capital reallocated to stronger trend.",
+      "attribution": "unknown",
+      "evidence": "same UTC-day round trip: an unjournaled broker-reconcile leg was reversed later the same day by a normal journaled leg; the agent's own HOLD/status rows show it believed the position never changed across this pair -- looks like a duplicate/erroneous order pair, not a considered rotation. journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-04-02",
+      "era": "algo_plus_tilt",
+      "timestamp": "2026-04-02T19:31:30.954019+00:00",
+      "action": "BUY",
+      "symbol": "XLE",
+      "qty": null,
+      "notional": 106.31,
+      "fill_price": null,
+      "order_id": "a02f1d3e-21b9-4625-9111-5e225a6ff9a3",
+      "source": null,
+      "reason": "Rotate into XLE: strongest cross-asset momentum (20d +4.74%, 60d +29.71%) with equities weak and gold rolling over.",
+      "attribution": "unknown",
+      "evidence": "same UTC-day round trip: an unjournaled broker-reconcile leg was reversed later the same day by a normal journaled leg; the agent's own HOLD/status rows show it believed the position never changed across this pair -- looks like a duplicate/erroneous order pair, not a considered rotation. journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-04-10",
+      "era": "algo_plus_tilt",
+      "timestamp": "2026-04-10T19:31:11.028932+00:00",
+      "action": "SELL",
+      "symbol": "XLE",
+      "qty": "1.795231179",
+      "notional": null,
+      "fill_price": null,
+      "order_id": "2735361f-4541-4890-a740-ce6b8d793925",
+      "source": null,
+      "reason": "Rotate out of XLE: leadership is deteriorating. XLE is now negative on 20d (-1.06%) and 5d (-3.97%) while breadth has improved in international/risk assets. Energy still leads on 60d (+21.02%), but that edge is now legacy momentum, not fresh strength.",
+      "attribution": "algo",
+      "evidence": "journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-04-10",
+      "era": "algo_plus_tilt",
+      "timestamp": "2026-04-10T19:31:11.454819+00:00",
+      "action": "BUY",
+      "symbol": "EEM",
+      "qty": null,
+      "notional": 102.4,
+      "fill_price": null,
+      "order_id": "62d9d201-de50-45b3-9669-8957c97f802a",
+      "source": null,
+      "reason": "Rotate into EEM: strongest fresh momentum in watchlist (20d +6.22%, 60d +5.18%, 5d +6.87%). Sector rotation favors international/emerging risk assets over cooling energy leadership. This improves alignment with current breadth while staying in a liquid, diversified ETF.",
+      "attribution": "algo",
+      "evidence": "journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-04-23",
+      "era": "algo_plus_tilt",
+      "timestamp": "2026-04-23T19:32:01.878952+00:00",
+      "action": "SELL",
+      "symbol": "EEM",
+      "qty": "1.693457696",
+      "notional": null,
+      "fill_price": null,
+      "order_id": "b8a08863-a423-4cc0-834c-8a13aef4423e",
+      "source": null,
+      "reason": "Rotate out of EEM: still positive but no longer the best use of capital. Fresh leadership shifted to QQQ, which now leads the watchlist on 20d momentum (+10.79%) while maintaining positive 60d trend (+3.19%).",
+      "attribution": "algo",
+      "evidence": "journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-04-23",
+      "era": "algo_plus_tilt",
+      "timestamp": "2026-04-23T19:32:02.213215+00:00",
+      "action": "BUY",
+      "symbol": "QQQ",
+      "qty": null,
+      "notional": 105.4,
+      "fill_price": null,
+      "order_id": "1e564992-a4e7-4121-8efe-154321a995c9",
+      "source": null,
+      "reason": "Rotate into QQQ: strongest fresh momentum in the watchlist (+10.79% 20d, +3.19% 60d) in a clear risk-on tape. Prefer US growth leadership over cooling EEM (+8.42% 20d, +3.21% 60d).",
+      "attribution": "algo",
+      "evidence": "journaled by daily_runner with reasoning/rotation thesis, in-watchlist symbol"
+    },
+    {
+      "date": "2026-06-12",
+      "era": "algo_plus_tilt",
+      "timestamp": "2026-06-12T13:30:01.581445+00:00",
+      "action": "SELL",
+      "symbol": "QQQ",
+      "qty": "0.16179193",
+      "notional": null,
+      "fill_price": 716.95,
+      "order_id": "6e3045ea-67f2-491d-9b77-0b73628cfeaa",
+      "source": "broker_reconcile",
+      "reason": null,
+      "attribution": "manual",
+      "evidence": "source=broker_reconcile, no reasoning field logged; not produced by daily_runner's normal decision path"
+    },
+    {
+      "date": "2026-06-12",
+      "era": "algo_plus_tilt",
+      "timestamp": "2026-06-12T19:31:29.171724+00:00",
+      "action": "BUY",
+      "symbol": "IWM",
+      "qty": "0.392491118",
+      "notional": 115.13,
+      "fill_price": 293.306,
+      "order_id": "4d9dc5ca-9e26-4b60-89f5-bc4a7436f082",
+      "source": "broker_reconcile",
+      "reason": null,
+      "attribution": "manual",
+      "evidence": "source=broker_reconcile, no reasoning field logged; not produced by daily_runner's normal decision path"
+    },
+    {
+      "date": "2026-06-29",
+      "era": "algo_plus_tilt",
+      "timestamp": "2026-06-29T13:30:00.097293+00:00",
+      "action": "SELL",
+      "symbol": "IWM",
+      "qty": "0.392491118",
+      "notional": null,
+      "fill_price": 298.11,
+      "order_id": "63e1b6dc-16a8-4730-8cc2-d37f89de70e4",
+      "source": "broker_reconcile",
+      "reason": null,
+      "attribution": "manual",
+      "evidence": "source=broker_reconcile, no reasoning field logged; not produced by daily_runner's normal decision path"
+    },
+    {
+      "date": "2026-07-07",
+      "era": "algo_plus_tilt",
+      "timestamp": "2026-07-07T13:30:00.059146+00:00",
+      "action": "BUY",
+      "symbol": "XLK",
+      "qty": "0.641202",
+      "notional": null,
+      "fill_price": 179.66,
+      "order_id": "293c79fc-6d2e-4b34-a643-7e837982930b",
+      "source": "broker_reconcile",
+      "reason": null,
+      "attribution": "manual",
+      "evidence": "symbol XLK not in 8-symbol watchlist ['EEM', 'EFA', 'GLD', 'IWM', 'QQQ', 'SPY', 'TLT', 'XLE']"
+    }
+  ],
+  "final_return_pct": 18.988,
+  "max_drawdown_pct": -7.032,
+  "n_trades": 38,
+  "attribution_summary": {
+    "algo": 12,
+    "manual": 16,
+    "unknown": 10
+  },
+  "era_attribution_summary": {
+    "pure_ai": {
+      "algo": 8,
+      "manual": 8,
+      "unknown": 6
+    },
+    "algo_plus_tilt": {
+      "algo": 4,
+      "manual": 8,
+      "unknown": 4
+    }
+  },
+  "era_returns": {
+    "pure_ai": {
+      "start_date": "2026-02-11",
+      "end_date": "2026-04-01",
+      "equity_start": 99.9219,
+      "equity_end": 103.503,
+      "return_pct": 3.584
+    },
+    "algo_plus_tilt": {
+      "start_date": "2026-04-01",
+      "end_date": "2026-07-08",
+      "equity_start": 103.503,
+      "equity_end": 118.9879,
+      "return_pct": 14.961
+    }
+  },
+  "journal_validation": [
+    {
+      "date": "2026-02-17",
+      "journal_portfolio_value": 96.04,
+      "reconstructed_equity": 95.9865,
+      "diff": -0.0535,
+      "diff_pct": -0.056
+    },
+    {
+      "date": "2026-02-18",
+      "journal_portfolio_value": 97.99,
+      "reconstructed_equity": 98.1452,
+      "diff": 0.1552,
+      "diff_pct": 0.158
+    },
+    {
+      "date": "2026-02-19",
+      "journal_portfolio_value": 98.33,
+      "reconstructed_equity": 98.4194,
+      "diff": 0.0894,
+      "diff_pct": 0.091
+    },
+    {
+      "date": "2026-02-23",
+      "journal_portfolio_value": 99.19,
+      "reconstructed_equity": 99.2621,
+      "diff": 0.0721,
+      "diff_pct": 0.073
+    },
+    {
+      "date": "2026-02-24",
+      "journal_portfolio_value": 100.79,
+      "reconstructed_equity": 100.805,
+      "diff": 0.015,
+      "diff_pct": 0.015
+    },
+    {
+      "date": "2026-02-25",
+      "journal_portfolio_value": 101.93,
+      "reconstructed_equity": 101.9025,
+      "diff": -0.0275,
+      "diff_pct": -0.027
+    },
+    {
+      "date": "2026-02-26",
+      "journal_portfolio_value": 100.84,
+      "reconstructed_equity": 100.9482,
+      "diff": 0.1082,
+      "diff_pct": 0.107
+    },
+    {
+      "date": "2026-03-16",
+      "journal_portfolio_value": 101.17,
+      "reconstructed_equity": 99.8916,
+      "diff": -1.2784,
+      "diff_pct": -1.264
+    },
+    {
+      "date": "2026-03-16",
+      "journal_portfolio_value": 101.28,
+      "reconstructed_equity": 99.8916,
+      "diff": -1.3884,
+      "diff_pct": -1.371
+    },
+    {
+      "date": "2026-03-17",
+      "journal_portfolio_value": 102.25,
+      "reconstructed_equity": 100.944,
+      "diff": -1.306,
+      "diff_pct": -1.277
+    },
+    {
+      "date": "2026-03-18",
+      "journal_portfolio_value": 102.04,
+      "reconstructed_equity": 100.806,
+      "diff": -1.234,
+      "diff_pct": -1.209
+    },
+    {
+      "date": "2026-03-19",
+      "journal_portfolio_value": 104.8,
+      "reconstructed_equity": 104.232,
+      "diff": -0.568,
+      "diff_pct": -0.542
+    },
+    {
+      "date": "2026-03-20",
+      "journal_portfolio_value": 104.43,
+      "reconstructed_equity": 104.1528,
+      "diff": -0.2772,
+      "diff_pct": -0.265
+    },
+    {
+      "date": "2026-03-23",
+      "journal_portfolio_value": 104.25,
+      "reconstructed_equity": 105.396,
+      "diff": 1.146,
+      "diff_pct": 1.099
+    },
+    {
+      "date": "2026-03-23",
+      "journal_portfolio_value": 104.48,
+      "reconstructed_equity": 105.396,
+      "diff": 0.916,
+      "diff_pct": 0.877
+    },
+    {
+      "date": "2026-03-24",
+      "journal_portfolio_value": 106.19,
+      "reconstructed_equity": 107.5298,
+      "diff": 1.3398,
+      "diff_pct": 1.262
+    },
+    {
+      "date": "2026-03-25",
+      "journal_portfolio_value": 105.58,
+      "reconstructed_equity": 105.4259,
+      "diff": -0.1541,
+      "diff_pct": -0.146
+    },
+    {
+      "date": "2026-03-26",
+      "journal_portfolio_value": 107.47,
+      "reconstructed_equity": 107.0795,
+      "diff": -0.3905,
+      "diff_pct": -0.363
+    },
+    {
+      "date": "2026-03-26",
+      "journal_portfolio_value": 107.3,
+      "reconstructed_equity": 107.0795,
+      "diff": -0.2205,
+      "diff_pct": -0.205
+    },
+    {
+      "date": "2026-03-27",
+      "journal_portfolio_value": 108.94,
+      "reconstructed_equity": 108.8897,
+      "diff": -0.0503,
+      "diff_pct": -0.046
+    },
+    {
+      "date": "2026-03-27",
+      "journal_portfolio_value": 109.15,
+      "reconstructed_equity": 108.8897,
+      "diff": -0.2603,
+      "diff_pct": -0.238
+    },
+    {
+      "date": "2026-03-30",
+      "journal_portfolio_value": 108.05,
+      "reconstructed_equity": 107.8453,
+      "diff": -0.2047,
+      "diff_pct": -0.189
+    },
+    {
+      "date": "2026-03-31",
+      "journal_portfolio_value": 106.83,
+      "reconstructed_equity": 106.6269,
+      "diff": -0.2031,
+      "diff_pct": -0.19
+    },
+    {
+      "date": "2026-04-08",
+      "journal_portfolio_value": 104.84,
+      "reconstructed_equity": 104.4128,
+      "diff": -0.4272,
+      "diff_pct": -0.407
+    },
+    {
+      "date": "2026-04-09",
+      "journal_portfolio_value": 103.93,
+      "reconstructed_equity": 103.1209,
+      "diff": -0.8091,
+      "diff_pct": -0.779
+    },
+    {
+      "date": "2026-04-10",
+      "journal_portfolio_value": 102.68,
+      "reconstructed_equity": 101.7445,
+      "diff": -0.9355,
+      "diff_pct": -0.911
+    },
+    {
+      "date": "2026-04-13",
+      "journal_portfolio_value": 103.71,
+      "reconstructed_equity": 102.6013,
+      "diff": -1.1087,
+      "diff_pct": -1.069
+    },
+    {
+      "date": "2026-04-14",
+      "journal_portfolio_value": 105.63,
+      "reconstructed_equity": 104.567,
+      "diff": -1.063,
+      "diff_pct": -1.006
+    },
+    {
+      "date": "2026-04-15",
+      "journal_portfolio_value": 105.66,
+      "reconstructed_equity": 104.4998,
+      "diff": -1.1602,
+      "diff_pct": -1.098
+    },
+    {
+      "date": "2026-04-16",
+      "journal_portfolio_value": 105.97,
+      "reconstructed_equity": 104.9198,
+      "diff": -1.0502,
+      "diff_pct": -0.991
+    },
+    {
+      "date": "2026-04-17",
+      "journal_portfolio_value": 107.81,
+      "reconstructed_equity": 106.919,
+      "diff": -0.891,
+      "diff_pct": -0.826
+    },
+    {
+      "date": "2026-04-20",
+      "journal_portfolio_value": 107.18,
+      "reconstructed_equity": 106.1462,
+      "diff": -1.0338,
+      "diff_pct": -0.965
+    },
+    {
+      "date": "2026-04-21",
+      "journal_portfolio_value": 106.55,
+      "reconstructed_equity": 104.5838,
+      "diff": -1.9662,
+      "diff_pct": -1.845
+    },
+    {
+      "date": "2026-04-22",
+      "journal_portfolio_value": 107.49,
+      "reconstructed_equity": 106.4822,
+      "diff": -1.0078,
+      "diff_pct": -0.938
+    },
+    {
+      "date": "2026-04-23",
+      "journal_portfolio_value": 105.68,
+      "reconstructed_equity": 105.0411,
+      "diff": -0.6389,
+      "diff_pct": -0.605
+    },
+    {
+      "date": "2026-04-24",
+      "journal_portfolio_value": 107.66,
+      "reconstructed_equity": 107.0503,
+      "diff": -0.6097,
+      "diff_pct": -0.566
+    },
+    {
+      "date": "2026-04-27",
+      "journal_portfolio_value": 107.71,
+      "reconstructed_equity": 107.1067,
+      "diff": -0.6033,
+      "diff_pct": -0.56
+    },
+    {
+      "date": "2026-04-28",
+      "journal_portfolio_value": 106.78,
+      "reconstructed_equity": 106.0296,
+      "diff": -0.7504,
+      "diff_pct": -0.703
+    },
+    {
+      "date": "2026-04-29",
+      "journal_portfolio_value": 107.26,
+      "reconstructed_equity": 106.6778,
+      "diff": -0.5822,
+      "diff_pct": -0.543
+    },
+    {
+      "date": "2026-04-30",
+      "journal_portfolio_value": 108.37,
+      "reconstructed_equity": 107.6727,
+      "diff": -0.6973,
+      "diff_pct": -0.643
+    },
+    {
+      "date": "2026-05-01",
+      "journal_portfolio_value": 109.61,
+      "reconstructed_equity": 108.7063,
+      "diff": -0.9037,
+      "diff_pct": -0.824
+    },
+    {
+      "date": "2026-05-04",
+      "journal_portfolio_value": 109.19,
+      "reconstructed_equity": 108.5015,
+      "diff": -0.6885,
+      "diff_pct": -0.631
+    },
+    {
+      "date": "2026-05-05",
+      "journal_portfolio_value": 110.7,
+      "reconstructed_equity": 109.9092,
+      "diff": -0.7908,
+      "diff_pct": -0.714
+    },
+    {
+      "date": "2026-05-06",
+      "journal_portfolio_value": 112.74,
+      "reconstructed_equity": 112.1925,
+      "diff": -0.5475,
+      "diff_pct": -0.486
+    },
+    {
+      "date": "2026-05-07",
+      "journal_portfolio_value": 112.51,
+      "reconstructed_equity": 112.0587,
+      "diff": -0.4513,
+      "diff_pct": -0.401
+    },
+    {
+      "date": "2026-05-08",
+      "journal_portfolio_value": 115.08,
+      "reconstructed_equity": 114.6854,
+      "diff": -0.3946,
+      "diff_pct": -0.343
+    },
+    {
+      "date": "2026-05-11",
+      "journal_portfolio_value": 115.54,
+      "reconstructed_equity": 115.0176,
+      "diff": -0.5224,
+      "diff_pct": -0.452
+    },
+    {
+      "date": "2026-05-12",
+      "journal_portfolio_value": 114.33,
+      "reconstructed_equity": 114.0421,
+      "diff": -0.2879,
+      "diff_pct": -0.252
+    },
+    {
+      "date": "2026-05-13",
+      "journal_portfolio_value": 116.11,
+      "reconstructed_equity": 115.2466,
+      "diff": -0.8634,
+      "diff_pct": -0.744
+    },
+    {
+      "date": "2026-05-14",
+      "journal_portfolio_value": 116.85,
+      "reconstructed_equity": 116.0657,
+      "diff": -0.7843,
+      "diff_pct": -0.671
+    },
+    {
+      "date": "2026-05-15",
+      "journal_portfolio_value": 114.87,
+      "reconstructed_equity": 114.3146,
+      "diff": -0.5554,
+      "diff_pct": -0.484
+    },
+    {
+      "date": "2026-05-15",
+      "journal_portfolio_value": 115.33,
+      "reconstructed_equity": 114.3146,
+      "diff": -1.0154,
+      "diff_pct": -0.88
+    },
+    {
+      "date": "2026-05-19",
+      "journal_portfolio_value": 113.65,
+      "reconstructed_equity": 113.1213,
+      "diff": -0.5287,
+      "diff_pct": -0.465
+    },
+    {
+      "date": "2026-05-19",
+      "journal_portfolio_value": 114.1,
+      "reconstructed_equity": 113.1213,
+      "diff": -0.9787,
+      "diff_pct": -0.858
+    },
+    {
+      "date": "2026-05-20",
+      "journal_portfolio_value": 115.44,
+      "reconstructed_equity": 114.995,
+      "diff": -0.445,
+      "diff_pct": -0.385
+    },
+    {
+      "date": "2026-05-21",
+      "journal_portfolio_value": 115.82,
+      "reconstructed_equity": 115.2143,
+      "diff": -0.6057,
+      "diff_pct": -0.523
+    },
+    {
+      "date": "2026-05-22",
+      "journal_portfolio_value": 116.4,
+      "reconstructed_equity": 115.7029,
+      "diff": -0.6971,
+      "diff_pct": -0.599
+    },
+    {
+      "date": "2026-05-26",
+      "journal_portfolio_value": 118.4,
+      "reconstructed_equity": 117.7573,
+      "diff": -0.6427,
+      "diff_pct": -0.543
+    }
+  ],
+  "alpaca_current_account": {
+    "portfolio_value": 120.75,
+    "cash": 3.19,
+    "positions": [
+      {
+        "symbol": "XLK",
+        "qty": 0.641202,
+        "market_value": 117.557975
+      }
+    ],
+    "fetched_at": "2026-07-09T08:47:50.625337+00:00"
+  },
+  "notes": [
+    "Manual discretionary_tilt.json does not exist on disk and is not tracked in git (0 commits touch it or auto_discretionary_tilt.json in 132-commit history); no historical tilt-state timeline is recoverable, so 'tilt-influenced' cannot be distinguished from 'algo' for any past HOLD/rotation decision -- only the current auto_discretionary_tilt.json snapshot exists.",
+    "portfolio_value stopped being logged in the journal after 2026-05-26; every trade from 2026-06-12 onward (SELL QQQ/BUY IWM, SELL IWM, BUY XLK) is a broker_reconcile backfill with no journaled reasoning -- these were not produced through the normal daily_runner decision path.",
+    "5 same-day round-trip pairs detected (2026-03-19, 2026-03-20, 2026-03-25, 2026-04-01, 2026-04-02) where a broker-reconciled GLD leg was placed mid-day and reversed back to XLE that same afternoon; runner.log shows the agent's own status checks never registered a share-count change across these pairs, consistent with a duplicate/erroneous order bug (or overlapping bot instances / reconciliation replay) rather than a deliberate rotation. All 5 dates fall in the algo_plus_tilt era (>=2026-04-01 cutover, since 03-19/03-20/03-25 use the same tilt_notes/regime/current/target HOLD schema as later confirmed-engine rows, and 04-01/04-02 are explicitly inside the cutover window). Resolved by broker-order-id ordering (each leg has a distinct real Alpaca order_id, confirmed via read-only account/positions pull -- no true duplicates, these are real back-to-back fills). Flagged as 'unknown', not 'algo', since no single engine run produced the round trip.",
+    "Era cutover set at 2026-04-01 per lt_core replay agent's finding that daily_runner.py's deterministic score/regime/tilt engine only began producing decisions around that date; trades before it (2026-02-11 GLD buy through the last pre-cutover leg) ran on free-text LLM reasoning with no engine backing, i.e. pure AI discretion. Note the HOLD rows' tilt_notes/regime/current/target schema actually starts appearing a couple weeks earlier (~03-14), narrower/faster to adopt than the trade-placing cutover -- so the boundary is a step function on the engine's own history, not a hard behavioral switch visible in every field."
+  ]
+}

@@ -1,0 +1,540 @@
+{
+  "arm": "a2_actual",
+  "window": {
+    "start": "2026-02-11",
+    "end": "2026-07-08"
+  },
+  "start_equity": 100.0,
+  "daily_equity": [
+    {
+      "date": "2026-02-11",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-02-12",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-02-13",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-02-17",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-02-18",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-02-19",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-02-20",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-02-23",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-02-24",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-02-25",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-02-26",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-02-27",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-02",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-03",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-04",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-05",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-06",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-09",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-10",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-11",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-12",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-13",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-16",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-17",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-18",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-19",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-20",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-23",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-24",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-25",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-26",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-27",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-30",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-03-31",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-01",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-02",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-06",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-07",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-08",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-09",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-10",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-13",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-14",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-15",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-16",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-17",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-20",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-21",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-22",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-23",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-24",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-27",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-28",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-29",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-04-30",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-05-01",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-05-04",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-05-05",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-05-06",
+      "equity": 100.0,
+      "holding": "CASH"
+    },
+    {
+      "date": "2026-05-07",
+      "equity": 100.0,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-08",
+      "equity": 103.4357,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-11",
+      "equity": 104.8264,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-12",
+      "equity": 103.2471,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-13",
+      "equity": 104.2195,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-14",
+      "equity": 105.7811,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-15",
+      "equity": 103.8718,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-18",
+      "equity": 102.7521,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-19",
+      "equity": 102.092,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-20",
+      "equity": 104.3904,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-21",
+      "equity": 105.2507,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-22",
+      "equity": 106.3056,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-26",
+      "equity": 109.1048,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-27",
+      "equity": 108.6864,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-28",
+      "equity": 110.1126,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-05-29",
+      "equity": 112.57,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-01",
+      "equity": 115.3633,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-02",
+      "equity": 116.8071,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-03",
+      "equity": 115.6403,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-04",
+      "equity": 113.837,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-05",
+      "equity": 106.2526,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-08",
+      "equity": 108.5391,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-09",
+      "equity": 106.5296,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-10",
+      "equity": 104.0898,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-11",
+      "equity": 107.9675,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-12",
+      "equity": 108.9045,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-15",
+      "equity": 113.0237,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-16",
+      "equity": 109.8709,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-17",
+      "equity": 109.4938,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-18",
+      "equity": 112.8175,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-22",
+      "equity": 113.3709,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-23",
+      "equity": 108.6744,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-24",
+      "equity": 108.0018,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-25",
+      "equity": 108.8986,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-26",
+      "equity": 106.8572,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-29",
+      "equity": 109.3942,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-06-30",
+      "equity": 112.4092,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-01",
+      "equity": 109.5181,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-02",
+      "equity": 106.5504,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-06",
+      "equity": 108.3086,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-07",
+      "equity": 105.7184,
+      "holding": "XLK"
+    },
+    {
+      "date": "2026-07-08",
+      "equity": 107.0283,
+      "holding": "XLK"
+    }
+  ],
+  "decisions": [
+    {
+      "date": "2026-05-07",
+      "action": "buy",
+      "symbol": "XLK",
+      "reason": "paper account executed trade (see journal)"
+    },
+    {
+      "date": "2026-07-07",
+      "action": "buy",
+      "symbol": "XLK",
+      "reason": "paper account executed trade (see journal)"
+    }
+  ],
+  "final_return_pct": 7.0283,
+  "max_drawdown_pct": 10.8874,
+  "n_trades": 2,
+  "notes": [
+    "Source: production paper trade journal fetched read-only from Dumbo (/opt/aurel2/data/paper/trade_journal.json), local copy at data/paper/trade_journal.json.",
+    "Journal's first entry is 2026-05-07 (paper account had no earlier position) \u2014 equity held flat at 100.0 from window start (2026-02-11) through 2026-05-06.",
+    "Position entered 2026-05-07: XLK, 5.762333 shares at fill $170.098265 on a $1000 notional paper account. Equity curve here re-derives an equivalent position from a 100.0-normalized entry at that trading day's close (170.10, adjusted), not the exact fill price, since fill/close can differ intraday and the schema requires close-based daily marks for comparability with the replay arm.",
+    "A second executed entry on 2026-07-07 (buy XLK, 0.109694 shares, fill $177.254, current_holding_after=null in the journal) is a same-symbol reconciliation topup, not an asset switch \u2014 folded into the running position, listed as a decision/trade but does not change the held symbol.",
+    "Daily closes from CachedPriceProvider (Yahoo Finance, auto-adjusted).",
+    "No AI advisor involvement observed in the executed entries (ai_agrees=true throughout)."
+  ]
+}

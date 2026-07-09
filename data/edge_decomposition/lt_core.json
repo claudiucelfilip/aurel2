@@ -1,0 +1,1629 @@
+{
+  "arm": "lt_core",
+  "window": {
+    "start": "2026-02-11",
+    "end": "2026-07-08"
+  },
+  "start_equity": 100.0,
+  "daily_equity": [
+    {
+      "date": "2026-02-11",
+      "equity": 100.0,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-02-12",
+      "equity": 98.1993,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-02-13",
+      "equity": 98.8656,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-02-17",
+      "equity": 97.7852,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-02-18",
+      "equity": 99.6399,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-02-19",
+      "equity": 100.3601,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-02-20",
+      "equity": 99.8199,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-02-23",
+      "equity": 100.3061,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-02-24",
+      "equity": 100.2161,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-02-25",
+      "equity": 99.8019,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-02-26",
+      "equity": 100.126,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-02-27",
+      "equity": 101.6926,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-02",
+      "equity": 103.7094,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-03",
+      "equity": 102.773,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-04",
+      "equity": 102.1788,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-05",
+      "equity": 102.701,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-06",
+      "equity": 102.863,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-09",
+      "equity": 102.4129,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-10",
+      "equity": 101.1164,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-11",
+      "equity": 103.6013,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-12",
+      "equity": 104.5557,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-13",
+      "equity": 104.8978,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-16",
+      "equity": 105.2579,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-17",
+      "equity": 106.3563,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-18",
+      "equity": 106.2123,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-19",
+      "equity": 107.8869,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-20",
+      "equity": 107.7968,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-23",
+      "equity": 109.0746,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-24",
+      "equity": 111.2676,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-25",
+      "equity": 110.7783,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-26",
+      "equity": 112.5001,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-27",
+      "equity": 114.385,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-30",
+      "equity": 113.2975,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-03-31",
+      "equity": 112.0288,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-04-01",
+      "equity": 107.8784,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-04-02",
+      "equity": 108.3859,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-04-06",
+      "equity": 109.1652,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-04-07",
+      "equity": 110.0352,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-04-08",
+      "equity": 106.211,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-04-09",
+      "equity": 104.906,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-04-10",
+      "equity": 104.1992,
+      "holding": "XLE"
+    },
+    {
+      "date": "2026-04-13",
+      "equity": 104.5073,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-14",
+      "equity": 106.4895,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-15",
+      "equity": 106.4217,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-16",
+      "equity": 106.8452,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-17",
+      "equity": 108.8613,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-20",
+      "equity": 108.082,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-21",
+      "equity": 106.5064,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-22",
+      "equity": 108.4208,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-23",
+      "equity": 106.6758,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-24",
+      "equity": 109.0307,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-27",
+      "equity": 108.8613,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-28",
+      "equity": 107.7601,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-29",
+      "equity": 107.2518,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-04-30",
+      "equity": 109.4542,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-05-01",
+      "equity": 109.6914,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-05-04",
+      "equity": 109.6406,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-05-05",
+      "equity": 111.843,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-05-06",
+      "equity": 115.3838,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-05-07",
+      "equity": 113.859,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-05-08",
+      "equity": 116.1462,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-05-11",
+      "equity": 116.0614,
+      "holding": "EEM"
+    },
+    {
+      "date": "2026-05-12",
+      "equity": 112.5545,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-13",
+      "equity": 113.7315,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-14",
+      "equity": 114.5318,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-15",
+      "equity": 112.8208,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-18",
+      "equity": 112.3403,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-19",
+      "equity": 111.6549,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-20",
+      "equity": 113.4857,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-21",
+      "equity": 113.7,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-22",
+      "equity": 114.1774,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-26",
+      "equity": 116.1846,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-27",
+      "equity": 116.0538,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-28",
+      "equity": 117.0228,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-05-29",
+      "equity": 117.4498,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-01",
+      "equity": 118.1477,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-02",
+      "equity": 118.6866,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-03",
+      "equity": 118.3793,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-04",
+      "equity": 117.8121,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-05",
+      "equity": 112.2111,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-08",
+      "equity": 113.9457,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-09",
+      "equity": 112.6475,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-10",
+      "equity": 110.4197,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-11",
+      "equity": 114.1112,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-12",
+      "equity": 114.7761,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-15",
+      "equity": 118.3463,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-16",
+      "equity": 116.1184,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-17",
+      "equity": 114.9604,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-18",
+      "equity": 117.8137,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-22",
+      "equity": 117.5208,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-23",
+      "equity": 113.688,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-24",
+      "equity": 113.2101,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-25",
+      "equity": 114.1186,
+      "holding": "QQQ"
+    },
+    {
+      "date": "2026-06-26",
+      "equity": 112.5634,
+      "holding": "IWM"
+    },
+    {
+      "date": "2026-06-29",
+      "equity": 112.2438,
+      "holding": "IWM"
+    },
+    {
+      "date": "2026-06-30",
+      "equity": 112.7939,
+      "holding": "IWM"
+    },
+    {
+      "date": "2026-07-01",
+      "equity": 112.3739,
+      "holding": "IWM"
+    },
+    {
+      "date": "2026-07-02",
+      "equity": 111.7272,
+      "holding": "IWM"
+    },
+    {
+      "date": "2026-07-06",
+      "equity": 112.2178,
+      "holding": "IWM"
+    },
+    {
+      "date": "2026-07-07",
+      "equity": 111.2106,
+      "holding": "IWM"
+    },
+    {
+      "date": "2026-07-08",
+      "equity": 110.2033,
+      "holding": "IWM"
+    }
+  ],
+  "decisions": [
+    {
+      "date": "2026-02-11",
+      "action": "BUY",
+      "symbol": "XLE",
+      "score_gap": null,
+      "reason": "Initiating position via discretionary engine. Target=XLE, conviction=12.42, regime=mixed."
+    },
+    {
+      "date": "2026-02-12",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=True."
+    },
+    {
+      "date": "2026-02-13",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-02-17",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-02-18",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-02-19",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-02-20",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-02-23",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-02-24",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-02-25",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-02-26",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-02-27",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-02",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-03",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": -0.407,
+      "reason": "HOLD XLE. target=GLD gap=-0.41, regime=risk_off, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-04",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": -0.1122,
+      "reason": "HOLD XLE. target=GLD gap=-0.11, regime=risk_off, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-05",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-06",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-09",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.9669,
+      "reason": "HOLD XLE. target=GLD gap=0.97, regime=risk_off, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-10",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 3.5326,
+      "reason": "HOLD XLE. target=GLD gap=3.53, regime=risk_off, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-11",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.2754,
+      "reason": "HOLD XLE. target=GLD gap=0.28, regime=risk_off, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-12",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-13",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": -3.5286,
+      "reason": "HOLD XLE. target=GLD gap=-3.53, regime=risk_off, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-16",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-17",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-18",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-19",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-20",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-23",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-24",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-25",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-26",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-27",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-30",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-03-31",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-04-01",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-04-02",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-04-06",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-04-07",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-04-08",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-04-09",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 0.0,
+      "reason": "HOLD XLE. target=XLE gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-04-10",
+      "action": "HOLD",
+      "symbol": "XLE",
+      "score_gap": 3.3975,
+      "reason": "HOLD XLE. target=EEM gap=3.40, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-04-13",
+      "action": "SELL",
+      "symbol": "XLE",
+      "score_gap": 4.4793,
+      "reason": "Discretionary rotation: XLE(1.54) -> EEM(6.02), edge 4.48, regime=risk_on."
+    },
+    {
+      "date": "2026-04-13",
+      "action": "BUY",
+      "symbol": "EEM",
+      "score_gap": 4.4793,
+      "reason": "Conviction leader EEM. trend=5.57, risk_penalty=0.56, regime_adj=1.00."
+    },
+    {
+      "date": "2026-04-14",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 0.0,
+      "reason": "HOLD EEM. target=EEM gap=0.00, regime=risk_on, cooldown_block=True."
+    },
+    {
+      "date": "2026-04-15",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 0.0,
+      "reason": "HOLD EEM. target=EEM gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-04-16",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 0.0,
+      "reason": "HOLD EEM. target=EEM gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-04-17",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 0.0,
+      "reason": "HOLD EEM. target=EEM gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-04-20",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 0.0,
+      "reason": "HOLD EEM. target=EEM gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-04-21",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 1.4788,
+      "reason": "HOLD EEM. target=IWM gap=1.48, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-04-22",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 0.0,
+      "reason": "HOLD EEM. target=EEM gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-04-23",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 1.7844,
+      "reason": "HOLD EEM. target=QQQ gap=1.78, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-04-24",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 0.811,
+      "reason": "HOLD EEM. target=QQQ gap=0.81, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-04-27",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 1.8141,
+      "reason": "HOLD EEM. target=QQQ gap=1.81, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-04-28",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 1.4125,
+      "reason": "HOLD EEM. target=QQQ gap=1.41, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-04-29",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 2.6981,
+      "reason": "HOLD EEM. target=QQQ gap=2.70, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-04-30",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 1.4806,
+      "reason": "HOLD EEM. target=QQQ gap=1.48, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-05-01",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 1.6418,
+      "reason": "HOLD EEM. target=QQQ gap=1.64, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-05-04",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 1.8224,
+      "reason": "HOLD EEM. target=QQQ gap=1.82, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-05-05",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 1.5175,
+      "reason": "HOLD EEM. target=QQQ gap=1.52, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-05-06",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 1.5281,
+      "reason": "HOLD EEM. target=QQQ gap=1.53, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-05-07",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 2.7539,
+      "reason": "HOLD EEM. target=QQQ gap=2.75, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-05-08",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 3.1041,
+      "reason": "HOLD EEM. target=QQQ gap=3.10, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-05-11",
+      "action": "HOLD",
+      "symbol": "EEM",
+      "score_gap": 3.5892,
+      "reason": "HOLD EEM. target=QQQ gap=3.59, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-05-12",
+      "action": "SELL",
+      "symbol": "EEM",
+      "score_gap": 6.2248,
+      "reason": "Discretionary rotation: EEM(4.03) -> QQQ(10.26), edge 6.22, regime=risk_on."
+    },
+    {
+      "date": "2026-05-12",
+      "action": "BUY",
+      "symbol": "QQQ",
+      "score_gap": 6.2248,
+      "reason": "Conviction leader QQQ. trend=9.72, risk_penalty=0.46, regime_adj=1.00."
+    },
+    {
+      "date": "2026-05-13",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.0,
+      "reason": "HOLD QQQ. target=QQQ gap=0.00, regime=risk_on, cooldown_block=True."
+    },
+    {
+      "date": "2026-05-14",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.0,
+      "reason": "HOLD QQQ. target=QQQ gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-05-15",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.0,
+      "reason": "HOLD QQQ. target=QQQ gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-05-18",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.7995,
+      "reason": "HOLD QQQ. target=XLE gap=0.80, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-05-19",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.9838,
+      "reason": "HOLD QQQ. target=XLE gap=0.98, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-05-20",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.0,
+      "reason": "HOLD QQQ. target=QQQ gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-05-21",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.0,
+      "reason": "HOLD QQQ. target=QQQ gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-05-22",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.0,
+      "reason": "HOLD QQQ. target=QQQ gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-05-26",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.0,
+      "reason": "HOLD QQQ. target=QQQ gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-05-27",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.0,
+      "reason": "HOLD QQQ. target=QQQ gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-05-28",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.0,
+      "reason": "HOLD QQQ. target=QQQ gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-05-29",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.0,
+      "reason": "HOLD QQQ. target=QQQ gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-01",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.0,
+      "reason": "HOLD QQQ. target=QQQ gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-02",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.0,
+      "reason": "HOLD QQQ. target=QQQ gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-03",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.0,
+      "reason": "HOLD QQQ. target=QQQ gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-04",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.0,
+      "reason": "HOLD QQQ. target=QQQ gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-05",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.0,
+      "reason": "HOLD QQQ. target=QQQ gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-08",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.0,
+      "reason": "HOLD QQQ. target=QQQ gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-09",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.6937,
+      "reason": "HOLD QQQ. target=IWM gap=0.69, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-10",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 1.9871,
+      "reason": "HOLD QQQ. target=IWM gap=1.99, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-11",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 1.7548,
+      "reason": "HOLD QQQ. target=IWM gap=1.75, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-12",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 1.888,
+      "reason": "HOLD QQQ. target=IWM gap=1.89, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-15",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.5682,
+      "reason": "HOLD QQQ. target=EEM gap=0.57, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-16",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 0.9774,
+      "reason": "HOLD QQQ. target=EEM gap=0.98, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-17",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 1.7493,
+      "reason": "HOLD QQQ. target=EEM gap=1.75, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-18",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 2.3684,
+      "reason": "HOLD QQQ. target=EEM gap=2.37, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-22",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 2.6187,
+      "reason": "HOLD QQQ. target=EEM gap=2.62, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-23",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 2.5399,
+      "reason": "HOLD QQQ. target=IWM gap=2.54, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-24",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 3.2108,
+      "reason": "HOLD QQQ. target=IWM gap=3.21, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-25",
+      "action": "HOLD",
+      "symbol": "QQQ",
+      "score_gap": 3.2079,
+      "reason": "HOLD QQQ. target=IWM gap=3.21, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-26",
+      "action": "SELL",
+      "symbol": "QQQ",
+      "score_gap": 5.1168,
+      "reason": "Discretionary rotation: QQQ(0.30) -> IWM(5.41), edge 5.12, regime=mixed."
+    },
+    {
+      "date": "2026-06-26",
+      "action": "BUY",
+      "symbol": "IWM",
+      "score_gap": 5.1168,
+      "reason": "Conviction leader IWM. trend=5.76, risk_penalty=0.35, regime_adj=0.00."
+    },
+    {
+      "date": "2026-06-29",
+      "action": "HOLD",
+      "symbol": "IWM",
+      "score_gap": 0.0,
+      "reason": "HOLD IWM. target=IWM gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-06-30",
+      "action": "HOLD",
+      "symbol": "IWM",
+      "score_gap": 0.0,
+      "reason": "HOLD IWM. target=IWM gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-07-01",
+      "action": "HOLD",
+      "symbol": "IWM",
+      "score_gap": 0.0,
+      "reason": "HOLD IWM. target=IWM gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-07-02",
+      "action": "HOLD",
+      "symbol": "IWM",
+      "score_gap": 0.0,
+      "reason": "HOLD IWM. target=IWM gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-07-06",
+      "action": "HOLD",
+      "symbol": "IWM",
+      "score_gap": 0.0,
+      "reason": "HOLD IWM. target=IWM gap=0.00, regime=mixed, cooldown_block=False."
+    },
+    {
+      "date": "2026-07-07",
+      "action": "HOLD",
+      "symbol": "IWM",
+      "score_gap": 0.0,
+      "reason": "HOLD IWM. target=IWM gap=0.00, regime=risk_on, cooldown_block=False."
+    },
+    {
+      "date": "2026-07-08",
+      "action": "HOLD",
+      "symbol": "IWM",
+      "score_gap": 0.0,
+      "reason": "HOLD IWM. target=IWM gap=0.00, regime=risk_on, cooldown_block=False."
+    }
+  ],
+  "final_return_pct": 10.2033,
+  "max_drawdown_pct": -8.9048,
+  "n_trades": 7,
+  "subwindows": {
+    "2026-04-01_to_2026-07-08": {
+      "window": {
+        "start": "2026-04-01",
+        "end": "2026-07-08"
+      },
+      "start_equity": 100.0,
+      "renormalized_from_actual_equity": 107.8784,
+      "daily_equity": [
+        {
+          "date": "2026-04-01",
+          "equity": 100.0,
+          "holding": "XLE"
+        },
+        {
+          "date": "2026-04-02",
+          "equity": 100.4704,
+          "holding": "XLE"
+        },
+        {
+          "date": "2026-04-06",
+          "equity": 101.1928,
+          "holding": "XLE"
+        },
+        {
+          "date": "2026-04-07",
+          "equity": 101.9993,
+          "holding": "XLE"
+        },
+        {
+          "date": "2026-04-08",
+          "equity": 98.4544,
+          "holding": "XLE"
+        },
+        {
+          "date": "2026-04-09",
+          "equity": 97.2447,
+          "holding": "XLE"
+        },
+        {
+          "date": "2026-04-10",
+          "equity": 96.5895,
+          "holding": "XLE"
+        },
+        {
+          "date": "2026-04-13",
+          "equity": 96.8751,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-04-14",
+          "equity": 98.7125,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-04-15",
+          "equity": 98.6497,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-04-16",
+          "equity": 99.0423,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-04-17",
+          "equity": 100.9111,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-04-20",
+          "equity": 100.1887,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-04-21",
+          "equity": 98.7282,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-04-22",
+          "equity": 100.5028,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-04-23",
+          "equity": 98.8852,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-04-24",
+          "equity": 101.0681,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-04-27",
+          "equity": 100.9111,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-04-28",
+          "equity": 99.8903,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-04-29",
+          "equity": 99.4192,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-04-30",
+          "equity": 101.4607,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-05-01",
+          "equity": 101.6806,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-05-04",
+          "equity": 101.6335,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-05-05",
+          "equity": 103.6751,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-05-06",
+          "equity": 106.9573,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-05-07",
+          "equity": 105.5438,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-05-08",
+          "equity": 107.664,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-05-11",
+          "equity": 107.5854,
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-05-12",
+          "equity": 104.3346,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-05-13",
+          "equity": 105.4256,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-05-14",
+          "equity": 106.1675,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-05-15",
+          "equity": 104.5815,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-05-18",
+          "equity": 104.136,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-05-19",
+          "equity": 103.5007,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-05-20",
+          "equity": 105.1978,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-05-21",
+          "equity": 105.3964,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-05-22",
+          "equity": 105.839,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-05-26",
+          "equity": 107.6996,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-05-27",
+          "equity": 107.5783,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-05-28",
+          "equity": 108.4766,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-05-29",
+          "equity": 108.8724,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-01",
+          "equity": 109.5193,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-02",
+          "equity": 110.0189,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-03",
+          "equity": 109.734,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-04",
+          "equity": 109.2082,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-05",
+          "equity": 104.0163,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-08",
+          "equity": 105.6242,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-09",
+          "equity": 104.4208,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-10",
+          "equity": 102.3557,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-11",
+          "equity": 105.7776,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-12",
+          "equity": 106.394,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-15",
+          "equity": 109.7034,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-16",
+          "equity": 107.6382,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-17",
+          "equity": 106.5648,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-18",
+          "equity": 109.2097,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-22",
+          "equity": 108.9382,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-23",
+          "equity": 105.3853,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-24",
+          "equity": 104.9423,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-25",
+          "equity": 105.7845,
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-26",
+          "equity": 104.3429,
+          "holding": "IWM"
+        },
+        {
+          "date": "2026-06-29",
+          "equity": 104.0466,
+          "holding": "IWM"
+        },
+        {
+          "date": "2026-06-30",
+          "equity": 104.5565,
+          "holding": "IWM"
+        },
+        {
+          "date": "2026-07-01",
+          "equity": 104.1672,
+          "holding": "IWM"
+        },
+        {
+          "date": "2026-07-02",
+          "equity": 103.5677,
+          "holding": "IWM"
+        },
+        {
+          "date": "2026-07-06",
+          "equity": 104.0225,
+          "holding": "IWM"
+        },
+        {
+          "date": "2026-07-07",
+          "equity": 103.0888,
+          "holding": "IWM"
+        },
+        {
+          "date": "2026-07-08",
+          "equity": 102.1551,
+          "holding": "IWM"
+        }
+      ],
+      "holdings_timeline": [
+        {
+          "date": "2026-04-01",
+          "holding": "XLE"
+        },
+        {
+          "date": "2026-04-13",
+          "holding": "EEM"
+        },
+        {
+          "date": "2026-05-12",
+          "holding": "QQQ"
+        },
+        {
+          "date": "2026-06-26",
+          "holding": "IWM"
+        }
+      ],
+      "final_return_pct": 2.1551,
+      "max_drawdown_pct": -7.1477,
+      "n_trades": 6,
+      "notes": [
+        "Sliced from the full 2026-02-11 sim, not re-simulated: position/cash state carries over from whatever the full sim was holding as of the day before this era starts, so the 150-day feature lookback stays warm across the era boundary.",
+        "Equity re-normalized to 100.0 at 2026-04-01 by dividing every day's actual simulated equity by that day's value (107.8784) and scaling by 100."
+      ]
+    }
+  },
+  "notes": [
+    "Deterministic core only: symbol_bias and regime_bias forced to {} for every day (equivalent to live-trader running with zero discretionary/AI tilt).",
+    "Functions (build_features, infer_regime, conviction_score, choose_target, WATCHLIST, RISK_ASSETS, DEFENSIVE, and threshold constants) are imported verbatim from /Users/claudiu/.openclaw/workspace/live-trader/daily_runner.py via exec of the source (broker/news-ingest imports at the top of that file were skipped since main() is not invoked).",
+    "Trades execute at the daily close of the decision day: features/regime/score for day D use bars through D's close, and any resulting BUY/SELL/ROTATE fills at D's close. Live-trader actually runs intraday (afternoon cron) against the latest available bar, which may not yet be day D's finalized close, so this is a simplifying backtest convention.",
+    "Price data: yfinance daily auto-adjusted closes, fetched from 2025-06-01 to warm the 150-day/80-bar lookback before the window start.",
+    "Position sizing: 99% of cash deployed on every BUY, matching live-trader's `buying_power * 0.99` notional logic; single-position (no partial holds).",
+    "get_last_rotation_time() in the live system is broker-order-based; this replay approximates it with the in-sim last BUY/SELL day, which is equivalent absent any out-of-band manual trades (none exist in this deterministic-only simulation).",
+    "FIDELITY CAVEAT (important for downstream attribution): the actual trades.jsonl shows daily_runner.py's distinctive reasoning format (e.g. 'Discretionary rotation: X(score) -> Y(score), edge N, regime=...') first appearing on 2026-04-01. Entries before that date (2026-02-11 through 2026-03-25, e.g. the initial GLD buy on 2026-02-11) use a different reasoning shape (free-text 'momentum_snapshot'/'scores' fields, LLM-authored prose) that does not match this engine's score/threshold logic at all \u2014 those were very likely produced by a different (AI-driven) decision system, not by daily_runner.py with a small tilt. This replay's day-one pick of XLE (vs. the real system's GLD) reflects that: it is genuine engine divergence from a different live decision-maker, not a data/logic bug in this replay. Treat pre-2026-04-01 real trades as out of scope for a 'daily_runner.py + tilt' attribution comparison; the deterministic-core-vs-AI diff is only apples-to-apples from 2026-04-01 onward."
+  ]
+}
