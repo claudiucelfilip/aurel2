@@ -173,12 +173,25 @@ Given ONLY this data, return STRICT JSON with no prose, no markdown fences, matc
 Empty symbol_bias ({{}}) is a valid answer -- only bias on real conviction from the data shown."""
 
 
-def call_claude_cli(prompt: str) -> tuple[dict | None, float, str]:
+def _extract_json(text: str) -> dict | None:
+    text = text.strip()
+    if text.startswith("```"):
+        text = text.strip("`")
+        if text.startswith("json"):
+            text = text[4:]
+        text = text.strip()
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        return None
+
+
+def call_claude_cli(prompt: str, model: str = "sonnet") -> tuple[dict | None, float, str]:
     """Shell out to `claude -p ... --output-format json`. Returns (parsed_result_or_None, latency_s, raw_text)."""
     start = time.monotonic()
     try:
         proc = subprocess.run(
-            ["claude", "-p", prompt, "--model", "sonnet", "--output-format", "json"],
+            ["claude", "-p", prompt, "--model", model, "--output-format", "json"],
             capture_output=True,
             text=True,
             timeout=CLI_TIMEOUT_S,
@@ -196,19 +209,57 @@ def call_claude_cli(prompt: str) -> tuple[dict | None, float, str]:
     except json.JSONDecodeError:
         return None, latency, f"ENVELOPE_PARSE_FAIL: {proc.stdout[:500]}"
 
-    text = result_text.strip()
-    if text.startswith("```"):
-        text = text.strip("`")
-        if text.startswith("json"):
-            text = text[4:]
-        text = text.strip()
-
-    try:
-        parsed = json.loads(text)
-    except json.JSONDecodeError:
-        return None, latency, result_text
-
+    parsed = _extract_json(result_text)
     return parsed, latency, result_text
+
+
+def call_codex_cli(prompt: str, model: str = "gpt-5.5") -> tuple[dict | None, float, str]:
+    """Shell out to `codex exec --json ...`. Returns (parsed_result_or_None, latency_s, raw_text).
+
+    stdout is newline-delimited JSON events; the final answer is the
+    "agent_message" item's "text" field. stdin is redirected from /dev/null --
+    codex exec otherwise blocks reading additional input.
+    """
+    start = time.monotonic()
+    try:
+        proc = subprocess.run(
+            ["codex", "exec", "--model", model, "--json", prompt],
+            capture_output=True,
+            text=True,
+            timeout=CLI_TIMEOUT_S,
+            stdin=subprocess.DEVNULL,
+        )
+    except subprocess.TimeoutExpired:
+        return None, time.monotonic() - start, "TIMEOUT"
+
+    latency = time.monotonic() - start
+    if proc.returncode != 0:
+        return None, latency, f"CLI_ERROR: {proc.stderr[:500]}"
+
+    result_text = ""
+    for line in proc.stdout.splitlines():
+        if not line.strip():
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if event.get("type") == "item.completed" and event.get("item", {}).get("type") == "agent_message":
+            result_text = event["item"].get("text", "")
+
+    if not result_text:
+        return None, latency, f"NO_AGENT_MESSAGE: {proc.stdout[:500]}"
+
+    parsed = _extract_json(result_text)
+    return parsed, latency, result_text
+
+
+CLI_BACKENDS = {
+    "sonnet": lambda prompt: call_claude_cli(prompt, model="sonnet"),
+    "fable5": lambda prompt: call_claude_cli(prompt, model="claude-fable-5"),
+    "gpt55": lambda prompt: call_codex_cli(prompt, model="gpt-5.5"),
+    "gpt56sol": lambda prompt: call_codex_cli(prompt, model="gpt-5.6-sol"),
+}
 
 
 def validate_tilt(parsed: dict) -> dict | None:
@@ -240,10 +291,10 @@ def validate_tilt(parsed: dict) -> dict | None:
     }
 
 
-def load_cache() -> dict:
+def load_cache(cache_path: Path = CACHE_PATH) -> dict:
     cache = {}
-    if CACHE_PATH.exists():
-        for line in CACHE_PATH.read_text().splitlines():
+    if cache_path.exists():
+        for line in cache_path.read_text().splitlines():
             if not line.strip():
                 continue
             rec = json.loads(line)
@@ -251,13 +302,19 @@ def load_cache() -> dict:
     return cache
 
 
-def append_cache(rec: dict):
-    CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with CACHE_PATH.open("a") as f:
+def append_cache(rec: dict, cache_path: Path = CACHE_PATH):
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    with cache_path.open("a") as f:
         f.write(json.dumps(rec) + "\n")
 
 
-def get_ai_tilt(calc_date: date, context: dict, cache: dict) -> tuple[dict, float]:
+def get_ai_tilt(
+    calc_date: date,
+    context: dict,
+    cache: dict,
+    backend: str = "sonnet",
+    cache_path: Path = CACHE_PATH,
+) -> tuple[dict, float]:
     prompt = PROMPT_TEMPLATE.format(as_of=calc_date.isoformat(), context_json=json.dumps(context, indent=2))
     prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()[:16]
     cache_key = f"{calc_date.isoformat()}:{prompt_hash}"
@@ -266,8 +323,9 @@ def get_ai_tilt(calc_date: date, context: dict, cache: dict) -> tuple[dict, floa
         rec = cache[cache_key]
         return rec["tilt"], 0.0
 
+    call_fn = CLI_BACKENDS[backend]
     for attempt in range(2):
-        parsed, latency, raw = call_claude_cli(prompt)
+        parsed, latency, raw = call_fn(prompt)
         tilt = validate_tilt(parsed) if parsed is not None else None
         if tilt is not None:
             rec = {
@@ -279,7 +337,7 @@ def get_ai_tilt(calc_date: date, context: dict, cache: dict) -> tuple[dict, floa
                 "tilt": tilt,
                 "latency_s": round(latency, 1),
             }
-            append_cache(rec)
+            append_cache(rec, cache_path)
             cache[cache_key] = rec
             return tilt, latency
         print(f"    [retry {attempt + 1}] malformed response: {raw[:200]}")
@@ -295,7 +353,7 @@ def get_ai_tilt(calc_date: date, context: dict, cache: dict) -> tuple[dict, floa
         "tilt": fallback,
         "latency_s": 0.0,
     }
-    append_cache(rec)
+    append_cache(rec, cache_path)
     cache[cache_key] = rec
     return fallback, 0.0
 
