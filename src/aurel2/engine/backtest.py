@@ -192,6 +192,8 @@ class BacktestEngine:
         canary_enabled: bool = False,
         canary_symbols: list[str] | None = None,
         canary_safe_asset: str = "IEF",
+        overlay_enabled: bool = False,
+        overlay_mode: str = "paper",
     ):
         # Mirror the LIVE checker configuration so backtests match the daemon:
         # no-TLT universe, plain dual momentum (2% switch threshold), the same
@@ -237,6 +239,11 @@ class BacktestEngine:
         self.vix_filter_safe_asset = vix_filter_safe_asset
         self.canary_enabled = canary_enabled
         self.canary_symbols = canary_symbols or ["SPY", "EFA", "EEM", "AGG"]
+        # Overlay containment: default OFF. Shares src/aurel2/overlay/integration.py
+        # with checker.py step 6c so live and backtest apply the same seam
+        # (docs/plans/2026-07-10-ai-overlay-design.md, fidelity rule).
+        self.overlay_enabled = overlay_enabled
+        self.overlay_mode = overlay_mode
         self.canary_safe_asset = canary_safe_asset
 
         # Tradeable symbols for AI override validation
@@ -553,6 +560,41 @@ class BacktestEngine:
                 market_context=market_context,
                 current_holding=current_holding_symbol,
             )
+
+            # ================================================================
+            # Step 3b: AI overlay (mirrors checker step 6c) — same seam as live.
+            # ================================================================
+            if self.overlay_enabled:
+                from aurel2.overlay.integration import run_overlay_for_decision
+
+                try:
+                    overlay_outcome = run_overlay_for_decision(
+                        mode=self.overlay_mode,
+                        today=rebal_date,
+                        prices=prices,
+                        dm_assets=self.dual_momentum.assets,
+                        current_holding_symbol=current_holding_symbol,
+                        exclude_from_selection=self.dual_momentum.exclude_from_selection,
+                    )
+                except Exception as e:
+                    logger.error("backtest_overlay_error", date=str(rebal_date), error=str(e))
+                    overlay_outcome = None
+
+                if overlay_outcome and overlay_outcome.action is not None and overlay_outcome.asset_symbol is not None:
+                    decision = AgentDecision(
+                        decision_type=decision.decision_type,
+                        action=overlay_outcome.action,
+                        asset_symbol=overlay_outcome.asset_symbol,
+                        reasoning=f"Overlay: {decision.reasoning}",
+                        confidence=decision.confidence,
+                        strategy_signals=decision.strategy_signals,
+                        requires_approval=decision.requires_approval,
+                        timeout_hours=decision.timeout_hours,
+                        urgency=decision.urgency,
+                        market_context=decision.market_context,
+                        position_size_pct=decision.position_size_pct,
+                        regime=decision.regime,
+                    )
 
             logger.info(
                 "backtest_decision",

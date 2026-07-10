@@ -47,6 +47,10 @@ class JournalEntry:
     ai_commentary: Optional[str] = None
     failure_patterns: list = field(default_factory=list)
 
+    # Overlay (docs/plans/2026-07-10-ai-overlay-design.md): every applied AND
+    # ignored transition-power activation for this decision, with reasoning.
+    overlay_activity: list = field(default_factory=list)
+
     # Market context
     market_regime: Optional[str] = None
 
@@ -112,6 +116,7 @@ class TradeJournal:
         current_holding: Optional[str] = None,
         decision_symbol: Optional[str] = None,
         current_holding_symbol: Optional[str] = None,
+        overlay_activity: Optional[list] = None,
     ) -> JournalEntry:
         """Record a trading decision."""
         entry = JournalEntry(
@@ -132,6 +137,7 @@ class TradeJournal:
             ai_confidence=ai_confidence,
             ai_commentary=ai_commentary,
             failure_patterns=failure_patterns or [],
+            overlay_activity=overlay_activity or [],
             market_regime=market_regime,
             account_value_before=account_value,
             current_holding_before=current_holding,
