@@ -19,6 +19,7 @@ from typing import Any, Optional
 import pandas as pd
 import structlog
 
+from aurel2.config.canonical import CANONICAL_CONFIG
 from aurel2.core.assets import ASSET_REGISTRY
 from aurel2.core.models import AssetClass
 from aurel2.data.momentum import calculate_momentum_scores
@@ -108,6 +109,16 @@ def apply_accelerate_entry(
         return None
 
     projected = project_next_pick(prices, today, dm_assets, exclude_from_selection)
+
+    if not CANONICAL_CONFIG.overlay.accelerate_entry_enabled:
+        # Shadow log: record what would have happened so the parallel run
+        # produces evidence for re-enabling behind a worth-it hurdle.
+        return OverlayJournalEntry(
+            power="accelerate_entry",
+            status="ignored",
+            reason="power disabled (shadow-logged)",
+            detail={"requested": symbol, "projected_next_pick": projected},
+        )
 
     if projected is None or symbol != projected:
         return OverlayJournalEntry(

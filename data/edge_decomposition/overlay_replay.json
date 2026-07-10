@@ -8,8 +8,8 @@
   "context_pack_version": "v2",
   "arms": {
     "a2_overlay": {
-      "final_value": 11084.05,
-      "final_return": 0.1084,
+      "final_value": 11439.78,
+      "final_return": 0.144,
       "equity_curve": [
         {
           "date": "2026-02-11",
@@ -203,347 +203,347 @@
         },
         {
           "date": "2026-04-06",
-          "value": 9117.64,
-          "holding": "XLE"
+          "value": 9135.91,
+          "holding": "GLD"
         },
         {
           "date": "2026-04-07",
-          "value": 9190.97,
-          "holding": "XLE"
+          "value": 9224.78,
+          "holding": "GLD"
         },
         {
           "date": "2026-04-08",
-          "value": 8868.62,
-          "holding": "XLE"
+          "value": 9282.88,
+          "holding": "GLD"
         },
         {
           "date": "2026-04-09",
-          "value": 8758.62,
-          "holding": "XLE"
+          "value": 9355.09,
+          "holding": "GLD"
         },
         {
           "date": "2026-04-10",
-          "value": 8699.04,
-          "holding": "XLE"
+          "value": 9338.43,
+          "holding": "GLD"
         },
         {
           "date": "2026-04-13",
-          "value": 8707.57,
-          "holding": "XLK"
+          "value": 9300.61,
+          "holding": "GLD"
         },
         {
           "date": "2026-04-14",
-          "value": 8846.9,
-          "holding": "XLK"
+          "value": 9508.48,
+          "holding": "GLD"
         },
         {
           "date": "2026-04-15",
-          "value": 8988.03,
-          "holding": "XLK"
+          "value": 9409.57,
+          "holding": "GLD"
         },
         {
           "date": "2026-04-16",
-          "value": 9090.89,
+          "value": 9382.65,
           "holding": "XLK"
         },
         {
           "date": "2026-04-17",
-          "value": 9230.23,
+          "value": 9526.46,
           "holding": "XLK"
         },
         {
           "date": "2026-04-20",
-          "value": 9242.78,
+          "value": 9539.42,
           "holding": "XLK"
         },
         {
           "date": "2026-04-21",
-          "value": 9250.56,
+          "value": 9547.45,
           "holding": "XLK"
         },
         {
           "date": "2026-04-22",
-          "value": 9453.88,
+          "value": 9757.29,
           "holding": "XLK"
         },
         {
           "date": "2026-04-23",
-          "value": 9319.33,
+          "value": 9618.42,
           "holding": "XLK"
         },
         {
           "date": "2026-04-24",
-          "value": 9581.26,
+          "value": 9888.76,
           "holding": "XLK"
         },
         {
           "date": "2026-04-27",
-          "value": 9602.19,
+          "value": 9910.36,
           "holding": "XLK"
         },
         {
           "date": "2026-04-28",
-          "value": 9439.53,
+          "value": 9742.48,
           "holding": "XLK"
         },
         {
           "date": "2026-04-29",
-          "value": 9514.88,
+          "value": 9820.25,
           "holding": "XLK"
         },
         {
           "date": "2026-04-30",
-          "value": 9538.2,
+          "value": 9844.32,
           "holding": "XLK"
         },
         {
           "date": "2026-05-01",
-          "value": 9679.93,
+          "value": 9990.59,
           "holding": "XLK"
         },
         {
           "date": "2026-05-04",
-          "value": 9690.69,
+          "value": 10001.7,
           "holding": "XLK"
         },
         {
           "date": "2026-05-05",
-          "value": 9904.78,
+          "value": 10222.66,
           "holding": "XLK"
         },
         {
           "date": "2026-05-06",
-          "value": 10167.9,
+          "value": 10494.23,
           "holding": "XLK"
         },
         {
           "date": "2026-05-07",
-          "value": 10147.57,
+          "value": 10473.24,
           "holding": "XLK"
         },
         {
           "date": "2026-05-08",
-          "value": 10496.21,
+          "value": 10833.07,
           "holding": "XLK"
         },
         {
           "date": "2026-05-11",
-          "value": 10637.33,
+          "value": 10978.73,
           "holding": "XLK"
         },
         {
           "date": "2026-05-12",
-          "value": 10477.07,
+          "value": 10813.32,
           "holding": "XLK"
         },
         {
           "date": "2026-05-13",
-          "value": 10575.74,
+          "value": 10915.16,
           "holding": "XLK"
         },
         {
           "date": "2026-05-14",
-          "value": 10734.21,
+          "value": 11078.72,
           "holding": "XLK"
         },
         {
           "date": "2026-05-15",
-          "value": 10540.46,
+          "value": 10878.74,
           "holding": "XLK"
         },
         {
           "date": "2026-05-18",
-          "value": 10426.84,
+          "value": 10761.48,
           "holding": "XLK"
         },
         {
           "date": "2026-05-19",
-          "value": 10359.86,
+          "value": 10692.35,
           "holding": "XLK"
         },
         {
           "date": "2026-05-20",
-          "value": 10593.08,
+          "value": 10933.06,
           "holding": "XLK"
         },
         {
           "date": "2026-05-21",
-          "value": 10680.39,
+          "value": 11023.17,
           "holding": "XLK"
         },
         {
           "date": "2026-05-22",
-          "value": 10787.43,
+          "value": 11133.65,
           "holding": "XLK"
         },
         {
           "date": "2026-05-25",
-          "value": 10787.43,
+          "value": 11133.65,
           "holding": "XLK"
         },
         {
           "date": "2026-05-26",
-          "value": 11071.49,
+          "value": 11426.82,
           "holding": "XLK"
         },
         {
           "date": "2026-05-27",
-          "value": 11029.03,
+          "value": 11382.99,
           "holding": "XLK"
         },
         {
           "date": "2026-05-28",
-          "value": 11173.75,
+          "value": 11532.36,
           "holding": "XLK"
         },
         {
           "date": "2026-05-29",
-          "value": 11423.11,
+          "value": 11789.73,
           "holding": "XLK"
         },
         {
           "date": "2026-06-01",
-          "value": 11706.57,
+          "value": 12082.28,
           "holding": "XLK"
         },
         {
           "date": "2026-06-02",
-          "value": 11853.08,
+          "value": 12233.5,
           "holding": "XLK"
         },
         {
           "date": "2026-06-03",
-          "value": 11734.68,
+          "value": 12111.29,
           "holding": "XLK"
         },
         {
           "date": "2026-06-04",
-          "value": 11551.69,
+          "value": 11922.43,
           "holding": "XLK"
         },
         {
           "date": "2026-06-05",
-          "value": 10782.05,
+          "value": 11128.09,
           "holding": "XLK"
         },
         {
           "date": "2026-06-08",
-          "value": 11014.08,
+          "value": 11367.56,
           "holding": "XLK"
         },
         {
           "date": "2026-06-09",
-          "value": 10810.16,
+          "value": 11157.1,
           "holding": "XLK"
         },
         {
           "date": "2026-06-10",
-          "value": 10562.58,
+          "value": 10901.58,
           "holding": "XLK"
         },
         {
           "date": "2026-06-11",
-          "value": 10956.07,
+          "value": 11307.7,
           "holding": "XLK"
         },
         {
           "date": "2026-06-12",
-          "value": 11051.15,
+          "value": 11405.83,
           "holding": "XLK"
         },
         {
           "date": "2026-06-15",
-          "value": 11469.16,
+          "value": 11837.25,
           "holding": "XLK"
         },
         {
           "date": "2026-06-16",
-          "value": 11149.23,
+          "value": 11507.05,
           "holding": "XLK"
         },
         {
           "date": "2026-06-17",
-          "value": 11110.96,
+          "value": 11467.55,
           "holding": "XLK"
         },
         {
           "date": "2026-06-18",
-          "value": 11448.23,
+          "value": 11815.65,
           "holding": "XLK"
         },
         {
           "date": "2026-06-19",
-          "value": 11448.23,
+          "value": 11815.65,
           "holding": "XLK"
         },
         {
           "date": "2026-06-22",
-          "value": 11490.69,
+          "value": 11859.47,
           "holding": "XLK"
         },
         {
           "date": "2026-06-23",
-          "value": 11014.68,
+          "value": 11368.18,
           "holding": "XLK"
         },
         {
           "date": "2026-06-24",
-          "value": 10946.5,
+          "value": 11297.82,
           "holding": "XLK"
         },
         {
           "date": "2026-06-25",
-          "value": 11037.4,
+          "value": 11391.64,
           "holding": "XLK"
         },
         {
           "date": "2026-06-26",
-          "value": 10830.49,
+          "value": 11178.08,
           "holding": "XLK"
         },
         {
           "date": "2026-06-29",
-          "value": 11087.63,
+          "value": 11443.48,
           "holding": "XLK"
         },
         {
           "date": "2026-06-30",
-          "value": 11393.21,
+          "value": 11758.87,
           "holding": "XLK"
         },
         {
           "date": "2026-07-01",
-          "value": 11100.19,
+          "value": 11456.44,
           "holding": "XLK"
         },
         {
           "date": "2026-07-02",
-          "value": 10799.39,
+          "value": 11145.99,
           "holding": "XLK"
         },
         {
           "date": "2026-07-03",
-          "value": 10799.39,
+          "value": 11145.99,
           "holding": "XLK"
         },
         {
           "date": "2026-07-06",
-          "value": 10977.6,
+          "value": 11329.92,
           "holding": "XLK"
         },
         {
           "date": "2026-07-07",
-          "value": 10715.07,
+          "value": 11058.97,
           "holding": "XLK"
         },
         {
           "date": "2026-07-08",
-          "value": 10847.83,
+          "value": 11195.98,
           "holding": "XLK"
         },
         {
           "date": "2026-07-09",
-          "value": 11084.05,
+          "value": 11439.78,
           "holding": "XLK"
         }
       ],
@@ -557,39 +557,23 @@
           "commission": 10.0
         },
         {
-          "date": "2026-04-06",
+          "date": "2026-04-16",
           "action": "sell",
           "symbol": "GLD",
           "shares": 21.36304320870831,
-          "price": 427.6499938964844,
-          "commission": 9.13590529781444
+          "price": 440.0799865722656,
+          "commission": 9.401447768431083
         },
         {
-          "date": "2026-04-06",
-          "action": "buy",
-          "symbol": "XLE",
-          "shares": 152.7755123408298,
-          "price": 59.68000030517578,
-          "commission": 9.126769392516627
-        },
-        {
-          "date": "2026-04-13",
-          "action": "sell",
-          "symbol": "XLE",
-          "shares": 152.7755123408298,
-          "price": 57.11000061035156,
-          "commission": 8.725009603031564
-        },
-        {
-          "date": "2026-04-13",
+          "date": "2026-04-16",
           "action": "buy",
           "symbol": "XLK",
-          "shares": 59.80061995972599,
-          "price": 145.61000061035156,
-          "commission": 8.716284593428533
+          "shares": 61.7198658771627,
+          "price": 152.02000427246094,
+          "commission": 9.392046320662653
         }
       ],
-      "num_trades": 5
+      "num_trades": 3
     },
     "a2_bare": {
       "final_value": 11439.78,
@@ -2144,7 +2128,7 @@
       "as_of": "2026-04-13",
       "iso_week": "2026-W16",
       "regime_view": "mixed",
-      "confidence": 0.58,
+      "confidence": 0.6,
       "samples": 5,
       "sample_agreement": 1.0,
       "powers_requested": {
@@ -2154,12 +2138,46 @@
         "lookback_override_months": null,
         "force_defensive_contest": false
       },
-      "current_position_at_refresh": "XLK",
+      "current_position_at_refresh": null,
       "days_held_at_refresh": 0
     },
     {
       "as_of": "2026-04-20",
       "iso_week": "2026-W17",
+      "regime_view": "risk_on",
+      "confidence": 0.6,
+      "samples": 5,
+      "sample_agreement": 1.0,
+      "powers_requested": {
+        "accelerate_entry": {
+          "symbol": null
+        },
+        "lookback_override_months": null,
+        "force_defensive_contest": false
+      },
+      "current_position_at_refresh": null,
+      "days_held_at_refresh": 0
+    },
+    {
+      "as_of": "2026-04-27",
+      "iso_week": "2026-W18",
+      "regime_view": "risk_on",
+      "confidence": 0.62,
+      "samples": 5,
+      "sample_agreement": 1.0,
+      "powers_requested": {
+        "accelerate_entry": {
+          "symbol": null
+        },
+        "lookback_override_months": null,
+        "force_defensive_contest": false
+      },
+      "current_position_at_refresh": null,
+      "days_held_at_refresh": 0
+    },
+    {
+      "as_of": "2026-05-04",
+      "iso_week": "2026-W19",
       "regime_view": "risk_on",
       "confidence": 0.69,
       "samples": 5,
@@ -2171,50 +2189,16 @@
         "lookback_override_months": null,
         "force_defensive_contest": false
       },
-      "current_position_at_refresh": "XLK",
-      "days_held_at_refresh": 7
-    },
-    {
-      "as_of": "2026-04-27",
-      "iso_week": "2026-W18",
-      "regime_view": "risk_on",
-      "confidence": 0.71,
-      "samples": 5,
-      "sample_agreement": 1.0,
-      "powers_requested": {
-        "accelerate_entry": {
-          "symbol": null
-        },
-        "lookback_override_months": null,
-        "force_defensive_contest": false
-      },
-      "current_position_at_refresh": "XLK",
-      "days_held_at_refresh": 14
-    },
-    {
-      "as_of": "2026-05-04",
-      "iso_week": "2026-W19",
-      "regime_view": "risk_on",
-      "confidence": 0.72,
-      "samples": 5,
-      "sample_agreement": 1.0,
-      "powers_requested": {
-        "accelerate_entry": {
-          "symbol": null
-        },
-        "lookback_override_months": null,
-        "force_defensive_contest": false
-      },
-      "current_position_at_refresh": "XLK",
-      "days_held_at_refresh": 21
+      "current_position_at_refresh": null,
+      "days_held_at_refresh": 0
     },
     {
       "as_of": "2026-05-11",
       "iso_week": "2026-W20",
-      "regime_view": "risk_on",
-      "confidence": 0.78,
-      "samples": 5,
-      "sample_agreement": 1.0,
+      "regime_view": "mixed",
+      "confidence": 0.0,
+      "samples": 0,
+      "sample_agreement": 0.0,
       "powers_requested": {
         "accelerate_entry": {
           "symbol": null
@@ -2222,16 +2206,16 @@
         "lookback_override_months": null,
         "force_defensive_contest": false
       },
-      "current_position_at_refresh": "XLK",
-      "days_held_at_refresh": 28
+      "current_position_at_refresh": null,
+      "days_held_at_refresh": 0
     },
     {
       "as_of": "2026-05-18",
       "iso_week": "2026-W21",
-      "regime_view": "risk_on",
-      "confidence": 0.65,
-      "samples": 5,
-      "sample_agreement": 1.0,
+      "regime_view": "mixed",
+      "confidence": 0.0,
+      "samples": 0,
+      "sample_agreement": 0.0,
       "powers_requested": {
         "accelerate_entry": {
           "symbol": null
@@ -2239,16 +2223,16 @@
         "lookback_override_months": null,
         "force_defensive_contest": false
       },
-      "current_position_at_refresh": "XLK",
-      "days_held_at_refresh": 35
+      "current_position_at_refresh": null,
+      "days_held_at_refresh": 0
     },
     {
       "as_of": "2026-05-25",
       "iso_week": "2026-W22",
-      "regime_view": "risk_on",
-      "confidence": 0.75,
-      "samples": 5,
-      "sample_agreement": 1.0,
+      "regime_view": "mixed",
+      "confidence": 0.0,
+      "samples": 0,
+      "sample_agreement": 0.0,
       "powers_requested": {
         "accelerate_entry": {
           "symbol": null
@@ -2256,16 +2240,16 @@
         "lookback_override_months": null,
         "force_defensive_contest": false
       },
-      "current_position_at_refresh": "XLK",
-      "days_held_at_refresh": 42
+      "current_position_at_refresh": null,
+      "days_held_at_refresh": 0
     },
     {
       "as_of": "2026-06-01",
       "iso_week": "2026-W23",
-      "regime_view": "risk_on",
-      "confidence": 0.77,
-      "samples": 5,
-      "sample_agreement": 1.0,
+      "regime_view": "mixed",
+      "confidence": 0.0,
+      "samples": 0,
+      "sample_agreement": 0.0,
       "powers_requested": {
         "accelerate_entry": {
           "symbol": null
@@ -2273,16 +2257,16 @@
         "lookback_override_months": null,
         "force_defensive_contest": false
       },
-      "current_position_at_refresh": "XLK",
-      "days_held_at_refresh": 49
+      "current_position_at_refresh": null,
+      "days_held_at_refresh": 0
     },
     {
       "as_of": "2026-06-08",
       "iso_week": "2026-W24",
       "regime_view": "mixed",
-      "confidence": 0.48,
-      "samples": 5,
-      "sample_agreement": 1.0,
+      "confidence": 0.0,
+      "samples": 0,
+      "sample_agreement": 0.0,
       "powers_requested": {
         "accelerate_entry": {
           "symbol": null
@@ -2290,16 +2274,16 @@
         "lookback_override_months": null,
         "force_defensive_contest": false
       },
-      "current_position_at_refresh": "XLK",
-      "days_held_at_refresh": 56
+      "current_position_at_refresh": null,
+      "days_held_at_refresh": 0
     },
     {
       "as_of": "2026-06-15",
       "iso_week": "2026-W25",
-      "regime_view": "risk_on",
-      "confidence": 0.61,
-      "samples": 5,
-      "sample_agreement": 1.0,
+      "regime_view": "mixed",
+      "confidence": 0.0,
+      "samples": 0,
+      "sample_agreement": 0.0,
       "powers_requested": {
         "accelerate_entry": {
           "symbol": null
@@ -2307,16 +2291,16 @@
         "lookback_override_months": null,
         "force_defensive_contest": false
       },
-      "current_position_at_refresh": "XLK",
-      "days_held_at_refresh": 63
+      "current_position_at_refresh": null,
+      "days_held_at_refresh": 0
     },
     {
       "as_of": "2026-06-22",
       "iso_week": "2026-W26",
-      "regime_view": "risk_on",
-      "confidence": 0.59,
-      "samples": 5,
-      "sample_agreement": 1.0,
+      "regime_view": "mixed",
+      "confidence": 0.0,
+      "samples": 0,
+      "sample_agreement": 0.0,
       "powers_requested": {
         "accelerate_entry": {
           "symbol": null
@@ -2324,16 +2308,16 @@
         "lookback_override_months": null,
         "force_defensive_contest": false
       },
-      "current_position_at_refresh": "XLK",
-      "days_held_at_refresh": 70
+      "current_position_at_refresh": null,
+      "days_held_at_refresh": 0
     },
     {
       "as_of": "2026-06-29",
       "iso_week": "2026-W27",
       "regime_view": "mixed",
-      "confidence": 0.56,
-      "samples": 5,
-      "sample_agreement": 1.0,
+      "confidence": 0.0,
+      "samples": 0,
+      "sample_agreement": 0.0,
       "powers_requested": {
         "accelerate_entry": {
           "symbol": null
@@ -2341,16 +2325,16 @@
         "lookback_override_months": null,
         "force_defensive_contest": false
       },
-      "current_position_at_refresh": "XLK",
-      "days_held_at_refresh": 77
+      "current_position_at_refresh": null,
+      "days_held_at_refresh": 0
     },
     {
       "as_of": "2026-07-06",
       "iso_week": "2026-W28",
       "regime_view": "mixed",
-      "confidence": 0.55,
-      "samples": 5,
-      "sample_agreement": 1.0,
+      "confidence": 0.0,
+      "samples": 0,
+      "sample_agreement": 0.0,
       "powers_requested": {
         "accelerate_entry": {
           "symbol": null
@@ -2358,8 +2342,8 @@
         "lookback_override_months": null,
         "force_defensive_contest": false
       },
-      "current_position_at_refresh": "XLK",
-      "days_held_at_refresh": 84
+      "current_position_at_refresh": null,
+      "days_held_at_refresh": 0
     }
   ],
   "overlay_journal_log": [
@@ -2369,10 +2353,10 @@
         {
           "power": "accelerate_entry",
           "status": "ignored",
-          "reason": "requested symbol 'GLD' is not the core's own projected next pick ('XLE')",
+          "reason": "power disabled (shadow-logged)",
           "detail": {
-            "requested_symbol": "GLD",
-            "projected_symbol": "XLE"
+            "requested": "GLD",
+            "projected_next_pick": "XLE"
           }
         }
       ]
@@ -2383,10 +2367,10 @@
         {
           "power": "accelerate_entry",
           "status": "ignored",
-          "reason": "requested symbol 'GLD' is not the core's own projected next pick ('XLE')",
+          "reason": "power disabled (shadow-logged)",
           "detail": {
-            "requested_symbol": "GLD",
-            "projected_symbol": "XLE"
+            "requested": "GLD",
+            "projected_next_pick": "XLE"
           }
         }
       ]
@@ -2397,9 +2381,10 @@
         {
           "power": "accelerate_entry",
           "status": "ignored",
-          "reason": "already holding GLD, nothing to accelerate",
+          "reason": "power disabled (shadow-logged)",
           "detail": {
-            "requested_symbol": "GLD"
+            "requested": "GLD",
+            "projected_next_pick": "GLD"
           }
         }
       ]
@@ -2410,10 +2395,10 @@
         {
           "power": "accelerate_entry",
           "status": "ignored",
-          "reason": "requested symbol 'GLD' is not the core's own projected next pick ('XLE')",
+          "reason": "power disabled (shadow-logged)",
           "detail": {
-            "requested_symbol": "GLD",
-            "projected_symbol": "XLE"
+            "requested": "GLD",
+            "projected_next_pick": "XLE"
           }
         }
       ]
@@ -2424,10 +2409,10 @@
         {
           "power": "accelerate_entry",
           "status": "ignored",
-          "reason": "requested symbol 'GLD' is not the core's own projected next pick ('XLE')",
+          "reason": "power disabled (shadow-logged)",
           "detail": {
-            "requested_symbol": "GLD",
-            "projected_symbol": "XLE"
+            "requested": "GLD",
+            "projected_next_pick": "XLE"
           }
         }
       ]
@@ -2567,10 +2552,11 @@
       "rows": [
         {
           "power": "accelerate_entry",
-          "status": "applied",
-          "reason": "accelerated entry into XLE, the core's own projected next pick",
+          "status": "ignored",
+          "reason": "power disabled (shadow-logged)",
           "detail": {
-            "symbol": "XLE"
+            "requested": "XLE",
+            "projected_next_pick": "XLE"
           }
         },
         {
@@ -2589,9 +2575,10 @@
         {
           "power": "accelerate_entry",
           "status": "ignored",
-          "reason": "already holding XLE, nothing to accelerate",
+          "reason": "power disabled (shadow-logged)",
           "detail": {
-            "requested_symbol": "XLE"
+            "requested": "XLE",
+            "projected_next_pick": "XLE"
           }
         },
         {
@@ -2610,10 +2597,10 @@
         {
           "power": "accelerate_entry",
           "status": "ignored",
-          "reason": "requested symbol 'XLE' is not the core's own projected next pick ('DBC')",
+          "reason": "power disabled (shadow-logged)",
           "detail": {
-            "requested_symbol": "XLE",
-            "projected_symbol": "DBC"
+            "requested": "XLE",
+            "projected_next_pick": "DBC"
           }
         },
         {
@@ -2632,10 +2619,10 @@
         {
           "power": "accelerate_entry",
           "status": "ignored",
-          "reason": "requested symbol 'XLE' is not the core's own projected next pick ('DBC')",
+          "reason": "power disabled (shadow-logged)",
           "detail": {
-            "requested_symbol": "XLE",
-            "projected_symbol": "DBC"
+            "requested": "XLE",
+            "projected_next_pick": "DBC"
           }
         },
         {
@@ -2654,10 +2641,10 @@
         {
           "power": "accelerate_entry",
           "status": "ignored",
-          "reason": "requested symbol 'XLE' is not the core's own projected next pick ('DBC')",
+          "reason": "power disabled (shadow-logged)",
           "detail": {
-            "requested_symbol": "XLE",
-            "projected_symbol": "DBC"
+            "requested": "XLE",
+            "projected_next_pick": "DBC"
           }
         },
         {
@@ -2676,10 +2663,10 @@
         {
           "power": "accelerate_entry",
           "status": "ignored",
-          "reason": "requested symbol 'EEM' is not the core's own projected next pick ('DBC')",
+          "reason": "power disabled (shadow-logged)",
           "detail": {
-            "requested_symbol": "EEM",
-            "projected_symbol": "DBC"
+            "requested": "EEM",
+            "projected_next_pick": "DBC"
           }
         },
         {
@@ -2698,10 +2685,10 @@
         {
           "power": "accelerate_entry",
           "status": "ignored",
-          "reason": "requested symbol 'EEM' is not the core's own projected next pick ('DBC')",
+          "reason": "power disabled (shadow-logged)",
           "detail": {
-            "requested_symbol": "EEM",
-            "projected_symbol": "DBC"
+            "requested": "EEM",
+            "projected_next_pick": "DBC"
           }
         },
         {
@@ -2720,10 +2707,10 @@
         {
           "power": "accelerate_entry",
           "status": "ignored",
-          "reason": "requested symbol 'EEM' is not the core's own projected next pick ('DBC')",
+          "reason": "power disabled (shadow-logged)",
           "detail": {
-            "requested_symbol": "EEM",
-            "projected_symbol": "DBC"
+            "requested": "EEM",
+            "projected_next_pick": "DBC"
           }
         },
         {
@@ -2742,10 +2729,10 @@
         {
           "power": "accelerate_entry",
           "status": "ignored",
-          "reason": "requested symbol 'EEM' is not the core's own projected next pick ('DBC')",
+          "reason": "power disabled (shadow-logged)",
           "detail": {
-            "requested_symbol": "EEM",
-            "projected_symbol": "DBC"
+            "requested": "EEM",
+            "projected_next_pick": "DBC"
           }
         },
         {
@@ -2764,10 +2751,10 @@
         {
           "power": "accelerate_entry",
           "status": "ignored",
-          "reason": "requested symbol 'EEM' is not the core's own projected next pick ('DBC')",
+          "reason": "power disabled (shadow-logged)",
           "detail": {
-            "requested_symbol": "EEM",
-            "projected_symbol": "DBC"
+            "requested": "EEM",
+            "projected_next_pick": "DBC"
           }
         },
         {

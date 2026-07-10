@@ -21,6 +21,21 @@ from aurel2.overlay.schema import validate_tilt
 from aurel2.overlay.state import OverlayState
 
 
+@pytest.fixture
+def accelerate_enabled(monkeypatch):
+    """Enable power 1 for tests of its logic; it ships disabled for the
+    parallel run (shadow-logged) per the 2026-07-10 replay finding."""
+    from dataclasses import replace
+
+    import aurel2.overlay.powers as powers_mod
+
+    cfg = replace(
+        powers_mod.CANONICAL_CONFIG,
+        overlay=replace(powers_mod.CANONICAL_CONFIG.overlay, accelerate_entry_enabled=True),
+    )
+    monkeypatch.setattr(powers_mod, "CANONICAL_CONFIG", cfg)
+
+
 def _price_series(symbol: str, start: date, days: int, start_price: float, daily_growth: float) -> pd.DataFrame:
     rows = []
     price = start_price
@@ -84,7 +99,7 @@ class TestProjectNextPick:
 
 
 class TestAccelerateEntryRestriction:
-    def test_applies_when_symbol_matches_projected_pick(self):
+    def test_applies_when_symbol_matches_projected_pick(self, accelerate_enabled):
         calc_date = date(2026, 7, 14)
         prices = build_prices(calc_date, {"XLK": 0.01, "SPY": 0.001})
         tilt = validate_tilt(make_tilt(powers={"accelerate_entry": {"symbol": "XLK"}}))
@@ -98,7 +113,7 @@ class TestAccelerateEntryRestriction:
         assert applied[0].status == "applied"
         assert result.decision_overrides == {"action": "buy", "asset_symbol": "XLK"}
 
-    def test_ignored_when_symbol_is_not_core_own_pick(self):
+    def test_ignored_when_symbol_is_not_core_own_pick(self, accelerate_enabled):
         """The AI can never introduce a novel symbol -- requesting QQQ (not in
         DM's universe / not the projected winner) must be a no-op, journaled."""
         calc_date = date(2026, 7, 14)
@@ -127,6 +142,23 @@ class TestAccelerateEntryRestriction:
         entries = [e for e in result.journal_entries if e.power == "accelerate_entry"]
         assert entries[0].status == "ignored"
 
+    def test_disabled_power_shadow_logs_and_never_overrides(self):
+        """Ships disabled for the parallel run: a valid request is journaled
+        (with the projection, for later worth-it analysis) but never applied."""
+        calc_date = date(2026, 7, 14)
+        prices = build_prices(calc_date, {"XLK": 0.01, "SPY": 0.001})
+        tilt = validate_tilt(make_tilt(powers={"accelerate_entry": {"symbol": "XLK"}}))
+        state = OverlayState()
+
+        result = apply_overlay(tilt, state, calc_date, prices, DM_ASSETS, current_holding_symbol="SPY")
+
+        entries = [e for e in result.journal_entries if e.power == "accelerate_entry"]
+        assert entries[0].status == "ignored"
+        assert "power disabled" in entries[0].reason
+        assert entries[0].detail == {"requested": "XLK", "projected_next_pick": "XLK"}
+        assert result.decision_overrides == {}
+        assert state.last_accelerate_entry_date is None  # no cap consumed
+
     def test_null_symbol_is_not_journaled(self):
         calc_date = date(2026, 7, 14)
         prices = build_prices(calc_date, {"XLK": 0.01, "SPY": 0.001})
@@ -138,7 +170,7 @@ class TestAccelerateEntryRestriction:
 
 
 class TestAccelerateEntryCapInSeam:
-    def test_over_cap_is_ignored_and_journaled(self):
+    def test_over_cap_is_ignored_and_journaled(self, accelerate_enabled):
         calc_date = date(2026, 7, 14)
         prices = build_prices(calc_date, {"XLK": 0.01, "SPY": 0.001})
         tilt = validate_tilt(make_tilt(powers={"accelerate_entry": {"symbol": "XLK"}}))
@@ -151,7 +183,7 @@ class TestAccelerateEntryCapInSeam:
         assert "over cap" in entries[0].reason
         assert result.decision_overrides == {}
 
-    def test_applying_updates_state_for_next_check(self):
+    def test_applying_updates_state_for_next_check(self, accelerate_enabled):
         calc_date = date(2026, 7, 14)
         prices = build_prices(calc_date, {"XLK": 0.01, "SPY": 0.001})
         tilt = validate_tilt(make_tilt(powers={"accelerate_entry": {"symbol": "XLK"}}))

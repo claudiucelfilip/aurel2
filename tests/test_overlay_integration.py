@@ -17,6 +17,21 @@ from aurel2.overlay.schema import tilt_path_for_mode
 from aurel2.overlay.state import state_path_for_mode
 
 
+@pytest.fixture
+def accelerate_enabled(monkeypatch):
+    """Enable power 1 for tests of its logic; it ships disabled for the
+    parallel run (shadow-logged) per the 2026-07-10 replay finding."""
+    from dataclasses import replace
+
+    import aurel2.overlay.powers as powers_mod
+
+    cfg = replace(
+        powers_mod.CANONICAL_CONFIG,
+        overlay=replace(powers_mod.CANONICAL_CONFIG.overlay, accelerate_entry_enabled=True),
+    )
+    monkeypatch.setattr(powers_mod, "CANONICAL_CONFIG", cfg)
+
+
 DM_ASSETS = {
     AssetClass.TECH_SECTOR: ASSET_REGISTRY[AssetClass.TECH_SECTOR],
     AssetClass.US_STOCKS: ASSET_REGISTRY[AssetClass.US_STOCKS],
@@ -90,7 +105,7 @@ class TestIntegrationSeam:
         assert outcome.action is None
         assert outcome.journal_rows == []
 
-    def test_valid_accelerate_entry_tilt_overrides_decision(self, tmp_path, monkeypatch):
+    def test_valid_accelerate_entry_tilt_overrides_decision(self, tmp_path, monkeypatch, accelerate_enabled):
         monkeypatch.chdir(tmp_path)
         calc_date = date(2026, 7, 14)
         prices = build_prices(calc_date, {"XLK": 0.01, "SPY": 0.001})
@@ -119,7 +134,7 @@ class TestIntegrationSeam:
         state = json.loads(state_file.read_text())
         assert state["last_accelerate_entry_date"] == "2026-07-14"
 
-    def test_second_call_within_cooldown_is_ignored(self, tmp_path, monkeypatch):
+    def test_second_call_within_cooldown_is_ignored(self, tmp_path, monkeypatch, accelerate_enabled):
         monkeypatch.chdir(tmp_path)
         calc_date = date(2026, 7, 14)
         prices = build_prices(calc_date, {"XLK": 0.01, "SPY": 0.001})

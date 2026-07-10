@@ -66,6 +66,12 @@ class OverlaySettings:
     context_pack_version: str = "v2"
 
     # Power 1: accelerate entry into the core's own next pick.
+    # Disabled for the parallel run (Claudiu, 2026-07-10): the overlay-ON replay
+    # showed one wrong acceleration (XLE detour, -3.5pp vs bare) from acting on
+    # a projection the concurrent lookback override had destabilized. Requests
+    # are still journaled as ignored (shadow log) so the run produces evidence
+    # for re-enabling behind a worth-it hurdle.
+    accelerate_entry_enabled: bool = False
     accelerate_entry_max_per_days: int = 21
 
     # Power 2: temporary lookback override (3m or 6m instead of 12m).

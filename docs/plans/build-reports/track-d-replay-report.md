@@ -241,3 +241,15 @@ Not pushed — orchestrator merges into `autonomous-trading` and pushes, per ins
   `auto_adjust=False` raw-close method) and are merged in-memory only for this replay's
   benchmark curve and the `accelerate_entry` projection space — neither committed CSV was
   edited.
+
+## Addendum (2026-07-10, post-review): accelerate_entry disabled for the parallel run
+
+Claudiu's launch decision after reviewing §6: power 1 (`accelerate_entry`) ships **disabled
+but shadow-logged** (`CANONICAL_CONFIG.overlay.accelerate_entry_enabled = False`) — every
+request is journaled as `ignored: power disabled (shadow-logged)` with the requested symbol
+and the projection, so the parallel run accumulates evidence on whether early entries would
+have paid. Re-enabling is conditioned on that evidence plus a worth-it hurdle (an expected-edge
+threshold covering the cost of a wrong early entry — Claudiu's suggestion), validated properly
+before any flip. Cache re-run with the flag off: A2+overlay = A2-bare exactly (14.40%, 3
+trades) — the XLE detour disappears and the defensive powers remain correctly inert on this
+trending window.
