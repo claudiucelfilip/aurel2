@@ -112,7 +112,7 @@ class Checker:
         ai_model: str = "haiku",
         ai_lookback_years: int = 3,
         mode: str = "paper",
-        overlay_enabled: bool = False,
+        overlay_enabled: bool = CANONICAL_CONFIG.overlay.enabled,
     ):
         self.connection = connection
         self.pending_manager = pending_manager

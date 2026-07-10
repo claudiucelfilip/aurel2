@@ -19,12 +19,14 @@ from typing import Optional
 
 import structlog
 
+from aurel2.config.canonical import CANONICAL_CONFIG
+
 logger = structlog.get_logger()
 
-ACCELERATE_ENTRY_COOLDOWN_DAYS = 21
-LOOKBACK_OVERRIDE_MAX_DAYS = 30
-LOOKBACK_OVERRIDE_MAX_PER_QUARTER = 2
-FORCE_DEFENSIVE_COOLDOWN_DAYS = 14
+ACCELERATE_ENTRY_COOLDOWN_DAYS = CANONICAL_CONFIG.overlay.accelerate_entry_max_per_days
+LOOKBACK_OVERRIDE_MAX_DAYS = CANONICAL_CONFIG.overlay.lookback_override_max_consecutive_days
+LOOKBACK_OVERRIDE_MAX_PER_QUARTER = CANONICAL_CONFIG.overlay.lookback_override_max_per_quarter
+FORCE_DEFENSIVE_COOLDOWN_DAYS = CANONICAL_CONFIG.overlay.force_defensive_contest_max_per_days
 
 
 def state_path_for_mode(mode: str = "paper") -> str:

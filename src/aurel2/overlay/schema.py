@@ -29,13 +29,15 @@ import structlog
 
 logger = structlog.get_logger()
 
+from aurel2.config.canonical import CANONICAL_CONFIG
+
 REGIME_VIEWS = ("risk_on", "mixed", "risk_off")
 LOOKBACK_OVERRIDE_MONTHS = (3, 6)
-DEFENSIVE_CONTEST_SYMBOLS = ("GLD", "AGG", "SHY", "IEF", "TIP", "CASH")
+DEFENSIVE_CONTEST_SYMBOLS = CANONICAL_CONFIG.overlay.force_defensive_contest_universe
 
 
 def tilt_path_for_mode(mode: str = "paper") -> str:
-    return f"data/{mode}/overlay_tilt.json"
+    return CANONICAL_CONFIG.overlay.tilt_file_path.format(mode=mode)
 
 
 @dataclass

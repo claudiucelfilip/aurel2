@@ -30,10 +30,12 @@ from aurel2.overlay.schema import (
     write_tilt,
 )
 
+from aurel2.config.canonical import CANONICAL_CONFIG
+
 logger = structlog.get_logger()
 
-N_SAMPLES = 5
-MAJORITY_THRESHOLD = 3  # of 5
+N_SAMPLES = CANONICAL_CONFIG.overlay.sample_count
+MAJORITY_THRESHOLD = CANONICAL_CONFIG.overlay.sample_agreement_threshold
 DEFAULT_TTL_DAYS = 7
 EVENT_TRIGGER_MOVE_PCT = 5.0
 EVENT_TRIGGER_WINDOW_DAYS = 3

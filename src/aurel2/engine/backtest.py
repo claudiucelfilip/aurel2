@@ -200,7 +200,7 @@ class BacktestEngine:
         canary_enabled: bool = False,
         canary_symbols: list[str] | None = None,
         canary_safe_asset: str = "IEF",
-        overlay_enabled: bool = False,
+        overlay_enabled: bool = CANONICAL_CONFIG.overlay.enabled,
         overlay_mode: str = "paper",
     ):
         # Mirror the LIVE checker configuration so backtests match the daemon:
