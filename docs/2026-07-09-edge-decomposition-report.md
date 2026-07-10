@@ -75,3 +75,20 @@ Per the pre-committed branch table:
 2. ⬜ Branch A build (AI overlay design → implementation).
 3. ⬜ Parallel paper run vs live-trader with weekly scorecard.
 4. ⬜ Written graduation rule.
+
+## Erratum (2026-07-10): LT-actual was contaminated by a second bot on the same account
+
+Discovered during Phase 2 launch (first fidelity-guard run → 7/07 divergence → traced):
+**`aurel2-live-runner`, an Aurel2 daemon in `live --real` mode, traded the SAME Alpaca
+account as live-trader** (proof: its 0.641202-share XLK order of 2026-07-07 13:00 UTC is
+live-trader's broker-reconcile fill "agent did not journal this"). Consequences for this
+report: (1) the March GLD wash-trades (5 same-day round-trips, §anomalies) were the two
+bots rotating against each other — mystery resolved, not a live-trader bug; (2) some
+trades attributed "manual/unknown" in the LT-actual arm were Aurel2-real trades, so the
+per-era attribution counts overstate Claw's manual activity; (3) LT-actual's return is a
+blend, not pure live-trader. The Branch A verdict stands on the uncontaminated evidence
+(LT-core/A2-replay are code replays; the Apr-20 blind risk_on call is independently
+reproduced in `model_bakeoff.json` and the ablation), but LT-actual's exact +18.99% should
+not be quoted as "Claw's track record." The runner was decommissioned 2026-07-10
+(commit 9429c2c); the account now has one bot (live-trader), making the parallel-run
+benchmark clean going forward.
