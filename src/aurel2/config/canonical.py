@@ -59,7 +59,9 @@ class OverlaySettings:
     """
 
     tilt_file_path: str = "data/{mode}/overlay_tilt.json"
-    enabled: bool = False
+    # Parallel run launched 2026-07-13 (graduation rule:
+    # docs/plans/2026-07-10-graduation-rule.md, approved 2026-07-10).
+    enabled: bool = True
 
     # Frozen by the single ablation step (docs/plans/2026-07-10-context-pack-spec.md):
     # v2 = v1 + per-asset RSI(14)/z-scores + momentum-spread alarm. v3 cut.

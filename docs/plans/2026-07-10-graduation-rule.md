@@ -10,7 +10,7 @@ This document leaves no term ambiguous. Every metric below states exactly which 
 
 | Field | Value |
 |---|---|
-| Run start date | **`<TO BE STAMPED AT LAUNCH>`** — do not infer or backfill; the run has not started as of this writing. Stamped into `data/{mode}/scorecard_history.jsonl`'s first record and passed to every `weekly_scorecard.py --run-start` invocation thereafter. |
+| Run start date | **2026-07-13** (Monday — first weekly tilt pre-open; stamped 2026-07-10 at launch; Claudiu approved this rule 2026-07-10, launch shape: accelerate_entry disabled + shadow-logged). Recorded in `data/{mode}/scorecard_history.jsonl`'s first record and passed to every `weekly_scorecard.py --run-start` invocation thereafter. |
 | Mode | `paper` (Alpaca paper account) |
 | Minimum duration | 6 full weeks = 30 trading days from run start, inclusive |
 | Evaluation cadence | Weekly, Friday after close ET, at scorecard boundaries only — never mid-week |
