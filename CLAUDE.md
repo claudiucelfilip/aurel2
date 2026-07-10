@@ -24,10 +24,16 @@ Repo path: /root/aurel2
 Real repo path: /Users/claudiu/vps-root/aurel2
 Synced deployment copy: /opt/aurel2
 Runtime env: /opt/aurel2/docker/.env
-Live runner mounts: /root/aurel2/config and /root/aurel2/src
-Logs: docker logs --tail 200 aurel2-live-runner
+Logs: docker logs --tail 200 aurel2-trading-aurel2-1
 Dashboard: http://127.0.0.1:8080 on Dumbo, public route https://aurel2.clawdiu.org/
 ```
+
+**aurel2-live-runner is DECOMMISSIONED (2026-07-10).** It ran `live --real` against
+the SAME Alpaca account live-trader trades (proof: its 0.641202-share XLK order on
+2026-07-07 appears in live-trader's broker reconcile) — the source of the March GLD
+wash-trades and the misattributed "manual" trades. One bot per account: live-trader
+keeps the real account; Aurel2 runs paper (`aurel2-trading-aurel2-1`) until it
+graduates per docs/plans/2026-07-10-graduation-rule.md. Do not recreate it.
 
 **IMPORTANT: Always check Dumbo first, not the deprecated VPS and not this control machine!**
 
@@ -84,19 +90,19 @@ Backtest failures inside the disposable workspace are research outcomes to repor
 ```bash
 ssh 100.122.64.94
 docker ps --format 'table {{.Names}}\t{{.Status}}'
-docker restart aurel2-live-runner
+docker restart aurel2-trading-aurel2-1
 ```
 
 ### View Production Logs On Dumbo
 ```bash
 ssh 100.122.64.94
-docker logs --tail 200 aurel2-live-runner
+docker logs --tail 200 aurel2-trading-aurel2-1
 ```
 
 ### Check Production Health
 ```bash
 ssh 100.122.64.94
-docker exec aurel2-live-runner cat /root/.aurel2/heartbeat.json
+docker exec aurel2-trading-aurel2-1 cat /root/.aurel2/heartbeat.json
 ```
 
 ### Deploy Code Changes
