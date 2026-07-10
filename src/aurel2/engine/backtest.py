@@ -13,6 +13,7 @@ engine and the live checker must never hardcode these values separately.
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from decimal import Decimal
+from typing import Callable, Optional
 
 import pandas as pd
 import numpy as np
@@ -200,6 +201,7 @@ class BacktestEngine:
         canary_safe_asset: str = "IEF",
         overlay_enabled: bool = CANONICAL_CONFIG.overlay.enabled,
         overlay_mode: str = "paper",
+        overlay_refresh: Optional[Callable[[date, pd.DataFrame], None]] = None,
     ):
         # Mirror the LIVE checker configuration so backtests match the daemon:
         # no-TLT universe, plain dual momentum (2% switch threshold). Both
@@ -242,6 +244,14 @@ class BacktestEngine:
         # (docs/plans/2026-07-10-ai-overlay-design.md, fidelity rule).
         self.overlay_enabled = overlay_enabled
         self.overlay_mode = overlay_mode
+        # Optional hook mirroring live's external weekly cron that refreshes
+        # data/{mode}/overlay_tilt.json (via run_overlay_decision) before the
+        # checker reads it. Backtest has no cron, so a caller that wants the
+        # tilt to actually get regenerated on a cadence must pass this in;
+        # production/live code paths never set it (None = pure read-only seam,
+        # unchanged behavior). Called immediately before each rebalance
+        # decision, only when overlay_enabled.
+        self.overlay_refresh = overlay_refresh
         self.canary_safe_asset = canary_safe_asset
 
         # Tradeable symbols for AI override validation
@@ -548,6 +558,12 @@ class BacktestEngine:
             # ================================================================
             if self.overlay_enabled:
                 from aurel2.overlay.integration import run_overlay_for_decision
+
+                if self.overlay_refresh is not None:
+                    try:
+                        self.overlay_refresh(rebal_date, prices)
+                    except Exception as e:
+                        logger.error("backtest_overlay_refresh_error", date=str(rebal_date), error=str(e))
 
                 try:
                     overlay_outcome = run_overlay_for_decision(
