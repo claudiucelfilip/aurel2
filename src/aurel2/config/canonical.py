@@ -61,6 +61,10 @@ class OverlaySettings:
     tilt_file_path: str = "data/{mode}/overlay_tilt.json"
     enabled: bool = False
 
+    # Frozen by the single ablation step (docs/plans/2026-07-10-context-pack-spec.md):
+    # v2 = v1 + per-asset RSI(14)/z-scores + momentum-spread alarm. v3 cut.
+    context_pack_version: str = "v2"
+
     # Power 1: accelerate entry into the core's own next pick.
     accelerate_entry_max_per_days: int = 21
 

@@ -372,3 +372,21 @@ BUILDERS = {
     "v2": build_context_pack_v2,
     "v3": build_context_pack_v3,
 }
+
+
+# ---------------------------------------------------------------------------
+# Production entrypoint: the FROZEN pack version, per the single ablation step
+# (docs/plans/2026-07-10-context-pack-spec.md). Callers never pick a version.
+# ---------------------------------------------------------------------------
+
+_BUILDERS = {
+    "v1": build_context_pack_v1,
+    "v2": build_context_pack_v2,
+    "v3": build_context_pack_v3,
+}
+
+
+def build_frozen_context_pack(*args, **kwargs) -> dict:
+    from aurel2.config.canonical import CANONICAL_CONFIG
+
+    return _BUILDERS[CANONICAL_CONFIG.overlay.context_pack_version](*args, **kwargs)
