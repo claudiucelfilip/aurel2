@@ -201,6 +201,73 @@ docker compose --profile fidelity-guard run --rm fidelity-guard
 
 This is wiring only — no host currently has this cron entry installed.
 
+## Optional: Weekly Overlay Runner + Event-Trigger Check
+
+Part of the parallel-run launch prep (`docs/plans/2026-07-10-ai-overlay-design.md`
+"Parallel run & graduation", `docs/plans/2026-07-10-graduation-rule.md`). Two
+one-shot jobs, neither started by `docker compose up`:
+
+- **`overlay-runner`** (`scripts/run_weekly_overlay.py`) — assembles the frozen
+  context pack from the live decision path and runs the majority-of-5 sampler,
+  writing + git-auto-committing a fresh `data/{mode}/overlay_tilt.json`.
+- **`overlay-event-check`** (`scripts/run_weekly_overlay.py --check-event-trigger-only`)
+  — pure predicate: has the held asset moved >5% in 3 days? Exit code `3` if
+  triggered (chain into `overlay-runner`), `0` otherwise.
+
+```bash
+# Run the weekly overlay decision manually:
+docker compose --profile overlay-runner run --rm overlay-runner
+
+# Run the event-trigger check manually:
+docker compose --profile overlay-event-check run --rm overlay-event-check
+
+# Host crontab wiring (NOT installed on any host):
+
+# Weekly cadence — Monday 08:30 ET, ahead of pre-open:
+30 8 * * 1 cd /opt/aurel2 && docker compose --profile overlay-runner run --rm overlay-runner
+
+# Daily event-trigger check — every weekday 08:00 ET, chains into overlay-runner on trigger:
+0 8 * * 1-5 cd /opt/aurel2 && \
+  docker compose --profile overlay-event-check run --rm overlay-event-check; \
+  [ $? -eq 3 ] && docker compose --profile overlay-runner run --rm overlay-runner
+```
+
+This is wiring only — no host currently has these cron entries installed, and
+`CANONICAL_CONFIG.overlay.enabled` stays `False` regardless (this only
+generates tilt files; `checker.py` still won't act on them until that flag
+flips, which is a separate, explicit decision).
+
+## Optional: Weekly Scorecard
+
+The automated parallel-run referee (`scripts/weekly_scorecard.py`) — computes
+cumulative return / alpha vs QQQ / max DD / Sharpe for all four arms
+(A2+overlay, live-trader, A2-bare shadow replay, QQQ), plus overlay
+intervention accounting. Appends to `data/{mode}/scorecard_history.jsonl`,
+writes `data/{mode}/scorecard_latest.json` for the dashboard, sends an ntfy
+summary. Exact rule it evaluates against: `docs/plans/2026-07-10-graduation-rule.md`.
+
+```bash
+docker compose --profile weekly-scorecard run --rm -e RUN_START=2026-07-14 weekly-scorecard
+
+# Host crontab wiring (NOT installed on any host) — Friday after close ET:
+0 17 * * 5 cd /opt/aurel2 && docker compose --profile weekly-scorecard run --rm \
+  -e RUN_START=<run-start-date> weekly-scorecard
+```
+
+`RUN_START` is required and has no default — see
+`docs/plans/2026-07-10-graduation-rule.md` section 0: the run-start date gets
+stamped once, at launch, never invented or inferred.
+
+**Known gap:** the live-trader arm reads an absolute host path
+(`/Users/claudiu/.openclaw/workspace/live-trader/trades.jsonl`) that isn't
+mounted into this container as configured — see the comment on the
+`weekly-scorecard` service in `docker-compose.yml`. Until that mount is added
+on whichever host activates this, the live-trader arm will report as a
+permanent data gap (graceful degradation, not a crash — see the graduation
+rule's "live-trader data gap" row).
+
+This is wiring only — no host currently has this cron entry installed.
+
 ## Optional: Enable Monitoring
 
 ```bash
