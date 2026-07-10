@@ -1,4 +1,5 @@
-"""AI overlay engine: capped transition powers on top of Aurel2's dual-momentum core.
+"""AI overlay engine: capped transition powers on top of Aurel2's dual-momentum core,
+plus the senses/context-pack construction the overlay reasons over.
 
 Containment (docs/plans/2026-07-10-ai-overlay-design.md, "Hard containment"):
 the overlay's ONLY write surfaces are data/{mode}/overlay_tilt.json,

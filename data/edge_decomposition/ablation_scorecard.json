@@ -1,0 +1,732 @@
+{
+  "versions": [
+    "v1",
+    "v2",
+    "v3"
+  ],
+  "scorecards": {
+    "v1": {
+      "version": "v1",
+      "first_risk_off_date_in_chop": "2026-03-23",
+      "first_risk_on_date_in_april": "2026-04-20",
+      "apr_risk_on_preserved_before_claw_entry": true,
+      "pct_weeks_mixed": 50.0,
+      "n_weeks_mixed": 11,
+      "n_weeks_total": 22,
+      "mean_sample_agreement_all_weeks": 0.955,
+      "mean_sample_agreement_chop_weeks": 0.875,
+      "n_fragile_chop_weeks_lt_60pct_agreement": 0,
+      "n_chop_weeks": 8,
+      "claw_agree": 4,
+      "claw_disagree": 2,
+      "claw_neutral": 3,
+      "claw_calibration_table": [
+        {
+          "date": "2026-02-20",
+          "claw_action": "GLD -> EEM",
+          "ai_tilt_week": "2026-02-16",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "GLD": -0.018,
+            "XLE": 0.013,
+            "EEM": 0.011,
+            "XLK": -0.01
+          },
+          "ai_reasoning": "Leadership sits in international equities, energy and gold while US large-cap and tech momentum has rolled over on 1m/3m horizons, so the tape reads as rotation rather than broad risk-off. GLD's 12m strength is intact but its 20d tape shows blow-off instability (a -10.3% day followed by -4.0% and a +6.4% snapback), warranting a modest trim tilt in favor of XLE's steadier 1m/3m momentum and EEM's cross-horizon strength.",
+          "agreement": "agree"
+        },
+        {
+          "date": "2026-02-27",
+          "claw_action": "EEM -> XLE",
+          "ai_tilt_week": "2026-02-23",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "GLD": -0.02,
+            "EEM": 0.0117,
+            "EFA": 0.01,
+            "XLE": 0.015,
+            "XLK": -0.01
+          },
+          "ai_reasoning": "Held GLD shows a violent -10.3%/-4.0% two-day shock, 5.5% drawdown from highs, and 1m momentum (2.3%) sharply decelerated versus 3m/12m, so I tilt modestly away from it despite the hold signal. Broad risk appetite is intact but rotating: SPY vol is low at 11.8%, bonds are calm, and leadership sits in EEM/EFA/XLE (strong across all horizons) while US tech (XLK 1m -2.9%) lags, warranting small positive tilts to the leaders.",
+          "agreement": "agree"
+        },
+        {
+          "date": "2026-03-02",
+          "claw_action": "XLE -> GLD",
+          "ai_tilt_week": "2026-03-02",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "GLD": -0.013,
+            "EEM": 0.015,
+            "XLK": -0.015,
+            "XLE": 0.01,
+            "EFA": 0.015
+          },
+          "ai_reasoning": "US large-cap/tech momentum is rolling over (XLK -4.5% 1m, SPY flat 3m) while bonds catch a bid, but EM/EFA/energy/commodity momentum is broad and strong, so this reads as rotation rather than risk-off. GLD's +83.7% 12m run with a -10.3% single-day drop in the last 20 sessions signals parabolic fragility, warranting a small trim tilt toward EEM whose momentum is strong and orderly across all horizons.",
+          "agreement": "disagree"
+        },
+        {
+          "date": "2026-03-11",
+          "claw_action": "GLD -> XLE",
+          "ai_tilt_week": "2026-03-09",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "DBC": 0.02,
+            "XLE": 0.013,
+            "XLK": -0.015,
+            "XLF": -0.01,
+            "EEM": -0.01,
+            "GLD": 0.01
+          },
+          "ai_reasoning": "Commodities and energy show accelerating momentum across all horizons (DBC +13.4% 1m, +25% 12m) while equities are uniformly negative on 1m and bonds are flat, an inflation-driven rotation rather than a classic risk-off flight. GLD hold remains justified (dominant 12m leader, shallow -4.5% drawdown with recovery after the one-day shakeout), so I tilt toward the commodity complex and away from the weakest 1m/3m equity sectors without overriding the core signal.",
+          "agreement": "agree"
+        },
+        {
+          "date": "2026-04-10",
+          "claw_action": "XLE -> EEM",
+          "ai_tilt_week": "2026-04-06",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "GLD": -0.015,
+            "DBC": 0.02,
+            "XLE": 0.018,
+            "SPY": -0.01
+          },
+          "ai_reasoning": "Equities are choppy-to-weak on 1-3m horizons while energy and broad commodities show strong, consistent momentum across all lookbacks, suggesting an inflationary rotation rather than clean risk-on or risk-off. The held GLD position is deteriorating sharply (-9.3% 1m, -13.4% off its 12m high with 3-4% daily swings), so I tilt modestly away from it toward DBC/XLE where trend and breadth are intact.",
+          "agreement": "neutral"
+        },
+        {
+          "date": "2026-04-23",
+          "claw_action": "EEM -> QQQ",
+          "ai_tilt_week": "2026-04-20",
+          "ai_regime_view": "risk_on",
+          "ai_symbol_bias": {
+            "XLK": 0.01,
+            "EEM": 0.01,
+            "XLE": -0.018
+          },
+          "ai_reasoning": "Broad V-shaped recovery is intact: equities show strong 1m momentum (SPY +9.5%, EEM +14.4%, XLK +14.1%) with consistent positive closes over the last two weeks, favoring the held XLK and EM breadth. Energy is the clear laggard (XLE 1m -7.2% against +15.6% 3m, DBC 1m negative), and elevated 19.4% SPY vol plus strong gold keep confidence moderate and tilts small.",
+          "agreement": "agree (regime_view risk_on favors equity rotation)"
+        },
+        {
+          "date": "2026-06-12",
+          "claw_action": "QQQ -> IWM",
+          "ai_tilt_week": "2026-06-08",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "XLK": -0.02,
+            "XLV": 0.013,
+            "EEM": -0.015
+          },
+          "ai_reasoning": "Twelve-month momentum remains broadly risk-on (XLK +51%, EEM +38%, IJS +33%), but the most recent session was a correlated risk-off shock (XLK -6.7%, QQQ -4.8%, EEM -6.5%) in which bonds and gold also fell, suggesting a rate-driven selloff with no safe-haven bid. With XLK already -9% off its 12m high, held 53 days, and hit hardest on the shock day while XLV shows defensive rotation (+6.6% 1m, up on the down day), I apply a small tilt away from XLK toward XLV without fighting the intact primary trend.",
+          "agreement": "neutral"
+        },
+        {
+          "date": "2026-06-29",
+          "claw_action": "IWM sell",
+          "ai_tilt_week": "2026-06-29",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "XLK": -0.015,
+            "XLV": 0.011,
+            "IJS": 0.01
+          },
+          "ai_reasoning": "12m momentum remains broadly risk-on (XLK/EEM/IJS leaders intact) but 1m shows sharp deleveraging in the winners (XLK -5.2, GLD -10.4, DBC -9.9) with rotation into XLV/XLF/IJS, and the held XLK sits -8.6% off its high with several -3% to -6.7% single days in the last 20. Momentum leadership is not broken so I stay near the mechanical hold, with only a small trim tilt away from XLK toward the defensively rotating XLV.",
+          "agreement": "neutral (sell/exit, no single favored symbol)"
+        },
+        {
+          "date": "2026-07-07",
+          "claw_action": "XLK buy",
+          "ai_tilt_week": "2026-07-06",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "XLK": -0.02,
+            "XLV": 0.015,
+            "XLF": 0.01,
+            "IJS": 0.01
+          },
+          "ai_reasoning": "XLK's 12m/3m momentum remains top-ranked but 1m has collapsed to 0.16% with a -8.89% drawdown and violent 20d chop, while XLV (+7.0% 1m) and XLF (+6.3% 1m) show a clear rotation into defensives and value on quieter tape. Bonds flat and commodities/gold weak argue against outright risk-off, so I tilt modestly away from the held tech position toward the rotation leaders without fighting the hold signal.",
+          "agreement": "disagree"
+        }
+      ],
+      "per_week_majority": {
+        "2026-02-11": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-02-16": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-02-23": {
+          "regime_view": "mixed",
+          "sample_agreement": 0.6
+        },
+        "2026-03-02": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-03-09": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-03-16": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-03-23": {
+          "regime_view": "risk_off",
+          "sample_agreement": 0.6
+        },
+        "2026-03-30": {
+          "regime_view": "risk_off",
+          "sample_agreement": 0.8
+        },
+        "2026-04-06": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-04-13": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-04-20": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-04-27": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-05-04": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-05-11": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-05-18": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-05-25": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-06-01": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-06-08": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-06-15": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-06-22": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-06-29": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-07-06": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        }
+      },
+      "n_unrecovered_fallback_cells": 0
+    },
+    "v2": {
+      "version": "v2",
+      "first_risk_off_date_in_chop": "2026-03-16",
+      "first_risk_on_date_in_april": "2026-04-20",
+      "apr_risk_on_preserved_before_claw_entry": true,
+      "pct_weeks_mixed": 50.0,
+      "n_weeks_mixed": 11,
+      "n_weeks_total": 22,
+      "mean_sample_agreement_all_weeks": 0.936,
+      "mean_sample_agreement_chop_weeks": 0.9,
+      "n_fragile_chop_weeks_lt_60pct_agreement": 0,
+      "n_chop_weeks": 8,
+      "claw_agree": 4,
+      "claw_disagree": 1,
+      "claw_neutral": 4,
+      "claw_calibration_table": [
+        {
+          "date": "2026-02-20",
+          "claw_action": "GLD -> EEM",
+          "ai_tilt_week": "2026-02-16",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "GLD": -0.017,
+            "XLE": -0.012,
+            "EEM": 0.011,
+            "EFA": 0.01,
+            "XLK": -0.01
+          },
+          "ai_reasoning": "GLD's 12m momentum remains dominant but the 20d window shows a -10.3% single-day shock followed by whipsaw, and XLE's short-vs-12m spread alarm flags a late-stage blowoff, so I trim both extended commodity legs. US large-cap/tech momentum is fading (SPY 1m negative, XLK 3m negative) while EEM/EFA show steady broad strength without alarms, and firm bonds plus gold leadership point to a mixed rather than cleanly risk-on regime.",
+          "agreement": "agree"
+        },
+        {
+          "date": "2026-02-27",
+          "claw_action": "EEM -> XLE",
+          "ai_tilt_week": "2026-02-23",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "GLD": -0.017,
+            "EEM": 0.011,
+            "EFA": 0.01,
+            "XLE": 0.0117,
+            "XLK": -0.01
+          },
+          "ai_reasoning": "International equities (EEM/EFA) show coherent strength across 1m/3m/12m while US large-cap and tech momentum has stalled and bonds are quietly bid, so the tape is risk-on abroad but hesitant at home. GLD remains the top 12m rank but the -10% single-day shock, -4.5pp short-vs-12m momentum spread, and -5.5% drawdown from high argue for a modest de-emphasis rather than an exit, consistent with the deterministic hold.",
+          "agreement": "agree"
+        },
+        {
+          "date": "2026-03-02",
+          "claw_action": "XLE -> GLD",
+          "ai_tilt_week": "2026-03-02",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "EEM": 0.015,
+            "EFA": 0.015,
+            "XLK": -0.02,
+            "XLF": -0.0133,
+            "GLD": 0.007,
+            "SPY": -0.01,
+            "XLE": 0.015
+          },
+          "ai_reasoning": "Heavy safety bid in bonds (IEF/AGG/TIP RSI ~78-81, z-scores near +3) alongside deteriorating US large-cap/tech momentum (XLK -10pp spread alarm, SPY 1m negative) argues against risk_on, but EEM/EFA/GLD/XLE strength shows rotation into ex-US and real assets rather than broad de-risking. Tilt toward EM/international where 1m/3m/12m momentum is aligned with no alarms, lean against XLK/XLF where short-term momentum has cracked, and keep only a token positive on held GLD since the deterministic hold is intact but the -10% day 20 sessions ago flags elevated tail volatility.",
+          "agreement": "agree"
+        },
+        {
+          "date": "2026-03-11",
+          "claw_action": "GLD -> XLE",
+          "ai_tilt_week": "2026-03-09",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "DBC": -0.02,
+            "XLK": -0.0167,
+            "GLD": 0.01
+          },
+          "ai_reasoning": "Long-term momentum still favors hard assets (GLD/DBC/XLE) while equities show broad 1m deterioration (SPY -3.1%, EFA -5.5%, XLK spread alarm at -12pp), so the regime is mixed with a defensive-rotation tilt rather than outright risk-off given moderate 13.3% SPY vol and oversold equity RSIs. DBC's RSI 92.5, 3.28 z-score, and +10.2pp spread alarm signal a parabolic blowoff to lean against, while held GLD retains intact trend (12m +76%, RSI 54.9, drawdown only -4.5%) supporting the deterministic hold with a small positive tilt.",
+          "agreement": "neutral"
+        },
+        {
+          "date": "2026-04-10",
+          "claw_action": "XLE -> EEM",
+          "ai_tilt_week": "2026-04-06",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "GLD": -0.018,
+            "DBC": 0.02,
+            "XLE": 0.017,
+            "XLK": -0.0113,
+            "SPY": -0.01
+          },
+          "ai_reasoning": "Trend leadership has rotated into commodities/energy (DBC/XLE positive 1m/3m with positive short-vs-12m spreads) while the held GLD shows a broken short-term trend (-9.3% 1m, -16pp spread alarm, -13.4% off its high) that its stale 12m rank masks. Equities carry spread alarms with negative 3m momentum and 19% vol, but bonds are also weak and defensives show no bid, so this reads as an inflationary chop rather than clean risk-off.",
+          "agreement": "neutral"
+        },
+        {
+          "date": "2026-04-23",
+          "claw_action": "EEM -> QQQ",
+          "ai_tilt_week": "2026-04-20",
+          "ai_regime_view": "risk_on",
+          "ai_symbol_bias": {
+            "XLK": -0.013,
+            "GLD": 0.01,
+            "SPY": -0.01
+          },
+          "ai_reasoning": "Broad 12m momentum is strong across equities with no spread alarms, so the regime stays risk-on, but breadth of overbought readings (SPY RSI 96.8, VNQ 100, XLK z-score 2.78) plus XLK's decelerating short-vs-12m spread (-3.56pp) warrants a small trim on the held leader. GLD keeps top-3 12m momentum (45.7%) while sitting at a modest z-score (-0.26) and mid-range RSI, making it the least stretched strong-trend asset and worth a small positive tilt.",
+          "agreement": "agree (regime_view risk_on favors equity rotation)"
+        },
+        {
+          "date": "2026-06-12",
+          "claw_action": "QQQ -> IWM",
+          "ai_tilt_week": "2026-06-08",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "XLK": -0.0188,
+            "GLD": -0.016,
+            "EEM": -0.01,
+            "XLV": 0.01,
+            "XLF": 0.01,
+            "DBC": -0.01
+          },
+          "ai_reasoning": "The latest session shows a sharp synchronized selloff (XLK -6.7%, EEM -6.5%, QQQ -4.8%) with bonds also falling and GLD tripping its momentum-spread alarm, suggesting a rate/liquidity shock rather than a clean growth scare, while defensives (XLV, XLF, VNQ) held up. XLK's trend remains intact (positive short-vs-12m spread, top 12m rank) so I only trim exposure at the margin rather than fight the hold signal, tilting slightly toward XLV which showed relative strength.",
+          "agreement": "neutral"
+        },
+        {
+          "date": "2026-06-29",
+          "claw_action": "IWM sell",
+          "ai_tilt_week": "2026-06-29",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "DBC": -0.018,
+            "GLD": -0.02,
+            "XLE": -0.0175,
+            "IEF": 0.01,
+            "XLV": 0.0,
+            "XLK": -0.0107,
+            "IJS": 0.01
+          },
+          "ai_reasoning": "Long-duration equity momentum remains intact (XLK 3m +39%, 12m +44%) but broad 1m pullbacks, a bond bid (AGG/IEF/TLT RSI ~70), and a collapsing commodity complex make the tape mixed rather than risk-on. Conviction is limited to the commodity breakdown, where DBC, GLD, and XLE all trip the momentum-spread alarm with deeply negative short-term trends against stale 12m strength.",
+          "agreement": "neutral (sell/exit, no single favored symbol)"
+        },
+        {
+          "date": "2026-07-07",
+          "claw_action": "XLK buy",
+          "ai_tilt_week": "2026-07-06",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "XLK": -0.0113,
+            "GLD": -0.0183,
+            "XLE": -0.0167,
+            "DBC": -0.02,
+            "XLV": 0.01,
+            "IJS": 0.0117
+          },
+          "ai_reasoning": "Leadership is rotating from stalled high-beta tech (XLK 1m +0.16 vs 3m +32, violent two-sided 20d chop, held position -8.9% off highs) toward defensives and financials (XLV/XLF 1m +6-7, RSI >70), while commodity-linked assets show momentum-crash signatures (DBC/GLD/XLE spread alarms, 1m -5 to -9 against strong 12m). Net picture is neither risk-off (SPY steady, bonds not bid) nor clean risk-on, so small tilts: fade the alarm-flagged 12m leaders, trim XLK, slight lean into XLV's confirmed strength.",
+          "agreement": "disagree"
+        }
+      ],
+      "per_week_majority": {
+        "2026-02-11": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-02-16": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-02-23": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-03-02": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-03-09": {
+          "regime_view": "mixed",
+          "sample_agreement": 0.6
+        },
+        "2026-03-16": {
+          "regime_view": "risk_off",
+          "sample_agreement": 0.6
+        },
+        "2026-03-23": {
+          "regime_view": "risk_off",
+          "sample_agreement": 1.0
+        },
+        "2026-03-30": {
+          "regime_view": "risk_off",
+          "sample_agreement": 1.0
+        },
+        "2026-04-06": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-04-13": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-04-20": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-04-27": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-05-04": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-05-11": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-05-18": {
+          "regime_view": "risk_on",
+          "sample_agreement": 0.8
+        },
+        "2026-05-25": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-06-01": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-06-08": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-06-15": {
+          "regime_view": "mixed",
+          "sample_agreement": 0.6
+        },
+        "2026-06-22": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-06-29": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-07-06": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        }
+      },
+      "n_unrecovered_fallback_cells": 0
+    },
+    "v3": {
+      "version": "v3",
+      "first_risk_off_date_in_chop": "2026-03-23",
+      "first_risk_on_date_in_april": "2026-04-20",
+      "apr_risk_on_preserved_before_claw_entry": true,
+      "pct_weeks_mixed": 50.0,
+      "n_weeks_mixed": 11,
+      "n_weeks_total": 22,
+      "mean_sample_agreement_all_weeks": 0.964,
+      "mean_sample_agreement_chop_weeks": 0.95,
+      "n_fragile_chop_weeks_lt_60pct_agreement": 0,
+      "n_chop_weeks": 8,
+      "claw_agree": 4,
+      "claw_disagree": 1,
+      "claw_neutral": 4,
+      "claw_calibration_table": [
+        {
+          "date": "2026-02-20",
+          "claw_action": "GLD -> EEM",
+          "ai_tilt_week": "2026-02-16",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "GLD": -0.015,
+            "XLE": -0.01,
+            "EFA": 0.01,
+            "EEM": 0.0118,
+            "XLK": -0.0125,
+            "SPY": -0.01
+          },
+          "ai_reasoning": "Breadth is still strong (94% above 200dma) but US large-cap/tech momentum is rolling over while bonds catch a bid and 20d vol nearly doubled, so this reads as rotation rather than clean risk-on. GLD's -10% single-day shakeout and subsequent whipsaw signal a possible parabolic break so I trim exposure slightly, XLE's 10.9pp short-vs-12m spread alarm flags chase risk, and EFA earns a small positive tilt on steady multi-horizon momentum with no divergence.",
+          "agreement": "agree"
+        },
+        {
+          "date": "2026-02-27",
+          "claw_action": "EEM -> XLE",
+          "ai_tilt_week": "2026-02-23",
+          "ai_regime_view": "risk_on",
+          "ai_symbol_bias": {
+            "GLD": -0.017,
+            "XLE": 0.02,
+            "EEM": 0.0124,
+            "EFA": 0.01
+          },
+          "ai_reasoning": "Breadth is extreme (94% above 200dma), realized vol is low, and international/energy/small-cap momentum is broad and accelerating, so the regime is risk-on despite soft US tech. GLD gets a modest negative tilt: a -10.3% single-day print, 1m momentum (2.3%) far below 3m (25.2%), and a -5.5% drawdown mark a decelerating parabolic move, while XLE's +12pp acceleration alarm and EEM's steady leadership earn small positive tilts.",
+          "agreement": "agree"
+        },
+        {
+          "date": "2026-03-02",
+          "claw_action": "XLE -> GLD",
+          "ai_tilt_week": "2026-03-02",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "GLD": 0.007,
+            "XLE": 0.014,
+            "XLK": -0.019,
+            "SPY": -0.01,
+            "EEM": 0.0175
+          },
+          "ai_reasoning": "US equities (SPY/XLK/XLF) show negative short-term momentum with XLK's -10pp spread alarm, while bonds are extremely overbought (IEF/AGG/TLT RSI ~80, zscore ~2.8) suggesting flight-to-quality, and vol is rising off a low base. Hard assets and ex-US equities remain in strong uptrends, so I tilt modestly toward the held GLD position and energy while leaning against US tech, without overriding the intact GLD trend.",
+          "agreement": "agree"
+        },
+        {
+          "date": "2026-03-11",
+          "claw_action": "GLD -> XLE",
+          "ai_tilt_week": "2026-03-09",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "GLD": 0.015,
+            "DBC": -0.025,
+            "XLK": -0.016
+          },
+          "ai_reasoning": "Commodity-led rotation: GLD/DBC/XLE lead while equities break down short-term (SPY z=-2.5, XLK spread alarm -12pp) and bonds offer no bid, yet vol at 13% and 87% above 200dma argue against full risk-off. Hold-side tilt to GLD (intact trend, +24pp 3m RS vs equity, RSI 55 not stretched); fade DBC's parabolic extension (RSI 92.5, z=3.3, spread alarm) rather than chase it, and lean against XLK's broken momentum.",
+          "agreement": "neutral"
+        },
+        {
+          "date": "2026-04-10",
+          "claw_action": "XLE -> EEM",
+          "ai_tilt_week": "2026-04-06",
+          "ai_regime_view": "risk_off",
+          "ai_symbol_bias": {
+            "DBC": 0.02,
+            "XLE": 0.0163,
+            "GLD": -0.015,
+            "XLK": -0.015,
+            "SPY": -0.0117
+          },
+          "ai_reasoning": "Breadth has collapsed (12.5% above 50dma) with 20d vol rising from 13.2% to 19.0% and six assets flashing short-vs-12m momentum alarms, while safe bonds offer no bid (AGG/IEF/SHY all negative 3m) -- an inflationary risk-off where only commodities and energy show accelerating momentum (DBC/XLE ~+29% 3m, positive z-scores, no alarms). Held GLD is down 13.4% from its high with a -16pp momentum spread alarm and RSI 38, warranting a modest negative tilt without overriding the core's hold, plus a small negative tilt on XLK whose -16.4pp spread alarm is the worst among equities.",
+          "agreement": "neutral"
+        },
+        {
+          "date": "2026-04-23",
+          "claw_action": "EEM -> QQQ",
+          "ai_tilt_week": "2026-04-20",
+          "ai_regime_view": "risk_on",
+          "ai_symbol_bias": {
+            "XLK": -0.011,
+            "GLD": 0.01
+          },
+          "ai_reasoning": "Broad momentum and breadth (75% above 200dma, all strategies bullish) support risk-on, but the 1m>>3m pattern shows a sharp V-rebound with near-universal overbought readings (SPY RSI 97, XLK z-score 2.78) and 20d vol expanding from 12.9% to 19.4% while prices rally. Small trim on stretched XLK and a small GLD tilt (3m relative strength +3.2pp, not overextended) as chop insurance; no override of the core hold.",
+          "agreement": "agree (regime_view risk_on favors equity rotation)"
+        },
+        {
+          "date": "2026-06-12",
+          "claw_action": "QQQ -> IWM",
+          "ai_tilt_week": "2026-06-08",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "GLD": -0.0183,
+            "XLK": -0.017,
+            "XLV": 0.01
+          },
+          "ai_reasoning": "Long-term trend remains intact (XLK 12m +51% with positive short-vs-12m spread, breadth ~50/56%), but the most recent session was a broad liquidation-style selloff (XLK -6.7%, EEM -6.5%, bonds and gold also down) with 20d vol rising from 10.5% to 13.1%, so I lean mixed rather than risk_on. GLD is the only asset with a momentum-spread alarm (-19.9pp) and -23pp relative strength vs equities, warranting a negative tilt; a small trim tilt on XLK reflects the -9% held drawdown plus vol shock, and a small positive tilt on XLV reflects its defensive leadership (1m +6.6%, only sector up on the selloff day).",
+          "agreement": "neutral"
+        },
+        {
+          "date": "2026-06-29",
+          "claw_action": "IWM sell",
+          "ai_tilt_week": "2026-06-29",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "XLK": -0.0104,
+            "IJS": 0.01,
+            "XLF": 0.008,
+            "GLD": -0.02,
+            "DBC": -0.02,
+            "XLE": -0.015,
+            "XLV": 0.0075
+          },
+          "ai_reasoning": "Vol regime is deteriorating (20d vol 10.1%->16.7%) with two -4% to -6.7% shock days in XLK/QQQ/EEM, a defensive bid in duration (TLT/AGG/IEF RSI ~70) and 1m leadership rotating to XLV/XLF while the held XLK is -5.2% on 1m; but breadth is intact (62.5% above 200dma), XLK's short-vs-12m spread is positive with no alarm, and all three deterministic strategies agree on hold, so this reads as a correction within an uptrend rather than a regime break. Small negative tilt on stretched-momentum XLK and small positive tilt on IJS, which shows positive momentum across all horizons (1m +4.8%, 3m +17.5%, 12m +37.4%) without the crowding of XLV (60d z-score 3.35).",
+          "agreement": "neutral (sell/exit, no single favored symbol)"
+        },
+        {
+          "date": "2026-07-07",
+          "claw_action": "XLK buy",
+          "ai_tilt_week": "2026-07-06",
+          "ai_regime_view": "mixed",
+          "ai_symbol_bias": {
+            "XLK": -0.013,
+            "GLD": -0.0183,
+            "XLE": -0.0183,
+            "DBC": -0.018,
+            "IJS": 0.01,
+            "XLV": 0.015,
+            "XLF": 0.01
+          },
+          "ai_reasoning": "Vol regime shifted sharply (20d vol 9.9%->17.95%) with weak 50dma breadth (43.8%) and leadership rotating from tech into financials/healthcare, while the held XLK sits -8.9% off its high with near-zero 1m momentum -- caution but not risk-off since bonds show no flight-to-quality bid. GLD, XLE and DBC trip the short-vs-12m momentum spread alarm (stale 12m ranks masking broken trends), so I bias against rotating into them, and give small credit to IJS whose momentum is consistent across all horizons.",
+          "agreement": "disagree"
+        }
+      ],
+      "per_week_majority": {
+        "2026-02-11": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-02-16": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-02-23": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-03-02": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-03-09": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-03-16": {
+          "regime_view": "mixed",
+          "sample_agreement": 0.6
+        },
+        "2026-03-23": {
+          "regime_view": "risk_off",
+          "sample_agreement": 1.0
+        },
+        "2026-03-30": {
+          "regime_view": "risk_off",
+          "sample_agreement": 1.0
+        },
+        "2026-04-06": {
+          "regime_view": "risk_off",
+          "sample_agreement": 0.8
+        },
+        "2026-04-13": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-04-20": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-04-27": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-05-04": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-05-11": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-05-18": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-05-25": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-06-01": {
+          "regime_view": "risk_on",
+          "sample_agreement": 1.0
+        },
+        "2026-06-08": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-06-15": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-06-22": {
+          "regime_view": "mixed",
+          "sample_agreement": 0.8
+        },
+        "2026-06-29": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        },
+        "2026-07-06": {
+          "regime_view": "mixed",
+          "sample_agreement": 1.0
+        }
+      },
+      "n_unrecovered_fallback_cells": 0
+    }
+  }
+}
