@@ -5,8 +5,14 @@
 
 set -euo pipefail
 
-echo "=== Running tests ==="
-python3 -m pytest tests/ -x -q --tb=short
+if [ "${SKIP_TESTS:-0}" = "1" ]; then
+    # Dumbo's host python has no pytest/deps; use only when the deployed
+    # commit's suite already passed elsewhere (CI or the dev Mac).
+    echo "=== Skipping tests (SKIP_TESTS=1) ==="
+else
+    echo "=== Running tests ==="
+    python3 -m pytest tests/ -x -q --tb=short
+fi
 
 echo ""
 if [ "${SKIP_BACKTEST_REGEN:-0}" = "1" ]; then
