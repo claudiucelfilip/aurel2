@@ -112,6 +112,7 @@ class Checker:
         ai_model: str = "haiku",
         ai_lookback_years: int = 3,
         mode: str = "paper",
+        overlay_enabled: bool = False,
     ):
         self.connection = connection
         self.pending_manager = pending_manager
@@ -119,6 +120,13 @@ class Checker:
         self.notifier = NtfyNotifier(topic=ntfy_topic)
         self.dry_run = dry_run
         self.use_ai_advisor = use_ai_advisor
+        self.mode = mode
+        # Overlay containment: default OFF. The overlay's only write surfaces are
+        # data/{mode}/overlay_tilt.json, overlay_state.json, and journal entries
+        # (docs/plans/2026-07-10-ai-overlay-design.md, "Hard containment"). It is
+        # applied here, right after the deterministic decision and before the AI
+        # advisor step, so both share the same seam as the backtest engine.
+        self.overlay_enabled = overlay_enabled
 
         # 2026-05-07: Switched from RobustQuarterlyStrategy (quarterly gate) to plain
         # DualMomentumStrategy. Daily-cadence backtests showed gate + calm-hold gave
@@ -280,6 +288,18 @@ class Checker:
                 priority="default",
             )
 
+        # 6c. AI overlay: capped transition powers applied against the SAME
+        # deterministic decision the core just produced. Hard no-op if the
+        # tilt file is missing/malformed/expired (see overlay/schema.py).
+        overlay_journal_rows: list[dict] = []
+        if self.overlay_enabled:
+            overlay_journal_rows, decision = self._apply_overlay(
+                decision=decision,
+                prices=prices,
+                current_holding=current_holding,
+            )
+            display_asset = _decision_display_asset(decision, current_holding)
+
         # 7. AI Advisor review (provides risk commentary for all decisions)
         ai_advice: Optional[AIAdvice] = None
         if self.ai_advisor and self.use_ai_advisor:
@@ -380,6 +400,7 @@ class Checker:
             ai_confidence=ai_advice.confidence if ai_advice else 0.0,
             ai_commentary=ai_advice.risk_commentary[:300] if ai_advice and ai_advice.risk_commentary else None,
             failure_patterns=ai_advice.failure_patterns_detected if ai_advice else [],
+            overlay_activity=overlay_journal_rows,
             market_regime=market_context.get("regime") if market_context else None,
             account_value=account_value,
             current_holding=current_holding,
@@ -466,6 +487,59 @@ class Checker:
         )
 
         return prices
+
+    def _apply_overlay(
+        self,
+        decision: AgentDecision,
+        prices: pd.DataFrame,
+        current_holding: Optional[str],
+    ) -> tuple[list[dict], AgentDecision]:
+        """Apply the AI overlay's capped transition powers to today's
+        deterministic decision. Returns (journal_rows, possibly-overridden
+        decision). This is the ONLY place checker.py touches the overlay
+        package — see overlay/integration.py for the shared live/backtest seam.
+        """
+        from aurel2.overlay.integration import run_overlay_for_decision
+
+        dm_strategy = self.strategies.get("dual_momentum")
+        dm_assets = getattr(dm_strategy, "assets", None)
+        if dm_assets is None:
+            return [], decision
+
+        exclude = getattr(dm_strategy, "exclude_from_selection", None)
+
+        try:
+            outcome = run_overlay_for_decision(
+                mode=self.mode,
+                today=date.today(),
+                prices=prices,
+                dm_assets=dm_assets,
+                current_holding_symbol=current_holding,
+                exclude_from_selection=exclude,
+            )
+        except Exception as e:
+            # Containment: an overlay failure must never break the deterministic
+            # decision path. Log and fall through with no override.
+            logger.error("overlay_apply_error", error=str(e))
+            return [], decision
+
+        if outcome.action is not None and outcome.asset_symbol is not None:
+            decision = AgentDecision(
+                decision_type=decision.decision_type,
+                action=outcome.action,
+                asset_symbol=outcome.asset_symbol,
+                reasoning=f"Overlay: {decision.reasoning}",
+                confidence=decision.confidence,
+                strategy_signals=decision.strategy_signals,
+                requires_approval=decision.requires_approval,
+                timeout_hours=decision.timeout_hours,
+                urgency=decision.urgency,
+                market_context=decision.market_context,
+                position_size_pct=decision.position_size_pct,
+                regime=decision.regime,
+            )
+
+        return outcome.journal_rows, decision
 
     def _run_strategies(
         self, prices: pd.DataFrame, current_holding: Optional[str]
