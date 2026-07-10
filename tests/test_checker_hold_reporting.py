@@ -100,7 +100,6 @@ def test_unmapped_broker_holding_does_not_reuse_stale_strategy_state():
             AssetClass.CASH: ASSET_REGISTRY[AssetClass.CASH],
         },
         switch_threshold=0.02,
-        pilot_entry_enabled=False,
     )
     strategy.current_holding = AssetClass.TECH_SECTOR
 
