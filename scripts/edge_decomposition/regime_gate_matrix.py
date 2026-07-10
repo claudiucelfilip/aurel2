@@ -342,10 +342,7 @@ def build_engine() -> BacktestEngine:
         lookback_months=12,
         switch_threshold=0.02,
         cash_rate=0.0,
-        pilot_entry_enabled=False,
     )
-    engine.orchestrator.calm_market_hold_threshold = 0.0
-    engine.orchestrator.min_hold_enabled = False
     return engine
 
 
