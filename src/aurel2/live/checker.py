@@ -10,12 +10,10 @@ import structlog
 
 from aurel2.agent.orchestrator import AgentOrchestrator, AgentDecision, DecisionType
 from aurel2.agent.advisor import AIAdvisor, AIAdvice
+from aurel2.config.canonical import CANONICAL_CONFIG, live_asset_registry
 from aurel2.core.assets import ASSET_REGISTRY, get_all_yahoo_symbols
-from aurel2.core.models import AssetClass
 from aurel2.data.providers.yahoo import YahooFinanceProvider
 from aurel2.strategies.dual_momentum import DualMomentumStrategy
-from aurel2.strategies.mean_reversion import MeanReversionStrategy
-from aurel2.strategies.multi_timeframe import MultiTimeframeTrendStrategy
 from aurel2.live.connection import AlpacaConnection
 from aurel2.live.executor import Executor, ExecutionResult
 from aurel2.live.journal import TradeJournal, journal_path_for_mode
@@ -24,20 +22,6 @@ from aurel2.live.trade_recorder import TradeRecorder
 from aurel2.notifications.ntfy import NtfyNotifier
 
 logger = structlog.get_logger()
-
-
-def _trading_days_since(prices: pd.DataFrame, since: date) -> int:
-    """Count distinct trading days in ``prices`` strictly after ``since``.
-
-    Used only when the optional min-hold cadence throttle is enabled. The latest
-    price date is "today", so this is the number of trading days elapsed since
-    the last switch.
-    """
-    try:
-        dates = {d.date() for d in pd.to_datetime(prices["date"])}
-    except (KeyError, TypeError, ValueError):
-        return 0
-    return sum(1 for d in dates if d > since)
 
 
 def _decision_display_asset(decision: AgentDecision, current_holding: Optional[str]) -> Optional[str]:
@@ -107,11 +91,14 @@ class Checker:
     Steps:
     1. Sync positions from broker
     2. Fetch market prices
-    3. Run all 3 strategies
+    3. Run dual momentum (the sole live strategy)
     4. Orchestrator produces decision
     5. Execute or create pending approval
 
     Used by both the daemon (scheduled) and manual check command.
+
+    Strategy/orchestrator parameters come from CANONICAL_CONFIG, the single
+    config artifact shared with BacktestEngine — see aurel2.config.canonical.
     """
 
     def __init__(
@@ -133,33 +120,26 @@ class Checker:
         self.dry_run = dry_run
         self.use_ai_advisor = use_ai_advisor
 
-        # Initialize strategies.
         # 2026-05-07: Switched from RobustQuarterlyStrategy (quarterly gate) to plain
         # DualMomentumStrategy. Daily-cadence backtests showed gate + calm-hold gave
         # up +5.9% CAGR over 5y vs no filters (same max DD). See
         # data/cadence_filter_revalidation_may2026.json.
-        no_tlt_assets = {ac: a for ac, a in ASSET_REGISTRY.items() if ac != AssetClass.BONDS_TREASURY}
+        dm_config = CANONICAL_CONFIG.dual_momentum
         self.strategies = {
             "dual_momentum": DualMomentumStrategy(
-                assets=no_tlt_assets,
-                lookback_months=12,
-                switch_threshold=0.02,
-                cash_rate=0.0,
-                pilot_entry_enabled=False,
-            ),
-            "mean_reversion": MeanReversionStrategy(),
-            # Give multi-timeframe the SAME universe as dual_momentum. Its default
-            # universe was only {US_STOCKS, INTL_DEVELOPED, BONDS_AGGREGATE}, so it
-            # had no data for sector holdings like XLK and always voted "switch to
-            # SPY" — a permanently dead/divergent vote that blocked any majority.
-            "multi_timeframe": MultiTimeframeTrendStrategy(
-                target_assets=[ac for ac in no_tlt_assets if ac != AssetClass.CASH],
+                assets=live_asset_registry(),
+                lookback_months=dm_config.lookback_months,
+                switch_threshold=dm_config.switch_threshold,
+                cash_rate=dm_config.cash_rate,
             ),
         }
 
+        orch_config = CANONICAL_CONFIG.orchestrator
         self.orchestrator = AgentOrchestrator(
-            calm_market_hold_threshold=0.0,
-            min_hold_enabled=False,
+            correlation_guard_enabled=orch_config.correlation_guard_enabled,
+            correlation_threshold=orch_config.correlation_threshold,
+            sideways_hold_enabled=orch_config.sideways_hold_enabled,
+            sideways_hold_momentum_threshold=orch_config.sideways_hold_momentum_threshold,
         )
         self.provider = YahooFinanceProvider()
 
@@ -254,12 +234,6 @@ class Checker:
 
         # 5. Get market context
         market_context = self._build_market_context(prices)
-
-        # Optional min-hold cadence input. The throttle is disabled by default,
-        # but keeping the context makes future opt-in research deterministic.
-        last_switch = self.journal.last_switch_date()
-        if last_switch is not None:
-            market_context["days_since_last_switch"] = _trading_days_since(prices, last_switch)
 
         # 6. Orchestrator analysis (deterministic)
         decision = self.orchestrator.analyze(

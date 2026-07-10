@@ -1,28 +1,8 @@
-strategy:
-  name: dual_momentum
-  lookback_months: 12
-  rebalance_frequency: quarterly
-  switch_threshold: 0.02
-
-# US ETFs for backtesting (longer history available)
-# For live trading with Romanian tax optimization, use the UCITS versions
-assets:
-  us_stocks:
-    symbol: SPY
-    name: "SPDR S&P 500 ETF"
-    isin: null
-    yahoo_symbol: SPY
-  global_stocks:
-    symbol: EFA
-    name: "iShares MSCI EAFE ETF"
-    isin: null
-    yahoo_symbol: EFA
-  bonds:
-    symbol: AGG
-    name: "iShares Core US Aggregate Bond ETF"
-    isin: null
-    yahoo_symbol: AGG
-  cash_rate: 0.0
+# Strategy parameters (universe, dual-momentum thresholds, orchestrator
+# toggles) live in src/aurel2/config/canonical.py, NOT here — that module is
+# the single config artifact both the live checker and BacktestEngine load,
+# per docs/plans/2026-07-09-edge-decomposition-goal.md Phase 2 non-negotiable #1.
+# This file only holds settings that aren't part of the trading decision path.
 
 broker:
   type: alpaca
