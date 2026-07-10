@@ -172,12 +172,10 @@ class BacktestEngine:
     advisor) and runs the same decision pipeline as production on each
     rebalance date.
 
-    NOTE on correlation_guard/sideways_hold defaults: this engine defaults
-    both to False, while Checker's canonical-config wiring leaves the
-    orchestrator's own True defaults in effect. That split predates this
-    cleanup and is a known residual divergence (documented in
-    docs/plans/build-reports/track-a-report.md) — left unchanged here because
-    changing either default would move the acceptance-test replay's decisions.
+    correlation_guard/sideways_hold default from CANONICAL_CONFIG.orchestrator,
+    matching the live Checker (aligned 2026-07-10; the pre-cleanup False
+    defaults were the last live-vs-backtest divergence — with them, the
+    fidelity guard would false-alarm whenever either guard fired in live).
     """
 
     def __init__(
@@ -188,8 +186,8 @@ class BacktestEngine:
         ai_model: str = "haiku",
         amnesia: bool = False,
         dca_amount: float = 0.0,
-        correlation_guard: bool = False,
-        sideways_hold: bool = False,
+        correlation_guard: bool = CANONICAL_CONFIG.orchestrator.correlation_guard_enabled,
+        sideways_hold: bool = CANONICAL_CONFIG.orchestrator.sideways_hold_enabled,
         trend_filter_enabled: bool = False,
         trend_filter_symbol: str = "SPY",
         trend_filter_period: int = 200,
@@ -214,9 +212,12 @@ class BacktestEngine:
             switch_threshold=dm_config.switch_threshold,
             cash_rate=dm_config.cash_rate,
         )
+        orch_config = CANONICAL_CONFIG.orchestrator
         self.orchestrator = AgentOrchestrator(
             correlation_guard_enabled=correlation_guard,
+            correlation_threshold=orch_config.correlation_threshold,
             sideways_hold_enabled=sideways_hold,
+            sideways_hold_momentum_threshold=orch_config.sideways_hold_momentum_threshold,
         )
 
         self.ai_advisor = None
