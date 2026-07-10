@@ -9,7 +9,6 @@ from aurel2.agent.orchestrator import (
     AgentOrchestrator,
     BOND_SYMBOLS,
     DecisionType,
-    MarketRegime,
     Urgency,
 )
 from aurel2.core.models import SignalAction
@@ -302,46 +301,6 @@ class TestCalculateTimeout:
         assert 1 <= timeout <= 2
 
 
-class TestSelectBestAction:
-    """Tests for _select_best_action method."""
-
-    def test_unanimous_hold_selects_hold(self):
-        """Unanimous HOLD should select HOLD."""
-        orchestrator = AgentOrchestrator()
-        signals = {
-            "dual_momentum": {"action": "hold", "confidence": 0.8},
-            "mean_reversion": {"action": "hold", "confidence": 0.7},
-            "multi_timeframe": {"action": "hold", "confidence": 0.9},
-        }
-        action, asset, confidence, _ = orchestrator._select_best_action(signals, {}, MarketRegime.BULL)
-        assert action == SignalAction.HOLD
-        assert confidence > 0.7
-
-    def test_majority_buy_selects_buy(self):
-        """Majority BUY should select BUY."""
-        orchestrator = AgentOrchestrator()
-        signals = {
-            "dual_momentum": {"action": "buy", "confidence": 0.8, "asset_symbol": "SPY"},
-            "mean_reversion": {"action": "buy", "confidence": 0.7, "asset_symbol": "SPY"},
-            "multi_timeframe": {"action": "hold", "confidence": 0.6},
-        }
-        action, asset, confidence, _ = orchestrator._select_best_action(signals, {}, MarketRegime.BULL)
-        assert action == SignalAction.BUY
-        assert asset == "SPY"
-
-    def test_mixed_signals_uses_highest_confidence(self):
-        """Mixed signals should weight by confidence."""
-        orchestrator = AgentOrchestrator()
-        signals = {
-            "dual_momentum": {"action": "buy", "confidence": 0.9, "asset_symbol": "SPY"},
-            "mean_reversion": {"action": "sell", "confidence": 0.3},
-            "multi_timeframe": {"action": "hold", "confidence": 0.5},
-        }
-        action, asset, confidence, _ = orchestrator._select_best_action(signals, {}, MarketRegime.BULL)
-        # BUY has highest confidence
-        assert action == SignalAction.BUY
-
-
 class TestAnalyze:
     """Tests for analyze method."""
 
@@ -350,8 +309,6 @@ class TestAnalyze:
         orchestrator = AgentOrchestrator()
         signals = {
             "dual_momentum": {"action": "hold", "confidence": 0.8},
-            "mean_reversion": {"action": "hold", "confidence": 0.7},
-            "multi_timeframe": {"action": "hold", "confidence": 0.9},
         }
         market_context = {"drawdown": 0.02, "volatility": "normal"}
         decision = orchestrator.analyze(signals, market_context)
@@ -360,18 +317,16 @@ class TestAnalyze:
         assert decision.action == SignalAction.HOLD
         assert decision.requires_approval is False
 
-    def test_analyze_non_routine_requires_approval(self):
-        """Non-routine decisions should require approval."""
+    def test_analyze_takes_dual_momentum_action_directly(self):
+        """analyze() should use dual_momentum's action/asset directly (DM is the sole live signal)."""
         orchestrator = AgentOrchestrator()
         signals = {
-            "dual_momentum": {"action": "buy", "confidence": 0.8},
-            "mean_reversion": {"action": "sell", "confidence": 0.7},
-            "multi_timeframe": {"action": "hold", "confidence": 0.6},
+            "dual_momentum": {"action": "buy", "confidence": 0.8, "asset_symbol": "SPY"},
         }
-        market_context = {"drawdown": 0.05}
+        market_context = {"drawdown": 0.02}
         decision = orchestrator.analyze(signals, market_context)
-        assert decision.decision_type == DecisionType.NON_ROUTINE
-        assert decision.requires_approval is True
+        assert decision.action == SignalAction.BUY
+        assert decision.asset_symbol == "SPY"
 
 
 class TestExecute:
@@ -419,7 +374,7 @@ class TestExecute:
 # Helper: build signals with momentum_scores for orchestrator tests
 # ---------------------------------------------------------------------------
 def _make_signals(action="buy", asset="AGG", momentum_scores=None):
-    """Build a minimal 3-strategy signal dict with DM primary."""
+    """Build a minimal dual_momentum-only signal dict (DM is the sole live signal)."""
     mom = momentum_scores or {}
     return {
         "dual_momentum": {
@@ -428,57 +383,7 @@ def _make_signals(action="buy", asset="AGG", momentum_scores=None):
             "asset_symbol": asset,
             "momentum_scores": mom,
         },
-        "mean_reversion": {"action": action, "confidence": 0.7},
-        "multi_timeframe": {"action": action, "confidence": 0.6},
     }
-
-
-class TestMinHoldThrottle:
-    """Tests for the min-hold execution-cadence throttle (daily monitor, monthly execute)."""
-
-    def _orch(self):
-        # Match live config: calm-hold disabled, sideways-hold off, throttle on.
-        return AgentOrchestrator(
-            calm_market_hold_threshold=0.0,
-            sideways_hold_enabled=False,
-            min_hold_enabled=True,
-            min_hold_days=21,
-        )
-
-    def test_switch_throttled_within_min_hold(self):
-        """A switch proposed before the min-hold window elapses is suppressed to HOLD."""
-        orch = self._orch()
-        signals = _make_signals(action="buy", asset="SPY")  # DM wants to rotate to SPY
-        ctx = {"drawdown": 0.0, "days_since_last_switch": 5}
-        decision = orch.analyze(signals, ctx, current_holding="XLK")
-        assert decision.action == SignalAction.HOLD
-
-    def test_min_hold_is_disabled_by_default(self):
-        """Default orchestrator behavior should not suppress profitable rotations."""
-        orch = AgentOrchestrator(calm_market_hold_threshold=0.0, sideways_hold_enabled=False)
-        signals = _make_signals(action="buy", asset="SPY")
-        ctx = {"drawdown": 0.0, "days_since_last_switch": 5}
-        decision = orch.analyze(signals, ctx, current_holding="XLK")
-        assert decision.action == SignalAction.BUY
-        assert decision.asset_symbol == "SPY"
-
-    def test_switch_allowed_after_min_hold(self):
-        """Once the min-hold window has passed, the switch executes."""
-        orch = self._orch()
-        signals = _make_signals(action="buy", asset="SPY")
-        ctx = {"drawdown": 0.0, "days_since_last_switch": 30}
-        decision = orch.analyze(signals, ctx, current_holding="XLK")
-        assert decision.action == SignalAction.BUY
-        assert decision.asset_symbol == "SPY"
-
-    def test_no_throttle_without_prior_switch(self):
-        """With no recorded prior switch, nothing is throttled (e.g. first entry)."""
-        orch = self._orch()
-        signals = _make_signals(action="buy", asset="SPY")
-        ctx = {"drawdown": 0.0}
-        decision = orch.analyze(signals, ctx, current_holding="XLK")
-        assert decision.action == SignalAction.BUY
-        assert decision.asset_symbol == "SPY"
 
 
 class TestCorrelationGuard:
@@ -548,14 +453,14 @@ class TestSidewaysHold:
         assert decision.asset_symbol == "SPY"
 
     def test_does_not_apply_in_bull(self):
-        """Sideways-hold should not apply when drawdown < 5% (calm-hold handles that)."""
+        """Sideways-hold should not apply when drawdown < 5% (its own 5%-15% band isn't met)."""
         orchestrator = AgentOrchestrator(sideways_hold_enabled=True, sideways_hold_momentum_threshold=0.20)
         signals = _make_signals(action="buy", asset="SPY", momentum_scores={"SPY": 0.12, "AGG": 0.11})
         market_context = {"drawdown": 0.03, "regime": "bull"}
-        # In bull, calm-hold fires instead; sideways-hold's drawdown >= 5% condition isn't met
         decision = orchestrator.analyze(signals, market_context, current_holding="AGG")
-        # calm-hold should have caught this
-        assert decision.action == SignalAction.HOLD
+        # dual_momentum's own BUY goes through unsuppressed
+        assert decision.action == SignalAction.BUY
+        assert decision.asset_symbol == "SPY"
 
     def test_does_not_apply_when_disabled(self):
         """Should not suppress when sideways-hold is disabled."""

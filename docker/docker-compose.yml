@@ -90,5 +90,30 @@ services:
     profiles:
       - dashboard
 
+  # Weekly fidelity guard — replays recent live decisions through the backtest
+  # engine and alerts via ntfy on divergence. NOT scheduled by this file; the
+  # `fidelity-guard` profile means `docker compose up` never starts it. Wire
+  # it to a real schedule with an external cron entry, e.g. on the host:
+  #   0 6 * * 1 cd /opt/aurel2 && docker compose --profile fidelity-guard run --rm fidelity-guard
+  # (Monday 06:00, before the Monday pre-open overlay cadence.) Track A only
+  # adds the wiring — activating it on any host is explicitly out of scope.
+  fidelity-guard:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    environment:
+      NTFY_TOPIC: ${NTFY_TOPIC:-aurel2}
+      TRADING_MODE: ${TRADING_MODE:-paper}
+    volumes:
+      - ../data/paper:/app/data/paper:ro
+      - ../data/live:/app/data/live:ro
+      - ../src:/app/src:ro
+      - ../config:/app/config:ro
+      - ../scripts:/app/scripts:ro
+    entrypoint: ["python3", "scripts/fidelity_guard.py"]
+    command: ["--mode", "${TRADING_MODE:-paper}", "--days", "10", "--ntfy-topic", "${NTFY_TOPIC:-aurel2}"]
+    profiles:
+      - fidelity-guard
+
 volumes:
   aurel2-data:

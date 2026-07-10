@@ -46,10 +46,7 @@ def build_live_engine() -> BacktestEngine:
         lookback_months=12,
         switch_threshold=0.02,
         cash_rate=0.0,
-        pilot_entry_enabled=False,
     )
-    engine.orchestrator.calm_market_hold_threshold = 0.0
-    engine.orchestrator.min_hold_enabled = False
     return engine
 
 
@@ -254,7 +251,7 @@ def main():
             f"real overlap period.",
             "Replays the exact live decision path via aurel2.engine.backtest.BacktestEngine, "
             "configured identically to checker.py / generate_comparison_json: no-TLT universe, "
-            "DualMomentumStrategy(lookback_months=12, switch_threshold=0.02, pilot_entry_enabled=False), "
+            "DualMomentumStrategy(lookback_months=12, switch_threshold=0.02), "
             "orchestrator calm_market_hold_threshold=0.0, min_hold_enabled=False, use_ai=False, daily cadence.",
             "Price data: CachedPriceProvider (Yahoo Finance, auto-adjusted closes).",
             "No reimplementation of strategy/orchestrator logic — engine components are the actual "

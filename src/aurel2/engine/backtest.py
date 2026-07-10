@@ -1,27 +1,27 @@
 """Backtesting engine that mirrors the full live trading path.
 
 Runs the same pipeline as production:
-  1. All 3 strategies (dual momentum, mean reversion, multi-timeframe)
-  2. Orchestrator (weighted voting, regime detection, position sizing)
+  1. Dual momentum (the sole live strategy)
+  2. Orchestrator (regime detection, sideways-hold, correlation guard)
   3. AI Advisor (failure learning review, potential override)
+
+Strategy/orchestrator parameters come from CANONICAL_CONFIG, the single
+config artifact shared with Checker — see aurel2.config.canonical. This
+engine and the live checker must never hardcode these values separately.
 """
 
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from decimal import Decimal
 
-import bisect
-
 import pandas as pd
 import numpy as np
 import structlog
 
+from aurel2.config.canonical import CANONICAL_CONFIG, live_asset_registry
 from aurel2.core.assets import ASSET_REGISTRY
 from aurel2.core.models import Asset, AssetClass, Position, Signal, SignalAction, Trade, PortfolioSnapshot
 from aurel2.strategies.dual_momentum import DualMomentumStrategy
-from aurel2.strategies.mean_reversion import MeanReversionStrategy
-from aurel2.strategies.multi_timeframe import MultiTimeframeTrendStrategy
-from aurel2.strategies.robust_quarterly import build_robust_quarterly_no_tlt_strategy
 from aurel2.agent.orchestrator import AgentOrchestrator, AgentDecision, DecisionType
 
 logger = structlog.get_logger()
@@ -168,8 +168,16 @@ class BacktestResult:
 class BacktestEngine:
     """Engine that mirrors the full live trading path for backtesting.
 
-    Creates all components internally (3 strategies, orchestrator, AI advisor)
-    and runs the same decision pipeline as production on each rebalance date.
+    Creates all components internally (dual momentum, orchestrator, AI
+    advisor) and runs the same decision pipeline as production on each
+    rebalance date.
+
+    NOTE on correlation_guard/sideways_hold defaults: this engine defaults
+    both to False, while Checker's canonical-config wiring leaves the
+    orchestrator's own True defaults in effect. That split predates this
+    cleanup and is a known residual divergence (documented in
+    docs/plans/build-reports/track-a-report.md) — left unchanged here because
+    changing either default would move the acceptance-test replay's decisions.
     """
 
     def __init__(
@@ -194,29 +202,18 @@ class BacktestEngine:
         canary_safe_asset: str = "IEF",
     ):
         # Mirror the LIVE checker configuration so backtests match the daemon:
-        # no-TLT universe, plain dual momentum (2% switch threshold), the same
-        # universe for multi-timeframe, calm-market-hold disabled, and min-hold
-        # disabled. Historically the backtest used the full registry + a narrow
-        # multi-timeframe universe + calm-hold enabled, which made backtest
-        # decisions diverge from live.
-        no_tlt_assets = {
-            ac: a for ac, a in ASSET_REGISTRY.items() if ac != AssetClass.BONDS_TREASURY
-        }
+        # no-TLT universe, plain dual momentum (2% switch threshold). Both
+        # this engine and Checker load these from CANONICAL_CONFIG so they
+        # cannot drift apart independently.
+        dm_config = CANONICAL_CONFIG.dual_momentum
         self.dual_momentum = DualMomentumStrategy(
-            assets=no_tlt_assets,
-            lookback_months=12,
-            switch_threshold=0.02,
-            cash_rate=0.0,
-            pilot_entry_enabled=False,
-        )
-        self.mean_reversion = MeanReversionStrategy()
-        self.multi_timeframe = MultiTimeframeTrendStrategy(
-            target_assets=[ac for ac in no_tlt_assets if ac != AssetClass.CASH],
+            assets=live_asset_registry(),
+            lookback_months=dm_config.lookback_months,
+            switch_threshold=dm_config.switch_threshold,
+            cash_rate=dm_config.cash_rate,
         )
         self.orchestrator = AgentOrchestrator(
-            calm_market_hold_threshold=0.0,
             correlation_guard_enabled=correlation_guard,
-            min_hold_enabled=False,
             sideways_hold_enabled=sideways_hold,
         )
 
@@ -456,16 +453,6 @@ class BacktestEngine:
         current_holding_symbol: str | None = None
         current_shares = Decimal("0")
 
-        # Optional min-hold cadence input. The throttle is disabled by default,
-        # but keeping the context makes opt-in backtests deterministic.
-        last_switch_date = None
-        _all_trading_days = sorted({d.date() for d in pd.to_datetime(prices["date"])})
-
-        def _trading_days_since(since_date) -> int:
-            lo = bisect.bisect_right(_all_trading_days, since_date)
-            hi = bisect.bisect_right(_all_trading_days, rebal_date)
-            return max(0, hi - lo)
-
         trades: list[Trade] = []
         all_signals: list[Signal] = []
         snapshots: list[PortfolioSnapshot] = []
@@ -501,13 +488,11 @@ class BacktestEngine:
                             cash -= dca  # spent the DCA cash
 
             # ================================================================
-            # Step 1: Run all 3 strategies (mirrors checker._run_strategies)
+            # Step 1: Run dual momentum (mirrors checker._run_strategies)
             # ================================================================
             signals = {}
             for name, strategy in [
                 ("dual_momentum", self.dual_momentum),
-                ("mean_reversion", self.mean_reversion),
-                ("multi_timeframe", self.multi_timeframe),
             ]:
                 try:
                     signal = strategy.generate_signal(
@@ -534,16 +519,12 @@ class BacktestEngine:
                 "backtest_signals",
                 date=str(rebal_date),
                 dm=signals.get("dual_momentum", {}).get("action"),
-                mr=signals.get("mean_reversion", {}).get("action"),
-                mtf=signals.get("multi_timeframe", {}).get("action"),
             )
 
             # ================================================================
             # Step 2: Market context (mirrors checker._build_market_context)
             # ================================================================
             market_context = self._build_market_context(prices, rebal_date)
-            if last_switch_date is not None:
-                market_context["days_since_last_switch"] = _trading_days_since(last_switch_date)
 
             # ================================================================
             # Step 3: Orchestrator analysis (mirrors checker step 6)
@@ -794,7 +775,6 @@ class BacktestEngine:
 
                     current_holding = AssetClass.CASH
                     current_holding_symbol = "CASH"
-                    last_switch_date = rebal_date
 
                 elif target_asset and target_asset.yahoo_symbol:
                     buy_price = self._get_price(prices, target_asset.yahoo_symbol, rebal_date)
@@ -841,7 +821,6 @@ class BacktestEngine:
                         current_shares = shares_to_buy
                         current_holding = target_asset_class
                         current_holding_symbol = target_symbol
-                        last_switch_date = rebal_date
 
                         logger.info(
                             "backtest_trade",
@@ -1097,19 +1076,15 @@ def generate_comparison_json(output_path: str = "data/backtest_comparison.json")
         ("1m", previous_month_start(month_start(end_date)), end_date),
     ]
 
-    # Build the deployed strategy: plain DM with NO_TLT universe, no quarterly
-    # gate, no calm-hold, no min-hold throttle. Daily cadence matches live behavior.
-    # See data/cadence_filter_revalidation_may2026.json for rationale.
-    no_tlt_assets = {ac: a for ac, a in ASSET_REGISTRY.items() if ac != AssetClass.BONDS_TREASURY}
-
+    # Build the deployed strategy: plain DM with the canonical NO_TLT universe,
+    # no quarterly gate. Daily cadence matches live behavior. See
+    # data/cadence_filter_revalidation_may2026.json for rationale.
     results = {
         "_meta": {
             "generated_at": end_date.isoformat(),
-            "strategy": "DM_NO_TLT_daily_no_calm_no_minhold",
+            "strategy": "DM_NO_TLT_daily",
             "benchmark": "SPY",
             "cadence": "daily",
-            "calm_hold_threshold": 0.0,
-            "min_hold_enabled": False,
         }
     }
     for label, start_date, period_end in periods:
@@ -1117,15 +1092,6 @@ def generate_comparison_json(output_path: str = "data/backtest_comparison.json")
 
         engine = BacktestEngine(initial_capital=capital, use_ai=False,
                                 correlation_guard=False, sideways_hold=False)
-        engine.dual_momentum = DualMomentumStrategy(
-            assets=no_tlt_assets,
-            lookback_months=12,
-            switch_threshold=0.02,
-            cash_rate=0.0,
-            pilot_entry_enabled=False,
-        )
-        engine.orchestrator.calm_market_hold_threshold = 0.0
-        engine.orchestrator.min_hold_enabled = False
         result = engine.run(
             prices=prices,
             start_date=start_date,

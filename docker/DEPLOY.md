@@ -183,6 +183,24 @@ docker compose --profile dashboard up -d
 # (Consider adding nginx + SSL for production)
 ```
 
+## Optional: Weekly Fidelity Guard
+
+Replays the last N live decision days through the backtest engine's decision
+path and diffs against what the daemon actually recorded, alerting via ntfy
+on any divergence (`scripts/fidelity_guard.py`). Not started by `docker
+compose up` — it's a one-shot job, not a long-running service. Wire it to a
+real schedule with a host cron entry:
+
+```bash
+# Run once manually:
+docker compose --profile fidelity-guard run --rm fidelity-guard
+
+# Or add to the host crontab (Monday 06:00, before the weekly overlay cadence):
+0 6 * * 1 cd /opt/aurel2/docker && docker compose --profile fidelity-guard run --rm fidelity-guard
+```
+
+This is wiring only — no host currently has this cron entry installed.
+
 ## Optional: Enable Monitoring
 
 ```bash
