@@ -206,17 +206,11 @@ services:
       - ../src:/app/src:ro
       - ../config:/app/config:ro
       - ../scripts:/app/scripts:ro
-      # NOTE: the live-trader arm reads an ABSOLUTE HOST PATH
-      # (/Users/claudiu/.openclaw/workspace/live-trader/trades.jsonl,
-      # scripts/weekly_scorecard.py::LIVE_TRADER_TRADES_PATH), not something
-      # under data/. That path does not exist inside this container as
-      # configured -- running this service as-is will report the live-trader
-      # arm as a permanent data gap. Whoever activates this on Dumbo must add
-      # a read-only bind mount for that host path before the live-trader
-      # comparison will actually work; until then §5 of the graduation rule's
-      # "live-trader data gap" row applies by construction. Left unmounted
-      # deliberately: guessing at a container path here would be exactly the
-      # kind of untested wiring this build is supposed to avoid.
+      # live-trader arm (READ-ONLY): mounted at the same absolute path the
+      # script reads (weekly_scorecard.py::LIVE_TRADER_TRADES_PATH). Verified
+      # present on Dumbo 2026-07-10. If the mount is absent the arm reports a
+      # data gap per the graduation rule §5 -- never a crash.
+      - /Users/claudiu/.openclaw/workspace/live-trader:/Users/claudiu/.openclaw/workspace/live-trader:ro
     entrypoint: ["python3", "scripts/weekly_scorecard.py"]
     command: ["--mode", "${TRADING_MODE:-paper}", "--run-start", "${RUN_START}", "--ntfy-topic", "${NTFY_TOPIC:-aurel2}"]
     profiles:
