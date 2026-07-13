@@ -3,8 +3,9 @@
 import asyncio
 import uuid
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import structlog
@@ -12,7 +13,7 @@ import structlog
 from aurel2.agent.orchestrator import AgentOrchestrator, AgentDecision, DecisionType
 from aurel2.agent.advisor import AIAdvisor, AIAdvice
 from aurel2.config.canonical import CANONICAL_CONFIG, live_asset_registry
-from aurel2.core.assets import ASSET_REGISTRY, get_all_yahoo_symbols
+from aurel2.core.assets import ASSET_REGISTRY
 from aurel2.data.providers.yahoo import YahooFinanceProvider
 from aurel2.strategies.dual_momentum import DualMomentumStrategy
 from aurel2.live.connection import AlpacaConnection
@@ -23,6 +24,10 @@ from aurel2.live.trade_recorder import TradeRecorder
 from aurel2.notifications.ntfy import NtfyNotifier
 
 logger = structlog.get_logger()
+
+MARKET_TIMEZONE = ZoneInfo("America/New_York")
+MAX_QUOTE_AGE = timedelta(minutes=2)
+MAX_DECISION_AGE = timedelta(minutes=10)
 
 
 def _last_reliable_account_state(journal: TradeJournal) -> tuple[float | None, str | None]:
@@ -144,6 +149,7 @@ class Checker:
         self.dry_run = dry_run
         self.use_ai_advisor = use_ai_advisor
         self.mode = mode
+        self._signal_snapshot_at: Optional[datetime] = None
         # Overlay containment: default OFF. The overlay's only write surfaces are
         # data/{mode}/overlay_tilt.json, overlay_state.json, and journal entries
         # (docs/plans/2026-07-10-ai-overlay-design.md, "Hard containment"). It is
@@ -495,6 +501,17 @@ class Checker:
         approval path — it goes straight to execution, independent of any
         external approval backend.
         """
+        if not self._signal_snapshot_is_fresh():
+            logger.warning("checker_signal_snapshot_expired")
+            return CheckResult(
+                success=False,
+                decision=decision,
+                ai_advice=ai_advice,
+                message="Signal snapshot expired before execution; no trade placed",
+                current_holding=current_holding,
+                account_value=account_value,
+            )
+
         if not decision.requires_approval:
             # ROUTINE - auto-execute
             return await self._execute_decision(
@@ -507,10 +524,16 @@ class Checker:
             )
 
     async def _fetch_prices(self) -> pd.DataFrame:
-        """Fetch price data for all tracked symbols."""
-        symbols = get_all_yahoo_symbols()
-        end_date = date.today()
-        start_date = end_date - timedelta(days=400)  # Need ~13 months for momentum
+        """Fetch completed history and one current full-universe quote snapshot."""
+        symbols = [
+            asset.yahoo_symbol
+            for asset in live_asset_registry().values()
+            if asset.yahoo_symbol
+        ]
+        now = datetime.now(timezone.utc)
+        market_date = now.astimezone(MARKET_TIMEZONE).date()
+        history_end = market_date - timedelta(days=1)
+        start_date = history_end - timedelta(days=400)  # Need ~13 months for momentum
 
         logger.info("checker_fetching_prices", symbols=symbols)
 
@@ -519,10 +542,57 @@ class Checker:
         loop = asyncio.get_event_loop()
         prices = await loop.run_in_executor(
             None,
-            lambda: self.provider.get_multi_prices(symbols, start_date, end_date),
+            lambda: self.provider.get_multi_prices(symbols, start_date, history_end),
         )
 
-        return prices
+        history_symbols = set(prices["symbol"].unique()) if not prices.empty else set()
+        missing_history = sorted(set(symbols) - history_symbols)
+        if missing_history:
+            raise RuntimeError(f"Missing completed history for: {', '.join(missing_history)}")
+
+        if not self.connection.is_connected or not self.connection.broker:
+            raise RuntimeError("Broker connection unavailable for current quote snapshot")
+
+        quotes = await self.connection.broker.get_market_quotes(symbols)
+        received_at = datetime.now(timezone.utc)
+        missing_quotes = sorted(set(symbols) - set(quotes))
+        if missing_quotes:
+            raise RuntimeError(f"Missing current quotes for: {', '.join(missing_quotes)}")
+
+        stale_quotes = sorted(
+            symbol
+            for symbol, quote in quotes.items()
+            if received_at - quote.observed_at > MAX_QUOTE_AGE
+            or quote.observed_at - received_at > timedelta(seconds=5)
+        )
+        if stale_quotes:
+            raise RuntimeError(f"Stale current quotes for: {', '.join(stale_quotes)}")
+
+        quote_times = [quote.observed_at for quote in quotes.values()]
+        if max(quote_times) - min(quote_times) > MAX_QUOTE_AGE:
+            raise RuntimeError("Current quote snapshot is not synchronized within 2 minutes")
+
+        current_rows = pd.DataFrame(
+            {
+                "date": [market_date] * len(symbols),
+                "close": [quotes[symbol].price for symbol in symbols],
+                "symbol": symbols,
+            }
+        )
+        logger.info(
+            "checker_quote_snapshot_ready",
+            symbols=len(symbols),
+            oldest_quote=min(quote_times).isoformat(),
+            newest_quote=max(quote_times).isoformat(),
+        )
+        self._signal_snapshot_at = min(quote_times)
+        return pd.concat([prices, current_rows], ignore_index=True)
+
+    def _signal_snapshot_is_fresh(self) -> bool:
+        if self._signal_snapshot_at is None:
+            return False
+        age = datetime.now(timezone.utc) - self._signal_snapshot_at
+        return -timedelta(seconds=5) <= age <= MAX_DECISION_AGE
 
     def _apply_overlay(
         self,

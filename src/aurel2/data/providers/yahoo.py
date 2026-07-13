@@ -37,7 +37,11 @@ class YahooFinanceProvider:
         buffer_start = start_date - timedelta(days=400)
 
         ticker = yf.Ticker(symbol)
-        hist = ticker.history(start=buffer_start, end=end_date + timedelta(days=1))
+        hist = ticker.history(
+            start=buffer_start,
+            end=end_date + timedelta(days=1),
+            auto_adjust=True,
+        )
 
         if hist.empty:
             logger.warning("no_data_returned", symbol=symbol)

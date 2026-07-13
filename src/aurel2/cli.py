@@ -786,7 +786,8 @@ def learn(
 @app.command()
 def live(
     paper: bool = typer.Option(True, "--paper/--real", help="Use paper trading (default) or real trading"),
-    check_time: str = typer.Option("16:00", "--check-time", "-t", help="Daily check time (HH:MM in Romania timezone)", envvar="CHECK_TIME"),
+    check_time: str = typer.Option("10:30", "--check-time", "-t", help="Daily check time (HH:MM in market timezone)", envvar="CHECK_TIME"),
+    market_timezone: str = typer.Option("America/New_York", "--market-timezone", help="IANA timezone for the daily check", envvar="MARKET_TIMEZONE"),
     poll_interval: int = typer.Option(5, "--poll-interval", "-p", help="Approval poll interval in minutes", envvar="POLL_INTERVAL"),
     ntfy_topic: str = typer.Option("aurel2", "--ntfy-topic", help="Ntfy notification topic", envvar="NTFY_TOPIC"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Don't execute trades, just simulate", envvar="DRY_RUN"),
@@ -798,18 +799,18 @@ def live(
 
     The daemon:
     1. Connects to Alpaca Markets
-    2. Runs daily check at the specified time (default 4 PM Romania)
+    2. Runs daily check at the specified time (default 10:30 AM New York)
     3. Auto-executes ROUTINE decisions (all strategies agree)
     4. Creates approval requests for NON_ROUTINE/URGENT decisions
     5. Polls for approvals every 5 minutes
-    6. Auto-executes timed-out decisions after 1 hour
+    6. Expires unapproved decisions after 10 minutes
 
     AI Configuration:
     - Default: Sonnet with 3-year lookback (best in backtests: +42.86% alpha)
     - Lookback window filters failure patterns to recent years only
 
     Environment Variables:
-        APCA_API_KEY_ID, APCA_API_SECRET_KEY, CHECK_TIME, POLL_INTERVAL,
+        APCA_API_KEY_ID, APCA_API_SECRET_KEY, CHECK_TIME, MARKET_TIMEZONE, POLL_INTERVAL,
         NTFY_TOPIC, DRY_RUN, AI_MODEL, AI_LOOKBACK_YEARS
 
     Examples:
@@ -849,6 +850,7 @@ def live(
     daemon = LiveDaemon(
         paper=paper,
         check_time=check_time_obj,
+        timezone=market_timezone,
         poll_interval_minutes=poll_interval,
         ntfy_topic=ntfy_topic,
         dry_run=dry_run,

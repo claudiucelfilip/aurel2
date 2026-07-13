@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Optional
 
 import structlog
@@ -69,6 +70,27 @@ class OrderVerification:
     message: str
 
 
+@dataclass(frozen=True)
+class MarketQuote:
+    """One timestamped bid/ask observation."""
+
+    symbol: str
+    price: float
+    bid_price: float
+    ask_price: float
+    observed_at: datetime
+
+
+@dataclass(frozen=True)
+class MarketClock:
+    """Broker view of the current regular trading session."""
+
+    is_open: bool
+    timestamp: datetime
+    next_open: datetime
+    next_close: datetime
+
+
 class BaseBroker(ABC):
     """Abstract base class for broker integrations."""
 
@@ -105,6 +127,16 @@ class BaseBroker(ABC):
     @abstractmethod
     async def get_market_price(self, symbol: str) -> Optional[float]:
         """Get current market price for a symbol."""
+        pass
+
+    @abstractmethod
+    async def get_market_quotes(self, symbols: list[str]) -> dict[str, MarketQuote]:
+        """Get one batch of timestamped quotes for the requested symbols."""
+        pass
+
+    @abstractmethod
+    async def get_market_clock(self) -> Optional[MarketClock]:
+        """Get the broker's current regular-session clock."""
         pass
 
     @property

@@ -6,6 +6,8 @@ from aurel2.broker.base import (
     BrokerOrder,
     OrderResult,
     AccountSummary,
+    MarketClock,
+    MarketQuote,
     OrderVerification,
 )
 
@@ -15,5 +17,7 @@ __all__ = [
     "BrokerOrder",
     "OrderResult",
     "AccountSummary",
+    "MarketClock",
+    "MarketQuote",
     "OrderVerification",
 ]

@@ -27,20 +27,20 @@ class LiveDaemon:
     Live trading daemon that runs continuously.
 
     Schedule:
-    - Daily check at configured time (default 4 PM Romania)
+    - Daily check at configured time (default 10:30 AM New York)
     - Poll for pending approvals every 5 minutes
 
     Handles:
     - Graceful shutdown on SIGINT/SIGTERM
     - Automatic reconnection to broker
-    - Pending decision timeouts
+    - Pending decision expiry
     """
 
     def __init__(
         self,
         paper: bool = True,
-        check_time: dt_time = dt_time(16, 0),  # 4 PM
-        timezone: str = "Europe/Bucharest",
+        check_time: dt_time = dt_time(10, 30),
+        timezone: str = "America/New_York",
         poll_interval_minutes: int = 5,
         ntfy_topic: str = "aurel2",
         dry_run: bool = False,
@@ -77,7 +77,7 @@ class LiveDaemon:
         self.notifier = NtfyNotifier(topic=ntfy_topic)
 
         self._running = False
-        self._last_check: Optional[datetime] = None
+        self._last_check: Optional[datetime] = self._load_last_check()
         self._error_count = 0
         self._last_decision_signals: Optional[dict] = None
         self._heartbeat_task: Optional[asyncio.Task] = None
@@ -90,6 +90,20 @@ class LiveDaemon:
             if HEARTBEAT_FILE.exists():
                 data = json.loads(HEARTBEAT_FILE.read_text())
                 return data.get("last_regime")
+        except Exception:
+            pass
+        return None
+
+    def _load_last_check(self) -> Optional[datetime]:
+        """Restore the last scheduled check so restarts cannot rerun it."""
+        try:
+            if HEARTBEAT_FILE.exists():
+                value = json.loads(HEARTBEAT_FILE.read_text()).get("last_check")
+                if value:
+                    parsed = datetime.fromisoformat(value)
+                    if parsed.tzinfo is None:
+                        parsed = self.timezone.localize(parsed)
+                    return parsed.astimezone(self.timezone)
         except Exception:
             pass
         return None
@@ -301,8 +315,7 @@ class LiveDaemon:
                 self.pending_manager.remove_decision(decision.id)
 
             elif new_status == PendingStatus.TIMEOUT.value:
-                print(f"Decision {decision.id} timed out - auto-executing...")
-                await self._execute_timeout(decision)
+                self._expire_decision(decision, "Approval window expired")
 
     async def _execute_approved(self, decision) -> None:
         """Execute an approved decision."""
@@ -312,6 +325,11 @@ class LiveDaemon:
         if self.dry_run:
             print("  (Dry run - no actual execution)")
             self.pending_manager.mark_executed(decision.id)
+            return
+
+        is_valid, reason = await self._pending_execution_is_valid(decision)
+        if not is_valid:
+            self._expire_decision(decision, reason)
             return
 
         journal_id = decision.journal_decision_id or decision.id
@@ -327,74 +345,36 @@ class LiveDaemon:
 
         self.pending_manager.mark_executed(decision.id)
 
-    async def _execute_timeout(self, decision) -> None:
-        """Execute a timed-out decision with validation."""
-        logger.info(
-            "daemon_handling_timed_out_decision",
-            decision_id=decision.id,
-            action=decision.action,
-            symbol=decision.symbol,
-        )
+    async def _pending_execution_is_valid(self, decision) -> tuple[bool, str]:
+        if not self.connection.is_connected or not self.connection.broker:
+            return False, "Broker connection unavailable"
 
-        # Get current market price for validation
+        clock = await self.connection.broker.get_market_clock()
+        if clock is None:
+            return False, "Market session status unavailable"
+        if not clock.is_open:
+            return False, "Regular market session is closed"
+        if clock.next_close - clock.timestamp < timedelta(minutes=10):
+            return False, "Less than 10 minutes remain before market close"
+
         current_price = 0.0
-        if decision.symbol and self.connection.is_connected:
-            try:
-                current_price = await self.connection.broker.get_market_price(decision.symbol)
-            except Exception as e:
-                logger.warning("failed_to_get_price_for_validation", error=str(e))
+        if decision.symbol:
+            current_price = await self.connection.broker.get_market_price(decision.symbol) or 0.0
+        return self.pending_manager.validate_decision_still_valid(decision, current_price)
 
-        # Validate decision is still appropriate
-        is_valid, reason = self.pending_manager.validate_decision_still_valid(
-            decision=decision,
-            current_price=current_price,
+    def _expire_decision(self, decision, reason: str) -> None:
+        logger.warning("pending_decision_expired", decision_id=decision.id, reason=reason)
+        self.pending_manager.mark_rejected(decision.id)
+        self.notifier.send(
+            message=(
+                f"Decision expired without execution: {reason}\n\n"
+                f"Action: {decision.action.upper()} {decision.symbol or 'CASH'}\n"
+                "The next check will calculate a new decision."
+            ),
+            title="Aurel2: Decision Expired",
+            priority="high",
+            tags=["warning", "clock"],
         )
-
-        if not is_valid:
-            logger.warning(
-                "timed_out_decision_invalidated",
-                decision_id=decision.id,
-                reason=reason,
-            )
-
-            self.notifier.send(
-                message=(
-                    f"Timed-out decision NOT auto-executed: {reason}\n\n"
-                    f"Action: {decision.action.upper()} {decision.symbol or 'CASH'}\n"
-                    f"Please review manually."
-                ),
-                title="Aurel2: Decision Invalidated",
-                priority="high",
-                tags=["warning", "clock"],
-            )
-
-            # Mark as rejected
-            self.pending_manager.decisions[decision.id].status = "rejected"
-            self.pending_manager._save()
-            return
-
-        # Proceed with auto-execution
-        logger.info("daemon_executing_timeout", id=decision.id)
-        print(f"Auto-executing timed-out decision: {decision.action.upper()} {decision.symbol or ''}")
-
-        if self.dry_run:
-            print("  (Dry run - no actual execution)")
-            self.pending_manager.mark_executed(decision.id)
-            return
-
-        journal_id = decision.journal_decision_id or decision.id
-        await self.checker.trade_recorder.execute_and_record(
-            action=decision.action,
-            symbol=decision.symbol,
-            decision_id=journal_id,
-            current_holding=decision.current_holding,
-            position_size_pct=decision.position_size_pct,
-            notify_title="Aurel2: Auto-Executed (Timeout)",
-            notify_context="Timed-out decision auto-executed",
-            notify_tags_success=["alarm_clock", "chart_with_upwards_trend"],
-        )
-
-        self.pending_manager.mark_executed(decision.id)
 
     def _setup_signals(self) -> None:
         """Setup signal handlers for graceful shutdown."""

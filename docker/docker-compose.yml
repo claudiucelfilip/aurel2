@@ -14,7 +14,8 @@ services:
 
       # Trading settings (read by CLI via envvar)
       TRADING_MODE: ${TRADING_MODE:-paper}
-      CHECK_TIME: ${CHECK_TIME:-16:00}
+      CHECK_TIME: ${CHECK_TIME:-10:30}
+      MARKET_TIMEZONE: ${MARKET_TIMEZONE:-America/New_York}
       POLL_INTERVAL: ${POLL_INTERVAL:-5}
       DRY_RUN: ${DRY_RUN:-false}
       NTFY_TOPIC: ${NTFY_TOPIC:-aurel2}

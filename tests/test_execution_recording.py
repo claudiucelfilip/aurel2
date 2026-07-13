@@ -151,6 +151,7 @@ class TestDaemonExecuteApproved:
 
         daemon.pending_manager = MagicMock()
         daemon.notifier = MagicMock()
+        daemon._pending_execution_is_valid = AsyncMock(return_value=(True, ""))
 
         return daemon
 
@@ -190,20 +191,29 @@ class TestDaemonExecuteApproved:
 
         mock_daemon.checker.trade_recorder.execute_and_record.assert_not_called()
 
+    def test_execute_approved_rejects_stale_decision(self, mock_daemon):
+        from aurel2.live.daemon import LiveDaemon
 
-class TestDaemonExecuteTimeout:
-    """Tests that _execute_timeout delegates to trade_recorder correctly."""
+        mock_daemon._pending_execution_is_valid = AsyncMock(
+            return_value=(False, "Decision too stale")
+        )
+        mock_daemon._expire_decision = MagicMock()
+        decision = MagicMock(id="d-stale", action="buy", symbol="GLD")
+
+        asyncio.run(LiveDaemon._execute_approved(mock_daemon, decision))
+
+        mock_daemon.checker.trade_recorder.execute_and_record.assert_not_called()
+        mock_daemon._expire_decision.assert_called_once_with(decision, "Decision too stale")
+
+
+class TestDaemonDecisionExpiry:
+    """Timed-out decisions must never execute."""
 
     @pytest.fixture
     def mock_daemon(self):
         """Create a mock daemon for timeout execution."""
         daemon = MagicMock()
         daemon.dry_run = False
-
-        daemon.connection = MagicMock()
-        daemon.connection.is_connected = True
-        daemon.connection.broker = MagicMock()
-        daemon.connection.broker.get_market_price = AsyncMock(return_value=455.0)
 
         daemon.checker = MagicMock()
         daemon.checker.trade_recorder = MagicMock()
@@ -215,14 +225,11 @@ class TestDaemonExecuteTimeout:
         )
 
         daemon.pending_manager = MagicMock()
-        daemon.pending_manager.validate_decision_still_valid = MagicMock(return_value=(True, ""))
-
         daemon.notifier = MagicMock()
 
         return daemon
 
-    def test_execute_timeout_calls_trade_recorder(self, mock_daemon):
-        """_execute_timeout should delegate to trade_recorder.execute_and_record."""
+    def test_timeout_is_rejected_without_execution(self, mock_daemon):
         from aurel2.live.daemon import LiveDaemon
 
         decision = MagicMock()
@@ -233,13 +240,10 @@ class TestDaemonExecuteTimeout:
         decision.position_size_pct = 0.8
         decision.journal_decision_id = "j-003"
 
-        asyncio.run(LiveDaemon._execute_timeout(mock_daemon, decision))
+        LiveDaemon._expire_decision(mock_daemon, decision, "Approval window expired")
 
-        mock_daemon.checker.trade_recorder.execute_and_record.assert_called_once()
-        call_kwargs = mock_daemon.checker.trade_recorder.execute_and_record.call_args
-        assert call_kwargs.kwargs.get("action") == "buy"
-        assert call_kwargs.kwargs.get("symbol") == "EFA"
-        assert call_kwargs.kwargs.get("decision_id") == "j-003"
+        mock_daemon.checker.trade_recorder.execute_and_record.assert_not_called()
+        mock_daemon.pending_manager.mark_rejected.assert_called_once_with("d-003")
 
 
 class TestCheckerExecuteDecision:
@@ -299,6 +303,7 @@ class TestCheckerDispatchAutonomy:
 
     def _mock_checker(self):
         checker = MagicMock()
+        checker._signal_snapshot_is_fresh.return_value = True
         checker._execute_decision = AsyncMock(return_value="EXECUTED")
         checker._create_pending_decision = AsyncMock(return_value="PENDING")
         return checker
@@ -349,3 +354,19 @@ class TestCheckerDispatchAutonomy:
         assert result == "PENDING"
         checker._create_pending_decision.assert_called_once()
         checker._execute_decision.assert_not_called()
+
+    def test_expired_snapshot_blocks_both_execution_paths(self):
+        from aurel2.live.checker import Checker
+        from aurel2.agent.orchestrator import DecisionType
+
+        checker = self._mock_checker()
+        checker._signal_snapshot_is_fresh.return_value = False
+        decision = self._decision(DecisionType.ROUTINE, requires_approval=False)
+
+        result = asyncio.run(Checker._dispatch_decision(
+            checker, decision, None, {}, {}, "GLD", 100000.0, "did-stale"
+        ))
+
+        assert result.success is False
+        checker._execute_decision.assert_not_called()
+        checker._create_pending_decision.assert_not_called()

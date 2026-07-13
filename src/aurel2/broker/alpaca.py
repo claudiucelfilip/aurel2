@@ -1,6 +1,7 @@
 """Alpaca Markets broker integration using alpaca-py SDK."""
 
 import asyncio
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import structlog
@@ -11,6 +12,8 @@ from aurel2.broker.base import (
     BrokerOrder,
     OrderResult,
     AccountSummary,
+    MarketClock,
+    MarketQuote,
 )
 
 logger = structlog.get_logger()
@@ -24,7 +27,7 @@ try:
     )
     from alpaca.trading.enums import OrderSide, TimeInForce, QueryOrderStatus
     from alpaca.data.historical import StockHistoricalDataClient
-    from alpaca.data.requests import StockLatestTradeRequest, StockBarsRequest
+    from alpaca.data.requests import StockLatestQuoteRequest, StockBarsRequest
     from alpaca.data.timeframe import TimeFrame
     HAS_ALPACA = True
 except ImportError:
@@ -221,6 +224,12 @@ class AlpacaBroker(BaseBroker):
         side = OrderSide.BUY if order.action == "BUY" else OrderSide.SELL
 
         try:
+            clock = await self.get_market_clock()
+            if clock is None or not clock.is_open:
+                return self._rejected_order(order, "Regular market session is closed")
+            if clock.next_close - clock.timestamp < timedelta(minutes=10):
+                return self._rejected_order(order, "Less than 10 minutes remain before market close")
+
             if order.order_type == "MKT":
                 request = MarketOrderRequest(
                     symbol=order.symbol.upper(),
@@ -288,6 +297,20 @@ class AlpacaBroker(BaseBroker):
                 message=str(e),
             )
 
+    @staticmethod
+    def _rejected_order(order: BrokerOrder, message: str) -> OrderResult:
+        logger.warning("order_blocked_outside_execution_window", symbol=order.symbol, reason=message)
+        return OrderResult(
+            order_id="",
+            symbol=order.symbol,
+            action=order.action,
+            quantity=order.quantity,
+            filled_quantity=0,
+            avg_fill_price=0,
+            status="REJECTED",
+            message=message,
+        )
+
     async def _wait_for_fill(self, order_id: str, timeout: int = 60):
         """Poll order status until filled or timeout."""
         loop = asyncio.get_event_loop()
@@ -304,23 +327,70 @@ class AlpacaBroker(BaseBroker):
         )
 
     async def get_market_price(self, symbol: str) -> Optional[float]:
-        """Get latest trade price from Alpaca market data."""
+        """Get the current quote midpoint from Alpaca market data."""
+        quotes = await self.get_market_quotes([symbol])
+        quote = quotes.get(symbol.upper())
+        return quote.price if quote else None
+
+    async def get_market_quotes(self, symbols: list[str]) -> dict[str, MarketQuote]:
+        """Get one batch of timestamped bid/ask quotes."""
         if not self._data_client:
+            return {}
+
+        try:
+            loop = asyncio.get_event_loop()
+            normalized = [symbol.upper() for symbol in symbols]
+            request = StockLatestQuoteRequest(symbol_or_symbols=normalized)
+            quotes = await loop.run_in_executor(
+                None, self._data_client.get_stock_latest_quote, request
+            )
+            result: dict[str, MarketQuote] = {}
+            for symbol in normalized:
+                quote = quotes.get(symbol)
+                if not quote:
+                    continue
+                bid = float(quote.bid_price)
+                ask = float(quote.ask_price)
+                if bid <= 0 or ask <= 0 or ask < bid:
+                    continue
+                observed_at = self._as_utc_datetime(quote.timestamp)
+                result[symbol] = MarketQuote(
+                    symbol=symbol,
+                    price=(bid + ask) / 2,
+                    bid_price=bid,
+                    ask_price=ask,
+                    observed_at=observed_at,
+                )
+            return result
+        except Exception as e:
+            logger.error("get_market_quotes_failed", symbols=symbols, error=str(e))
+            return {}
+
+    async def get_market_clock(self) -> Optional[MarketClock]:
+        """Return Alpaca's regular-session clock."""
+        if not self._client:
             return None
 
         try:
             loop = asyncio.get_event_loop()
-            request = StockLatestTradeRequest(symbol_or_symbols=symbol.upper())
-            trades = await loop.run_in_executor(
-                None, self._data_client.get_stock_latest_trade, request
+            clock = await loop.run_in_executor(None, self._client.get_clock)
+            return MarketClock(
+                is_open=bool(clock.is_open),
+                timestamp=self._as_utc_datetime(clock.timestamp),
+                next_open=self._as_utc_datetime(clock.next_open),
+                next_close=self._as_utc_datetime(clock.next_close),
             )
-            trade = trades.get(symbol.upper())
-            if trade:
-                return float(trade.price)
-            return None
         except Exception as e:
-            logger.error("get_market_price_failed", symbol=symbol, error=str(e))
+            logger.error("get_market_clock_failed", error=str(e))
             return None
+
+    @staticmethod
+    def _as_utc_datetime(value) -> datetime:
+        if hasattr(value, "to_pydatetime"):
+            value = value.to_pydatetime()
+        if value.tzinfo is None:
+            value = value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)
 
     async def get_price_history(self, symbol: str, period: str = "1M", timeframe: str = "1D") -> dict:
         """Get historical bars for a symbol from Alpaca market data.
@@ -335,8 +405,6 @@ class AlpacaBroker(BaseBroker):
         """
         if not self._data_client:
             return {"dates": [], "close": []}
-
-        from datetime import datetime, timezone, timedelta
 
         tf = TimeFrame.Day if timeframe == "1D" else TimeFrame.Minute
         delta_map = {

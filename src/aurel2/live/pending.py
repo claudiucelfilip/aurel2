@@ -68,8 +68,7 @@ class PendingDecision:
 
     def timeout_seconds(self) -> int:
         """Get timeout in seconds based on urgency."""
-        # Both NON_ROUTINE and URGENT have 1 hour timeout
-        return 3600  # 1 hour
+        return 600
 
     def is_timed_out(self) -> bool:
         """Check if this decision has timed out."""
@@ -308,6 +307,13 @@ class PendingManager:
             self._save()
             logger.info("pending_marked_executed", id=decision_id)
 
+    def mark_rejected(self, decision_id: str) -> None:
+        """Reject a decision without executing it."""
+        if decision_id in self.decisions:
+            self.decisions[decision_id].status = PendingStatus.REJECTED.value
+            self._save()
+            logger.info("pending_marked_rejected", id=decision_id)
+
     def remove_decision(self, decision_id: str) -> None:
         """Remove a decision from tracking."""
         if decision_id in self.decisions:
@@ -331,7 +337,7 @@ class PendingManager:
 
         Checks:
         - Market hasn't moved more than 3% since decision
-        - Decision is not too stale (> 4 hours)
+        - Decision is not too stale (> 10 minutes)
 
         Args:
             decision: The pending decision to validate
@@ -343,11 +349,14 @@ class PendingManager:
         # Check staleness
         created = datetime.fromisoformat(decision.created_at)
         age = datetime.now() - created
-        if age > timedelta(hours=4):
-            return False, f"Decision too stale: {age.total_seconds() / 3600:.1f} hours old"
+        if age > timedelta(minutes=10):
+            return False, f"Decision too stale: {age.total_seconds() / 60:.1f} minutes old"
 
         # Check market movement if we have original price
-        if decision.original_price and decision.original_price > 0 and current_price > 0:
+        if decision.original_price and decision.original_price > 0 and current_price <= 0:
+            return False, "Current price unavailable"
+
+        if decision.original_price and decision.original_price > 0:
             price_change = abs(current_price - decision.original_price) / decision.original_price
             if price_change > 0.03:  # 3% threshold
                 return False, f"Market moved {price_change:.1%} since decision"
