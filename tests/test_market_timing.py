@@ -15,6 +15,7 @@ from aurel2.config.canonical import live_asset_registry
 from aurel2.live.checker import Checker
 from aurel2.live.daemon import LiveDaemon
 from aurel2.live.pending import PendingDecision, PendingManager
+from aurel2.monitor.health_checker import HealthChecker, HealthStatus, LogErrors, ProcessInfo
 
 
 def live_symbols() -> list[str]:
@@ -87,6 +88,22 @@ def test_fetch_prices_rejects_stale_quote():
         asyncio.run(checker._fetch_prices())
 
 
+def test_alpaca_market_snapshot_uses_validated_quote_midpoint():
+    now = datetime.now(timezone.utc)
+    broker = AlpacaBroker.__new__(AlpacaBroker)
+    broker._data_client = MagicMock()
+    broker._data_client.get_stock_latest_quote.return_value = {
+        "SPY": SimpleNamespace(bid_price=100.0, ask_price=100.2, timestamp=now),
+        "EFA": SimpleNamespace(bid_price=102.0, ask_price=101.0, timestamp=now),
+    }
+
+    snapshot = asyncio.run(broker.get_market_snapshot(["spy", "efa"]))
+
+    assert snapshot["SPY"] == MarketPriceSnapshot("SPY", 100.1, now)
+    assert "EFA" not in snapshot
+    broker._data_client.get_stock_latest_quote.assert_called_once()
+
+
 def test_alpaca_rejects_order_when_regular_session_is_closed():
     now = datetime.now(timezone.utc)
     broker = AlpacaBroker.__new__(AlpacaBroker)
@@ -155,3 +172,23 @@ def test_daemon_restores_last_check_across_restart(monkeypatch, tmp_path):
 
     assert daemon._last_check == checked_at
     assert daemon._should_run_check(checked_at + timedelta(hours=1)) is False
+
+
+def test_health_checker_degrades_on_failed_scheduled_check(tmp_path, monkeypatch):
+    heartbeat = tmp_path / "heartbeat.json"
+    heartbeat.write_text(json.dumps({
+        "timestamp": datetime.now().timestamp(),
+        "connected": True,
+        "circuit_breaker": {"state": "closed"},
+        "last_check": datetime.now().isoformat(),
+        "last_check_success": False,
+        "last_check_message": "Stale current prices for: SHY",
+    }))
+    checker = HealthChecker(heartbeat_file=heartbeat, log_file=tmp_path / "daemon.log")
+    monkeypatch.setattr(checker, "_check_process", lambda: ProcessInfo(running=True))
+    monkeypatch.setattr(checker, "_check_logs", lambda: LogErrors())
+
+    report = checker.check()
+
+    assert report.status is HealthStatus.DEGRADED
+    assert report.issues == ["Last scheduled check failed: Stale current prices for: SHY"]

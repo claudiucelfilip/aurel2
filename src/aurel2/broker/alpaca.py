@@ -27,7 +27,7 @@ try:
     )
     from alpaca.trading.enums import OrderSide, TimeInForce, QueryOrderStatus
     from alpaca.data.historical import StockHistoricalDataClient
-    from alpaca.data.requests import StockLatestTradeRequest, StockBarsRequest
+    from alpaca.data.requests import StockLatestQuoteRequest, StockBarsRequest
     from alpaca.data.timeframe import TimeFrame
     HAS_ALPACA = True
 except ImportError:
@@ -327,32 +327,41 @@ class AlpacaBroker(BaseBroker):
         )
 
     async def get_market_price(self, symbol: str) -> Optional[float]:
-        """Get the latest trade price from Alpaca market data."""
+        """Get the latest validated quote midpoint from Alpaca market data."""
         snapshot = await self.get_market_snapshot([symbol])
         price = snapshot.get(symbol.upper())
         return price.price if price else None
 
     async def get_market_snapshot(self, symbols: list[str]) -> dict[str, MarketPriceSnapshot]:
-        """Get one batch of timestamped latest trades."""
+        """Get one batch of timestamped, validated quote midpoints.
+
+        Latest IEX trades can legitimately be several minutes old for otherwise
+        tradeable ETFs. Quotes are the correct liveness signal here because they
+        continue updating even when no eligible trade prints on IEX.
+        """
         if not self._data_client:
             return {}
 
         try:
             loop = asyncio.get_event_loop()
             normalized = [symbol.upper() for symbol in symbols]
-            request = StockLatestTradeRequest(symbol_or_symbols=normalized)
-            trades = await loop.run_in_executor(
-                None, self._data_client.get_stock_latest_trade, request
+            request = StockLatestQuoteRequest(symbol_or_symbols=normalized)
+            quotes = await loop.run_in_executor(
+                None, self._data_client.get_stock_latest_quote, request
             )
             result: dict[str, MarketPriceSnapshot] = {}
             for symbol in normalized:
-                trade = trades.get(symbol)
-                if not trade or float(trade.price) <= 0:
+                quote = quotes.get(symbol)
+                if not quote:
+                    continue
+                bid = float(quote.bid_price)
+                ask = float(quote.ask_price)
+                if bid <= 0 or ask <= 0 or ask < bid:
                     continue
                 result[symbol] = MarketPriceSnapshot(
                     symbol=symbol,
-                    price=float(trade.price),
-                    observed_at=self._as_utc_datetime(trade.timestamp),
+                    price=(bid + ask) / 2,
+                    observed_at=self._as_utc_datetime(quote.timestamp),
                 )
             return result
         except Exception as e:

@@ -78,6 +78,7 @@ class LiveDaemon:
 
         self._running = False
         self._last_check: Optional[datetime] = self._load_last_check()
+        self._last_check_success, self._last_check_message = self._load_last_check_result()
         self._error_count = 0
         self._last_decision_signals: Optional[dict] = None
         self._heartbeat_task: Optional[asyncio.Task] = None
@@ -108,6 +109,17 @@ class LiveDaemon:
             pass
         return None
 
+    @staticmethod
+    def _load_last_check_result() -> tuple[Optional[bool], Optional[str]]:
+        """Restore the outcome of the last scheduled check for monitoring."""
+        try:
+            if HEARTBEAT_FILE.exists():
+                data = json.loads(HEARTBEAT_FILE.read_text())
+                return data.get("last_check_success"), data.get("last_check_message")
+        except Exception:
+            pass
+        return None, None
+
     def _write_heartbeat(self) -> None:
         """Write heartbeat file with current daemon status."""
         try:
@@ -119,6 +131,8 @@ class LiveDaemon:
                 "circuit_breaker": self.connection.circuit_breaker.get_status(),
                 "pending_count": len(pending),
                 "last_check": self._last_check.isoformat() if self._last_check else None,
+                "last_check_success": self._last_check_success,
+                "last_check_message": self._last_check_message,
                 "paper": self.paper,
                 "dry_run": self.dry_run,
                 "error_count": self._error_count,
@@ -224,6 +238,10 @@ class LiveDaemon:
 
                     result = await self.checker.run(previous_regime=self._last_regime)
                     self._last_check = now
+                    self._last_check_success = result.success
+                    self._last_check_message = result.message
+                    if not result.success:
+                        self._error_count += 1
 
                     # Update regime tracking
                     if result.decision and result.decision.regime:
@@ -244,6 +262,8 @@ class LiveDaemon:
                 except Exception as e:
                     logger.error("daemon_check_error", error=str(e))
                     print(f"Check error: {e}")
+                    self._last_check_success = False
+                    self._last_check_message = str(e)
                     self._error_count += 1
 
             # Poll for pending approvals

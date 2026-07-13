@@ -37,6 +37,8 @@ class HeartbeatInfo:
     circuit_breaker_state: str
     pending_count: int
     last_check: Optional[datetime]
+    last_check_success: Optional[bool]
+    last_check_message: Optional[str]
     paper: bool
     dry_run: bool
     error_count: int
@@ -107,6 +109,9 @@ class HealthChecker:
             issues.append("Broker disconnected")
         elif heartbeat.circuit_breaker_state == "open":
             issues.append("Circuit breaker is OPEN")
+        elif heartbeat.last_check_success is False:
+            detail = heartbeat.last_check_message or "unknown error"
+            issues.append(f"Last scheduled check failed: {detail}")
 
         # Check logs - only report if there are significant errors
         log_errors = self._check_logs()
@@ -204,6 +209,8 @@ class HealthChecker:
                 circuit_breaker_state=data.get("circuit_breaker", {}).get("state", "unknown"),
                 pending_count=data.get("pending_count", 0),
                 last_check=datetime.fromisoformat(data["last_check"]) if data.get("last_check") else None,
+                last_check_success=data.get("last_check_success"),
+                last_check_message=data.get("last_check_message"),
                 paper=data.get("paper", True),
                 dry_run=data.get("dry_run", False),
                 error_count=data.get("error_count", 0),
