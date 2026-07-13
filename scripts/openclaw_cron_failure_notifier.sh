@@ -5,8 +5,10 @@
 set -u
 DB="$HOME/.openclaw/state/openclaw.sqlite"
 STATE="$HOME/.openclaw/state/failure_notifier_last_ts"
+FINGERPRINT_DIR="$HOME/.openclaw/state/failure-notifier-fingerprints"
 NTFY_TOPIC="${NTFY_TOPIC:-aurel2}"
 [ -r "$DB" ] || exit 0
+mkdir -p "$FINGERPRINT_DIR"
 
 last=$(cat "$STATE" 2>/dev/null | tr -dc '0-9')
 [ -n "$last" ] || last=0
@@ -37,12 +39,23 @@ maxts=$last
 IFS=$'\n'
 for row in $rows; do
   ts="${row%%|*}"; rest="${row#*|}"; job="${rest%%|*}"; err="${rest#*|}"
+  fingerprint=$(printf '%s|%s' "$job" "$err" | shasum -a 256 | awk '{print $1}')
+  fingerprint_file="$FINGERPRINT_DIR/$fingerprint"
+  last_notified=$(cat "$fingerprint_file" 2>/dev/null | tr -dc '0-9')
+  [ -n "$last_notified" ] || last_notified=0
+  now_s=$(date +%s)
+  if [ "$last_notified" -ge $((now_s - 86400)) ]; then
+    [ "$ts" -gt "$maxts" ] && maxts=$ts
+    echo "$maxts" > "$STATE"
+    continue
+  fi
   when=$(date -r $((ts/1000)) '+%m-%d %H:%M' 2>/dev/null || echo "$ts")
   curl -s -m 10 \
     -H "Title: OpenClaw cron failed: $job" \
     -H "Priority: high" -H "Tags: warning" \
     -d "[$when] $err" \
     "https://ntfy.sh/$NTFY_TOPIC" >/dev/null || exit 0  # keep state on send failure; retry next run
+  echo "$now_s" > "$fingerprint_file"
   [ "$ts" -gt "$maxts" ] && maxts=$ts
   echo "$maxts" > "$STATE"
 done

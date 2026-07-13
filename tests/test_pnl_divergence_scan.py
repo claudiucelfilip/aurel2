@@ -1,5 +1,6 @@
 import importlib.util
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -18,6 +19,47 @@ def leader_context() -> dict[str, str]:
 
 def stale_holding_context() -> dict[str, str]:
     return {"verdict": "current_holding_is_not_momentum_leader"}
+
+
+def point(day: int, value: float, hour: int = 14):
+    ts = datetime(2026, 7, day, hour, tzinfo=timezone.utc)
+    return scan.Point(ts=ts, date=ts.date().isoformat(), value=value)
+
+
+def test_normalize_daily_points_quarantines_isolated_drop_and_keeps_last_daily_value():
+    points = [
+        point(2, 1083.28),
+        point(7, 19.84),
+        point(8, 1053.42),
+        point(10, 1085.95, 14),
+        point(10, 1091.47, 17),
+    ]
+
+    normalized, anomalies = scan.normalize_daily_points(points)
+
+    assert [(item.date, item.value) for item in normalized] == [
+        ("2026-07-02", 1083.28),
+        ("2026-07-08", 1053.42),
+        ("2026-07-10", 1091.47),
+    ]
+    assert anomalies == [
+        {
+            "rule": "isolated_account_snapshot_quarantined",
+            "date": "2026-07-07",
+            "observed_value": 19.84,
+            "previous_value": 1083.28,
+            "following_value": 1053.42,
+        }
+    ]
+
+
+def test_normalize_daily_points_keeps_sustained_drawdown():
+    normalized, anomalies = scan.normalize_daily_points(
+        [point(1, 1000), point(2, 800), point(3, 700), point(4, 650)]
+    )
+
+    assert [item.value for item in normalized] == [1000, 800, 700, 650]
+    assert anomalies == []
 
 
 def test_build_strategy_signal_context_marks_alignment():

@@ -34,7 +34,7 @@ class Point:
 
 def load_container_json(path: str) -> Any:
     completed = subprocess.run(
-        ["docker", "exec", CONTAINER, "cat", path],
+        [os.environ.get("DOCKER_BIN", "/usr/local/bin/docker"), "exec", CONTAINER, "cat", path],
         check=True,
         text=True,
         capture_output=True,
@@ -56,7 +56,9 @@ def extract_points(entries: list[dict[str, Any]]) -> list[Point]:
     points: list[Point] = []
     for entry in entries:
         raw_ts = str(entry.get("timestamp") or "").strip()
-        raw_value = entry.get("account_value_before")
+        raw_value = entry.get("account_value_after")
+        if raw_value is None:
+            raw_value = entry.get("account_value_before")
         if not raw_ts or raw_value is None:
             continue
         try:
@@ -66,6 +68,38 @@ def extract_points(entries: list[dict[str, Any]]) -> list[Point]:
             continue
         points.append(Point(ts=ts, date=ts.date().isoformat(), value=value))
     return sorted(points, key=lambda item: item.ts)
+
+
+def normalize_daily_points(points: list[Point]) -> tuple[list[Point], list[dict[str, Any]]]:
+    """Keep one close-like value per day and quarantine isolated bad snapshots."""
+    by_date: dict[str, Point] = {}
+    for point in points:
+        current = by_date.get(point.date)
+        if current is None or point.ts > current.ts:
+            by_date[point.date] = point
+
+    daily = sorted(by_date.values(), key=lambda item: item.ts)
+    anomalies: list[dict[str, Any]] = []
+    excluded: set[int] = set()
+    for index in range(1, len(daily) - 1):
+        previous, current, following = daily[index - 1 : index + 2]
+        if previous.value <= 0 or following.value <= 0:
+            continue
+        neighbor_ratio = following.value / previous.value
+        snapshot_ratio = current.value / min(previous.value, following.value)
+        if 0.75 <= neighbor_ratio <= 1.25 and snapshot_ratio < 0.25:
+            excluded.add(index)
+            anomalies.append(
+                {
+                    "rule": "isolated_account_snapshot_quarantined",
+                    "date": current.date,
+                    "observed_value": round(current.value, 2),
+                    "previous_value": round(previous.value, 2),
+                    "following_value": round(following.value, 2),
+                }
+            )
+
+    return [point for index, point in enumerate(daily) if index not in excluded], anomalies
 
 
 def latest_journal_entry(entries: list[dict[str, Any]]) -> dict[str, Any]:
@@ -400,7 +434,8 @@ def main() -> int:
     raw_entries = load_container_json(TRADE_JOURNAL)
     if not isinstance(raw_entries, list):
         raise RuntimeError("trade journal is not a JSON list")
-    points = extract_points(raw_entries)
+    raw_points = extract_points(raw_entries)
+    points, data_quality_observations = normalize_daily_points(raw_points)
     if len(points) < 2:
         raise RuntimeError("not enough paper value points for divergence scan")
 
@@ -461,6 +496,7 @@ def main() -> int:
         rolling_7d_return_pct=rolling_7d_return_pct,
         momentum_context=momentum_context,
     )
+    observations = data_quality_observations + observations
 
     record = {
         "bot": "Aurel2",
@@ -491,6 +527,8 @@ def main() -> int:
         "momentum_context": momentum_context,
         "flags": flags,
         "observations": observations,
+        "raw_point_count": len(raw_points),
+        "daily_point_count": len(points),
     }
     record["operator_summary"] = build_operator_summary(
         status=record["status"],

@@ -1,5 +1,6 @@
 """Single check logic - runs strategy analysis and produces decisions."""
 
+import asyncio
 import uuid
 from dataclasses import dataclass
 from datetime import date, timedelta
@@ -22,6 +23,28 @@ from aurel2.live.trade_recorder import TradeRecorder
 from aurel2.notifications.ntfy import NtfyNotifier
 
 logger = structlog.get_logger()
+
+
+def _last_reliable_account_state(journal: TradeJournal) -> tuple[float | None, str | None]:
+    for entry in reversed(journal.entries):
+        holding = entry.current_holding_after or entry.current_holding_before
+        value = entry.account_value_after or entry.account_value_before
+        if holding and value and value > 0:
+            return float(value), holding
+    return None, None
+
+
+def _broker_snapshot_is_inconsistent(
+    positions: list,
+    account_value: float | None,
+    journal: TradeJournal,
+) -> bool:
+    previous_value, previous_holding = _last_reliable_account_state(journal)
+    if not previous_holding or positions:
+        return False
+    if account_value is None or previous_value is None:
+        return True
+    return account_value < previous_value * 0.5
 
 
 def _decision_display_asset(decision: AgentDecision, current_holding: Optional[str]) -> Optional[str]:
@@ -208,6 +231,21 @@ class Checker:
         # 2. Sync positions from broker
         positions = await self.connection.get_positions()
         account_summary = await self.connection.get_account_summary()
+        account_value = account_summary.total_value if account_summary else None
+
+        if _broker_snapshot_is_inconsistent(positions, account_value, self.journal):
+            logger.warning("checker_inconsistent_broker_snapshot_retrying")
+            await asyncio.sleep(2)
+            positions = await self.connection.get_positions()
+            account_summary = await self.connection.get_account_summary()
+            account_value = account_summary.total_value if account_summary else None
+            if _broker_snapshot_is_inconsistent(positions, account_value, self.journal):
+                logger.error("checker_inconsistent_broker_snapshot_blocked")
+                return CheckResult(
+                    success=False,
+                    message="Broker account snapshot is inconsistent; trading paused for this cycle",
+                    account_value=account_value,
+                )
 
         current_holding = None
         if positions:
@@ -215,8 +253,6 @@ class Checker:
             largest = max(positions, key=lambda p: p.market_value)
             if largest.market_value > 100:
                 current_holding = largest.symbol
-
-        account_value = account_summary.total_value if account_summary else None
 
         logger.info(
             "checker_positions_synced",

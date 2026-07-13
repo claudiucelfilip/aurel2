@@ -65,7 +65,6 @@ def _run(prices: pd.DataFrame, assets: dict[AssetClass, Asset], start: date, end
         lookback_months=12,
         switch_threshold=0.02,
         cash_rate=0.0,
-        pilot_entry_enabled=False,
     )
     result = engine.run(prices=prices, start_date=start, end_date=end, benchmark_symbol="SPY", frequency="quarterly")
     result.calculate_metrics()
@@ -163,7 +162,6 @@ def main() -> None:
             "frequency": "quarterly",
             "switch_threshold": 0.02,
             "cash_rate": 0.0,
-            "pilot_entry_enabled": False,
         },
         "periods": {},
     }
