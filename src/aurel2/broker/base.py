@@ -71,13 +71,11 @@ class OrderVerification:
 
 
 @dataclass(frozen=True)
-class MarketQuote:
-    """One timestamped bid/ask observation."""
+class MarketPriceSnapshot:
+    """One timestamped market-price observation."""
 
     symbol: str
     price: float
-    bid_price: float
-    ask_price: float
     observed_at: datetime
 
 
@@ -130,8 +128,8 @@ class BaseBroker(ABC):
         pass
 
     @abstractmethod
-    async def get_market_quotes(self, symbols: list[str]) -> dict[str, MarketQuote]:
-        """Get one batch of timestamped quotes for the requested symbols."""
+    async def get_market_snapshot(self, symbols: list[str]) -> dict[str, MarketPriceSnapshot]:
+        """Get one batch of timestamped prices for the requested symbols."""
         pass
 
     @abstractmethod

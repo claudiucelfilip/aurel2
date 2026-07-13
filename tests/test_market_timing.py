@@ -10,7 +10,7 @@ import pytest
 import pytz
 
 from aurel2.broker.alpaca import AlpacaBroker
-from aurel2.broker.base import BrokerOrder, MarketClock, MarketQuote
+from aurel2.broker.base import BrokerOrder, MarketClock, MarketPriceSnapshot
 from aurel2.config.canonical import live_asset_registry
 from aurel2.live.checker import Checker
 from aurel2.live.daemon import LiveDaemon
@@ -21,17 +21,17 @@ def live_symbols() -> list[str]:
     return [asset.yahoo_symbol for asset in live_asset_registry().values() if asset.yahoo_symbol]
 
 
-def quote(symbol: str, observed_at: datetime, price: float = 100.0) -> MarketQuote:
-    return MarketQuote(
+def snapshot_price(
+    symbol: str, observed_at: datetime, price: float = 100.0
+) -> MarketPriceSnapshot:
+    return MarketPriceSnapshot(
         symbol=symbol,
         price=price,
-        bid_price=price - 0.01,
-        ask_price=price + 0.01,
         observed_at=observed_at,
     )
 
 
-def checker_with_snapshot(quotes: dict[str, MarketQuote]):
+def checker_with_snapshot(snapshot: dict[str, MarketPriceSnapshot]):
     symbols = live_symbols()
     history = pd.DataFrame(
         {
@@ -43,7 +43,7 @@ def checker_with_snapshot(quotes: dict[str, MarketQuote]):
     checker = Checker.__new__(Checker)
     checker.provider = MagicMock()
     checker.provider.get_multi_prices.return_value = history
-    broker = SimpleNamespace(get_market_quotes=AsyncMock(return_value=quotes))
+    broker = SimpleNamespace(get_market_snapshot=AsyncMock(return_value=snapshot))
     checker.connection = SimpleNamespace(is_connected=True, broker=broker)
     return checker
 
@@ -51,8 +51,11 @@ def checker_with_snapshot(quotes: dict[str, MarketQuote]):
 def test_fetch_prices_appends_one_fresh_full_universe_snapshot():
     now = datetime.now(timezone.utc)
     symbols = live_symbols()
-    quotes = {symbol: quote(symbol, now, 100.0 + i) for i, symbol in enumerate(symbols)}
-    checker = checker_with_snapshot(quotes)
+    snapshot = {
+        symbol: snapshot_price(symbol, now, 100.0 + i)
+        for i, symbol in enumerate(symbols)
+    }
+    checker = checker_with_snapshot(snapshot)
 
     prices = asyncio.run(checker._fetch_prices())
     current_date = datetime.now(ZoneInfo("America/New_York")).date()
@@ -60,27 +63,27 @@ def test_fetch_prices_appends_one_fresh_full_universe_snapshot():
 
     assert set(current["symbol"]) == set(symbols)
     assert len(current) == len(symbols)
-    assert current.set_index("symbol").loc[symbols[0], "close"] == quotes[symbols[0]].price
+    assert current.set_index("symbol").loc[symbols[0], "close"] == snapshot[symbols[0]].price
 
 
 def test_fetch_prices_rejects_missing_quote():
     now = datetime.now(timezone.utc)
     symbols = live_symbols()
-    quotes = {symbol: quote(symbol, now) for symbol in symbols[:-1]}
-    checker = checker_with_snapshot(quotes)
+    snapshot = {symbol: snapshot_price(symbol, now) for symbol in symbols[:-1]}
+    checker = checker_with_snapshot(snapshot)
 
-    with pytest.raises(RuntimeError, match="Missing current quotes"):
+    with pytest.raises(RuntimeError, match="Missing current prices"):
         asyncio.run(checker._fetch_prices())
 
 
 def test_fetch_prices_rejects_stale_quote():
     now = datetime.now(timezone.utc)
     symbols = live_symbols()
-    quotes = {symbol: quote(symbol, now) for symbol in symbols}
-    quotes[symbols[0]] = quote(symbols[0], now - timedelta(minutes=3))
-    checker = checker_with_snapshot(quotes)
+    snapshot = {symbol: snapshot_price(symbol, now) for symbol in symbols}
+    snapshot[symbols[0]] = snapshot_price(symbols[0], now - timedelta(minutes=3))
+    checker = checker_with_snapshot(snapshot)
 
-    with pytest.raises(RuntimeError, match="Stale current quotes"):
+    with pytest.raises(RuntimeError, match="Stale current prices"):
         asyncio.run(checker._fetch_prices())
 
 

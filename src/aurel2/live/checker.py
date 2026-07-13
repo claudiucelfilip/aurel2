@@ -26,7 +26,7 @@ from aurel2.notifications.ntfy import NtfyNotifier
 logger = structlog.get_logger()
 
 MARKET_TIMEZONE = ZoneInfo("America/New_York")
-MAX_QUOTE_AGE = timedelta(minutes=2)
+MAX_MARKET_PRICE_AGE = timedelta(minutes=2)
 MAX_DECISION_AGE = timedelta(minutes=10)
 
 
@@ -553,39 +553,39 @@ class Checker:
         if not self.connection.is_connected or not self.connection.broker:
             raise RuntimeError("Broker connection unavailable for current quote snapshot")
 
-        quotes = await self.connection.broker.get_market_quotes(symbols)
+        snapshot = await self.connection.broker.get_market_snapshot(symbols)
         received_at = datetime.now(timezone.utc)
-        missing_quotes = sorted(set(symbols) - set(quotes))
-        if missing_quotes:
-            raise RuntimeError(f"Missing current quotes for: {', '.join(missing_quotes)}")
+        missing_prices = sorted(set(symbols) - set(snapshot))
+        if missing_prices:
+            raise RuntimeError(f"Missing current prices for: {', '.join(missing_prices)}")
 
-        stale_quotes = sorted(
+        stale_prices = sorted(
             symbol
-            for symbol, quote in quotes.items()
-            if received_at - quote.observed_at > MAX_QUOTE_AGE
-            or quote.observed_at - received_at > timedelta(seconds=5)
+            for symbol, price in snapshot.items()
+            if received_at - price.observed_at > MAX_MARKET_PRICE_AGE
+            or price.observed_at - received_at > timedelta(seconds=5)
         )
-        if stale_quotes:
-            raise RuntimeError(f"Stale current quotes for: {', '.join(stale_quotes)}")
+        if stale_prices:
+            raise RuntimeError(f"Stale current prices for: {', '.join(stale_prices)}")
 
-        quote_times = [quote.observed_at for quote in quotes.values()]
-        if max(quote_times) - min(quote_times) > MAX_QUOTE_AGE:
-            raise RuntimeError("Current quote snapshot is not synchronized within 2 minutes")
+        observed_times = [price.observed_at for price in snapshot.values()]
+        if max(observed_times) - min(observed_times) > MAX_MARKET_PRICE_AGE:
+            raise RuntimeError("Current price snapshot is not synchronized within 2 minutes")
 
         current_rows = pd.DataFrame(
             {
                 "date": [market_date] * len(symbols),
-                "close": [quotes[symbol].price for symbol in symbols],
+                "close": [snapshot[symbol].price for symbol in symbols],
                 "symbol": symbols,
             }
         )
         logger.info(
             "checker_quote_snapshot_ready",
             symbols=len(symbols),
-            oldest_quote=min(quote_times).isoformat(),
-            newest_quote=max(quote_times).isoformat(),
+            oldest_price=min(observed_times).isoformat(),
+            newest_price=max(observed_times).isoformat(),
         )
-        self._signal_snapshot_at = min(quote_times)
+        self._signal_snapshot_at = min(observed_times)
         return pd.concat([prices, current_rows], ignore_index=True)
 
     def _signal_snapshot_is_fresh(self) -> bool:

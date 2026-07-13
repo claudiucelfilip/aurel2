@@ -13,7 +13,7 @@ from aurel2.broker.base import (
     OrderResult,
     AccountSummary,
     MarketClock,
-    MarketQuote,
+    MarketPriceSnapshot,
 )
 
 logger = structlog.get_logger()
@@ -27,7 +27,7 @@ try:
     )
     from alpaca.trading.enums import OrderSide, TimeInForce, QueryOrderStatus
     from alpaca.data.historical import StockHistoricalDataClient
-    from alpaca.data.requests import StockLatestQuoteRequest, StockBarsRequest
+    from alpaca.data.requests import StockLatestTradeRequest, StockBarsRequest
     from alpaca.data.timeframe import TimeFrame
     HAS_ALPACA = True
 except ImportError:
@@ -327,43 +327,36 @@ class AlpacaBroker(BaseBroker):
         )
 
     async def get_market_price(self, symbol: str) -> Optional[float]:
-        """Get the current quote midpoint from Alpaca market data."""
-        quotes = await self.get_market_quotes([symbol])
-        quote = quotes.get(symbol.upper())
-        return quote.price if quote else None
+        """Get the latest trade price from Alpaca market data."""
+        snapshot = await self.get_market_snapshot([symbol])
+        price = snapshot.get(symbol.upper())
+        return price.price if price else None
 
-    async def get_market_quotes(self, symbols: list[str]) -> dict[str, MarketQuote]:
-        """Get one batch of timestamped bid/ask quotes."""
+    async def get_market_snapshot(self, symbols: list[str]) -> dict[str, MarketPriceSnapshot]:
+        """Get one batch of timestamped latest trades."""
         if not self._data_client:
             return {}
 
         try:
             loop = asyncio.get_event_loop()
             normalized = [symbol.upper() for symbol in symbols]
-            request = StockLatestQuoteRequest(symbol_or_symbols=normalized)
-            quotes = await loop.run_in_executor(
-                None, self._data_client.get_stock_latest_quote, request
+            request = StockLatestTradeRequest(symbol_or_symbols=normalized)
+            trades = await loop.run_in_executor(
+                None, self._data_client.get_stock_latest_trade, request
             )
-            result: dict[str, MarketQuote] = {}
+            result: dict[str, MarketPriceSnapshot] = {}
             for symbol in normalized:
-                quote = quotes.get(symbol)
-                if not quote:
+                trade = trades.get(symbol)
+                if not trade or float(trade.price) <= 0:
                     continue
-                bid = float(quote.bid_price)
-                ask = float(quote.ask_price)
-                if bid <= 0 or ask <= 0 or ask < bid:
-                    continue
-                observed_at = self._as_utc_datetime(quote.timestamp)
-                result[symbol] = MarketQuote(
+                result[symbol] = MarketPriceSnapshot(
                     symbol=symbol,
-                    price=(bid + ask) / 2,
-                    bid_price=bid,
-                    ask_price=ask,
-                    observed_at=observed_at,
+                    price=float(trade.price),
+                    observed_at=self._as_utc_datetime(trade.timestamp),
                 )
             return result
         except Exception as e:
-            logger.error("get_market_quotes_failed", symbols=symbols, error=str(e))
+            logger.error("get_market_snapshot_failed", symbols=symbols, error=str(e))
             return {}
 
     async def get_market_clock(self) -> Optional[MarketClock]:
