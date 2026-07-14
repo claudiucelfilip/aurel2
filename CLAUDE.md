@@ -39,25 +39,13 @@ graduates per docs/plans/2026-07-10-graduation-rule.md. Do not recreate it.
 
 **CRITICAL: Run production Docker commands only against the active Dumbo deployment.** Do not recreate containers from a checkout that lacks `/opt/aurel2/docker/.env`.
 
+**Claw/OpenClaw must not run autonomous strategy research, backtests, optimization, experiments, or improvement loops on Aurel2.** Human-directed development remains allowed.
+
 ### When User Says "Services Are Down"
 
 1. **Check if they mean Dumbo or the control machine** - production is Dumbo
 2. **For production issues**: SSH to Dumbo and inspect Docker/Colima containers
 3. **For local testing only**: Check processes with `ps aux | grep aurel2`
-
-### Weekly Strategy Research
-
-Weekly strategy experiments must not run directly in `/root/aurel2`.
-
-Use the disposable workspace helper:
-
-```bash
-python3 /root/aurel2/scripts/weekly_strategy_workspace.py create --repo /root/aurel2
-python3 /root/aurel2/scripts/weekly_strategy_workspace.py run --worktree <worktree> -- python3 scripts/<backtest>.py
-python3 /root/aurel2/scripts/weekly_strategy_workspace.py finalize --worktree <worktree> --cleanup
-```
-
-Backtest failures inside the disposable workspace are research outcomes to report. They should not dirty the protected checkout or make the weekly cron stop without a useful summary.
 
 ## Key Files by Task
 

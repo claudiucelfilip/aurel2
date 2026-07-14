@@ -26,21 +26,14 @@ If these conflict with generic defaults, follow these files for this repo.
   remains the synced deployment copy and holds runtime files such as
   `/opt/aurel2/docker/.env`.
 
-## Weekly Strategy Research
-
-- Never run weekly strategy experiments directly in `/root/aurel2`.
-- Use `python3 /root/aurel2/scripts/weekly_strategy_workspace.py create` to get
-  a disposable worktree, run experiments there, then finalize with
-  `python3 /root/aurel2/scripts/weekly_strategy_workspace.py finalize --cleanup`.
-- Backtest command failures inside that disposable workspace are research
-  outcomes to report, not a reason to dirty or block the protected checkout.
-
 ## Mandatory Operating Constraints
 
 - Read `ARCHITECTURE.md` before major architecture or deployment changes.
 - Default troubleshooting target is the Dumbo deployment, not localhost or the deprecated VPS.
 - Broker is Alpaca Markets (REST API, no gateway process).
 - Never commit secrets such as `.env` credentials.
+- Do not schedule Claw/OpenClaw to run autonomous strategy research, backtests,
+  optimization, experiments, or improvement loops.
 
 ## Claude Hook Equivalents In Codex
 
