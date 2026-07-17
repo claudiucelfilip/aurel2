@@ -1,0 +1,282 @@
+[
+ {
+  "start": 2010,
+  "threshold": 0.02,
+  "cagr": 11.21,
+  "sharpe": 0.654,
+  "max_dd": 33.22,
+  "trades": 40
+ },
+ {
+  "start": 2010,
+  "threshold": 0.03,
+  "cagr": 10.65,
+  "sharpe": 0.628,
+  "max_dd": 33.22,
+  "trades": 40
+ },
+ {
+  "start": 2010,
+  "threshold": 0.04,
+  "cagr": 11.84,
+  "sharpe": 0.681,
+  "max_dd": 33.22,
+  "trades": 36
+ },
+ {
+  "start": 2010,
+  "threshold": 0.05,
+  "cagr": 12.25,
+  "sharpe": 0.702,
+  "max_dd": 33.22,
+  "trades": 33
+ },
+ {
+  "start": 2010,
+  "threshold": 0.06,
+  "cagr": 12.55,
+  "sharpe": 0.71,
+  "max_dd": 30.34,
+  "trades": 30
+ },
+ {
+  "start": 2012,
+  "threshold": 0.02,
+  "cagr": 13.08,
+  "sharpe": 0.746,
+  "max_dd": 29.71,
+  "trades": 35
+ },
+ {
+  "start": 2012,
+  "threshold": 0.03,
+  "cagr": 12.44,
+  "sharpe": 0.716,
+  "max_dd": 29.71,
+  "trades": 35
+ },
+ {
+  "start": 2012,
+  "threshold": 0.04,
+  "cagr": 13.81,
+  "sharpe": 0.777,
+  "max_dd": 24.92,
+  "trades": 31
+ },
+ {
+  "start": 2012,
+  "threshold": 0.05,
+  "cagr": 14.28,
+  "sharpe": 0.802,
+  "max_dd": 24.92,
+  "trades": 28
+ },
+ {
+  "start": 2012,
+  "threshold": 0.06,
+  "cagr": 13.82,
+  "sharpe": 0.779,
+  "max_dd": 24.92,
+  "trades": 27
+ },
+ {
+  "start": 2014,
+  "threshold": 0.02,
+  "cagr": 12.75,
+  "sharpe": 0.703,
+  "max_dd": 29.71,
+  "trades": 26
+ },
+ {
+  "start": 2014,
+  "threshold": 0.03,
+  "cagr": 12.41,
+  "sharpe": 0.689,
+  "max_dd": 29.71,
+  "trades": 26
+ },
+ {
+  "start": 2014,
+  "threshold": 0.04,
+  "cagr": 14.0,
+  "sharpe": 0.756,
+  "max_dd": 24.92,
+  "trades": 22
+ },
+ {
+  "start": 2014,
+  "threshold": 0.05,
+  "cagr": 15.0,
+  "sharpe": 0.802,
+  "max_dd": 24.92,
+  "trades": 19
+ },
+ {
+  "start": 2014,
+  "threshold": 0.06,
+  "cagr": 15.0,
+  "sharpe": 0.802,
+  "max_dd": 24.92,
+  "trades": 19
+ },
+ {
+  "start": 2016,
+  "threshold": 0.02,
+  "cagr": 13.72,
+  "sharpe": 0.718,
+  "max_dd": 28.2,
+  "trades": 23
+ },
+ {
+  "start": 2016,
+  "threshold": 0.03,
+  "cagr": 13.31,
+  "sharpe": 0.702,
+  "max_dd": 28.2,
+  "trades": 23
+ },
+ {
+  "start": 2016,
+  "threshold": 0.04,
+  "cagr": 14.69,
+  "sharpe": 0.76,
+  "max_dd": 24.92,
+  "trades": 21
+ },
+ {
+  "start": 2016,
+  "threshold": 0.05,
+  "cagr": 15.89,
+  "sharpe": 0.811,
+  "max_dd": 24.92,
+  "trades": 18
+ },
+ {
+  "start": 2016,
+  "threshold": 0.06,
+  "cagr": 15.89,
+  "sharpe": 0.811,
+  "max_dd": 24.92,
+  "trades": 18
+ },
+ {
+  "start": 2018,
+  "threshold": 0.02,
+  "cagr": 16.03,
+  "sharpe": 0.781,
+  "max_dd": 27.18,
+  "trades": 15
+ },
+ {
+  "start": 2018,
+  "threshold": 0.03,
+  "cagr": 15.52,
+  "sharpe": 0.762,
+  "max_dd": 27.18,
+  "trades": 15
+ },
+ {
+  "start": 2018,
+  "threshold": 0.04,
+  "cagr": 15.52,
+  "sharpe": 0.762,
+  "max_dd": 27.18,
+  "trades": 15
+ },
+ {
+  "start": 2018,
+  "threshold": 0.05,
+  "cagr": 16.72,
+  "sharpe": 0.806,
+  "max_dd": 27.18,
+  "trades": 13
+ },
+ {
+  "start": 2018,
+  "threshold": 0.06,
+  "cagr": 16.72,
+  "sharpe": 0.806,
+  "max_dd": 27.18,
+  "trades": 13
+ },
+ {
+  "start": 2020,
+  "threshold": 0.02,
+  "cagr": 24.28,
+  "sharpe": 1.04,
+  "max_dd": 17.43,
+  "trades": 10
+ },
+ {
+  "start": 2020,
+  "threshold": 0.03,
+  "cagr": 23.56,
+  "sharpe": 1.017,
+  "max_dd": 17.43,
+  "trades": 10
+ },
+ {
+  "start": 2020,
+  "threshold": 0.04,
+  "cagr": 23.56,
+  "sharpe": 1.017,
+  "max_dd": 17.43,
+  "trades": 10
+ },
+ {
+  "start": 2020,
+  "threshold": 0.05,
+  "cagr": 25.24,
+  "sharpe": 1.07,
+  "max_dd": 17.43,
+  "trades": 8
+ },
+ {
+  "start": 2020,
+  "threshold": 0.06,
+  "cagr": 25.24,
+  "sharpe": 1.07,
+  "max_dd": 17.43,
+  "trades": 8
+ },
+ {
+  "start": 2022,
+  "threshold": 0.02,
+  "cagr": 19.91,
+  "sharpe": 0.901,
+  "max_dd": 17.43,
+  "trades": 8
+ },
+ {
+  "start": 2022,
+  "threshold": 0.03,
+  "cagr": 18.92,
+  "sharpe": 0.868,
+  "max_dd": 17.43,
+  "trades": 8
+ },
+ {
+  "start": 2022,
+  "threshold": 0.04,
+  "cagr": 18.92,
+  "sharpe": 0.868,
+  "max_dd": 17.43,
+  "trades": 8
+ },
+ {
+  "start": 2022,
+  "threshold": 0.05,
+  "cagr": 21.25,
+  "sharpe": 0.944,
+  "max_dd": 17.43,
+  "trades": 6
+ },
+ {
+  "start": 2022,
+  "threshold": 0.06,
+  "cagr": 21.25,
+  "sharpe": 0.944,
+  "max_dd": 17.43,
+  "trades": 6
+ }
+]
