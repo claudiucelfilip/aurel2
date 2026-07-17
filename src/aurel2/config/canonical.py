@@ -33,7 +33,7 @@ class DualMomentumConfig:
     """Dual-momentum strategy parameters — the sole live trading signal."""
 
     lookback_months: int = 12
-    switch_threshold: float = 0.02
+    switch_threshold: float = 0.05
     cash_rate: float = 0.0
 
 

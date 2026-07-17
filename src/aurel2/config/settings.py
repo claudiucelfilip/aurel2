@@ -21,7 +21,7 @@ class StrategyConfig(BaseModel):
     name: str = "dual_momentum"
     lookback_months: int = 12
     rebalance_frequency: str = "quarterly"  # monthly, quarterly
-    switch_threshold: float = 0.02  # selected robust threshold
+    switch_threshold: float = 0.05  # selected robust threshold (see experiments/threshold_robustness_results.json)
 
 
 class AssetsConfig(BaseModel):
