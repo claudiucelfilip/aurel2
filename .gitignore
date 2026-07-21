@@ -29,6 +29,7 @@ data/cache/
 data/price_cache/
 data/archive/
 data/backtest_results.json
+data/paper/overlay_state.json
 
 # Test artifacts
 .coverage
