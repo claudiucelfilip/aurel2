@@ -186,6 +186,7 @@ class BacktestEngine:
         use_ai: bool = False,
         ai_model: str = "haiku",
         amnesia: bool = False,
+        ai_enrich: bool = False,
         dca_amount: float = 0.0,
         correlation_guard: bool = CANONICAL_CONFIG.orchestrator.correlation_guard_enabled,
         sideways_hold: bool = CANONICAL_CONFIG.orchestrator.sideways_hold_enabled,
@@ -226,7 +227,9 @@ class BacktestEngine:
         if use_ai:
             # Deferred import to avoid circular: backtest -> advisor -> failure_analyzer -> backtest
             from aurel2.agent.advisor import AIAdvisor
-            self.ai_advisor = AIAdvisor(model=ai_model, amnesia=amnesia)
+            self.ai_advisor = AIAdvisor(
+                model=ai_model, amnesia=amnesia, enrich_asset_context=ai_enrich
+            )
         self.initial_capital = initial_capital
         self.transaction_cost_pct = transaction_cost_pct
         self.dca_amount = dca_amount

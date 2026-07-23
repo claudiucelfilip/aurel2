@@ -62,6 +62,7 @@ class AIAdvisor:
         model: str = "haiku",
         lookback_years: int = 5,
         amnesia: bool = False,
+        enrich_asset_context: bool = False,
     ):
         """Initialize the AI advisor.
 
@@ -72,11 +73,15 @@ class AIAdvisor:
                            Set to None to use all historical failures.
             amnesia: If True, instruct AI to ignore training data financial
                     knowledge and redact dates to prevent data leakage.
+            enrich_asset_context: If True, add per-asset confirmation stats
+                    (trend vs EMAs, momentum, RSI, RS vs SPY) for the candidate
+                    and held assets to the prompt. Off by default.
         """
         self.failure_file = failure_file
         self.model = model
         self.lookback_years = lookback_years
         self.amnesia = amnesia
+        self.enrich_asset_context = enrich_asset_context
 
         # Load failure analysis
         self.failure_analysis: FailureAnalysis | None = None
@@ -213,11 +218,66 @@ class AIAdvisor:
                 logger.error("failed_to_init_ai_evaluator", error=str(e))
                 raise
 
+    def _asset_context_lines(
+        self,
+        prices: pd.DataFrame,
+        symbol: str,
+        target_date: date,
+        label: str,
+    ) -> list[str]:
+        """Per-asset confirmation stats, computed point-in-time (no lookahead).
+
+        Bake-off finding (aurel3 BAKEOFF_FINDINGS.md): models are anti-calibrated
+        on narrative alone but calibrate once shown the asset's own market state.
+        """
+        from aurel2.data.indicators import calculate_rsi
+        from aurel2.data.momentum import calculate_momentum
+
+        sp = prices[prices["symbol"] == symbol].copy()
+        if sp.empty:
+            return []
+        sp["date"] = pd.to_datetime(sp["date"])
+        sp = sp[sp["date"] <= pd.Timestamp(target_date)].sort_values("date")
+        if len(sp) < 20:
+            return []
+
+        closes = sp["close"]
+        current = float(closes.iloc[-1])
+        ema20 = float(closes.ewm(span=20).mean().iloc[-1])
+        ema50 = float(closes.ewm(span=50).mean().iloc[-1]) if len(sp) >= 50 else None
+        above20 = current > ema20
+        above50 = current > ema50 if ema50 is not None else None
+        if above20 and above50:
+            trend = "strong uptrend (above 20d and 50d EMA)"
+        elif above20:
+            trend = "uptrend (above 20d EMA)"
+        elif above50 is False:
+            trend = "downtrend (below 20d and 50d EMA)"
+        else:
+            trend = "weakening (below 20d EMA)"
+
+        clipped = prices[pd.to_datetime(prices["date"]) <= pd.Timestamp(target_date)]
+        rsi = calculate_rsi(clipped, symbol)
+
+        lines = [f"{label} ({symbol}):", f"  Trend: {trend}"]
+        for months in (1, 3, 12):
+            mom = calculate_momentum(prices, target_date, lookback_months=months)
+            val = mom.get(symbol)
+            spy = mom.get("SPY")
+            if val is not None:
+                rs = f", vs SPY {val - spy:+.1%}" if spy is not None and symbol != "SPY" else ""
+                lines.append(f"  {months}m momentum: {val:+.1%}{rs}")
+        if rsi is not None:
+            lines.append(f"  RSI(14): {rsi:.0f}")
+        return lines
+
     def _build_context(
         self,
         prices: pd.DataFrame,
         market_context: dict[str, Any],
         target_date: date,
+        candidate_asset: str | None = None,
+        current_holding: str | None = None,
     ) -> str:
         """Build context string for AI evaluation.
 
@@ -225,6 +285,9 @@ class AIAdvisor:
             prices: Price data DataFrame.
             market_context: Market context from MCP server.
             target_date: The decision date.
+            candidate_asset: Deterministic pick — gets a confirmation block when
+                enrich_asset_context is on.
+            current_holding: Currently held asset — same treatment.
 
         Returns:
             Formatted context string.
@@ -287,6 +350,27 @@ class AIAdvisor:
         if rsi is not None:
             rsi_interp = market_context.get("rsi_interpretation", "neutral")
             lines.append(f"RSI: {rsi:.1f} ({rsi_interp})")
+
+        # Per-asset confirmation blocks (opt-in): the candidate and the holding
+        if self.enrich_asset_context:
+            asset_lines = []
+            seen = set()
+            for label, sym in (
+                ("CANDIDATE ASSET CONFIRMATION", candidate_asset),
+                ("CURRENT HOLDING CONFIRMATION", current_holding),
+            ):
+                if sym and sym not in seen and sym != "CASH":
+                    seen.add(sym)
+                    asset_lines.extend(
+                        self._asset_context_lines(prices, sym, target_date, label)
+                    )
+            if asset_lines:
+                lines.append("")
+                lines.extend(asset_lines)
+                lines.append(
+                    "Weigh whether the asset's own price behavior confirms the "
+                    "proposed action, not just the macro regime."
+                )
 
         return "\n".join(lines)
 
@@ -421,6 +505,8 @@ class AIAdvisor:
             prices=prices,
             market_context=market_context,
             target_date=target_date,
+            candidate_asset=deterministic_asset,
+            current_holding=current_holding,
         )
 
         # Transform strategy signals for AI evaluator

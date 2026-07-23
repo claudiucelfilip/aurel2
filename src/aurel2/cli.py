@@ -47,6 +47,7 @@ def backtest(
     ai: bool = typer.Option(False, "--ai", help="Enable AI advisor (disabled by default — see ARCHITECTURE.md for findings)"),
     ai_model: str = typer.Option("haiku", "--ai-model", help="AI model: sonnet, opus, haiku"),
     amnesia: bool = typer.Option(False, "--amnesia", help="Tell AI to ignore training data financial knowledge and redact dates"),
+    ai_enrich: bool = typer.Option(False, "--ai-enrich", help="Add per-asset confirmation stats (trend/momentum/RSI/RS) to the AI advisor prompt"),
     correlation_guard: bool = typer.Option(True, "--correlation-guard/--no-correlation-guard", help="Redirect bond rotations when SPY-AGG correlation is high"),
     sideways_hold: bool = typer.Option(True, "--sideways-hold/--no-sideways-hold", help="Suppress switches in sideways markets unless momentum advantage is large"),
     config: Path = typer.Option(None, help="Config file path"),
@@ -68,6 +69,8 @@ def backtest(
     typer.echo(f"AI advisor: {'enabled' if ai else 'disabled'} (model: {ai_model})")
     if amnesia:
         typer.echo(f"AI amnesia mode: enabled (dates redacted, no financial knowledge)")
+    if ai_enrich:
+        typer.echo("AI asset-context enrichment: enabled (per-asset trend/momentum/RSI/RS)")
     typer.echo(f"Correlation guard: {'enabled' if correlation_guard else 'disabled'}")
     typer.echo(f"Sideways hold: {'enabled' if sideways_hold else 'disabled'}")
 
@@ -94,6 +97,7 @@ def backtest(
         use_ai=ai,
         ai_model=ai_model,
         amnesia=amnesia,
+        ai_enrich=ai_enrich,
         dca_amount=dca,
         correlation_guard=correlation_guard,
         sideways_hold=sideways_hold,
