@@ -83,6 +83,14 @@ def make_tilt(**overrides) -> dict:
     return base
 
 
+def validate_tilt_pinned(parsed: dict):
+    """validate_tilt pinned to the tilt's own as_of — these fixtures hardcode
+    2026 dates and must not start expiring as the wall clock advances (all
+    seam tests silently broke on 2026-07-21 when the default now=today passed
+    make_tilt's hardcoded expiry)."""
+    return validate_tilt(parsed, now=date.fromisoformat(parsed["as_of"]))
+
+
 class TestProjectNextPick:
     def test_projects_highest_short_term_momentum_symbol(self):
         calc_date = date(2026, 7, 14)
@@ -102,7 +110,7 @@ class TestAccelerateEntryRestriction:
     def test_applies_when_symbol_matches_projected_pick(self, accelerate_enabled):
         calc_date = date(2026, 7, 14)
         prices = build_prices(calc_date, {"XLK": 0.01, "SPY": 0.001})
-        tilt = validate_tilt(make_tilt(powers={"accelerate_entry": {"symbol": "XLK"}}))
+        tilt = validate_tilt_pinned(make_tilt(powers={"accelerate_entry": {"symbol": "XLK"}}))
         state = OverlayState()
 
         result = apply_overlay(
@@ -118,7 +126,7 @@ class TestAccelerateEntryRestriction:
         DM's universe / not the projected winner) must be a no-op, journaled."""
         calc_date = date(2026, 7, 14)
         prices = build_prices(calc_date, {"XLK": 0.001, "SPY": 0.01, "QQQ": 0.05})
-        tilt = validate_tilt(make_tilt(powers={"accelerate_entry": {"symbol": "QQQ"}}))
+        tilt = validate_tilt_pinned(make_tilt(powers={"accelerate_entry": {"symbol": "QQQ"}}))
         state = OverlayState()
 
         result = apply_overlay(
@@ -133,7 +141,7 @@ class TestAccelerateEntryRestriction:
     def test_ignored_when_already_holding_symbol(self):
         calc_date = date(2026, 7, 14)
         prices = build_prices(calc_date, {"XLK": 0.01, "SPY": 0.001})
-        tilt = validate_tilt(make_tilt(powers={"accelerate_entry": {"symbol": "XLK"}}))
+        tilt = validate_tilt_pinned(make_tilt(powers={"accelerate_entry": {"symbol": "XLK"}}))
         state = OverlayState()
 
         result = apply_overlay(
@@ -147,7 +155,7 @@ class TestAccelerateEntryRestriction:
         (with the projection, for later worth-it analysis) but never applied."""
         calc_date = date(2026, 7, 14)
         prices = build_prices(calc_date, {"XLK": 0.01, "SPY": 0.001})
-        tilt = validate_tilt(make_tilt(powers={"accelerate_entry": {"symbol": "XLK"}}))
+        tilt = validate_tilt_pinned(make_tilt(powers={"accelerate_entry": {"symbol": "XLK"}}))
         state = OverlayState()
 
         result = apply_overlay(tilt, state, calc_date, prices, DM_ASSETS, current_holding_symbol="SPY")
@@ -162,7 +170,7 @@ class TestAccelerateEntryRestriction:
     def test_null_symbol_is_not_journaled(self):
         calc_date = date(2026, 7, 14)
         prices = build_prices(calc_date, {"XLK": 0.01, "SPY": 0.001})
-        tilt = validate_tilt(make_tilt())  # accelerate_entry.symbol is None
+        tilt = validate_tilt_pinned(make_tilt())  # accelerate_entry.symbol is None
         state = OverlayState()
 
         result = apply_overlay(tilt, state, calc_date, prices, DM_ASSETS, current_holding_symbol="SPY")
@@ -173,7 +181,7 @@ class TestAccelerateEntryCapInSeam:
     def test_over_cap_is_ignored_and_journaled(self, accelerate_enabled):
         calc_date = date(2026, 7, 14)
         prices = build_prices(calc_date, {"XLK": 0.01, "SPY": 0.001})
-        tilt = validate_tilt(make_tilt(powers={"accelerate_entry": {"symbol": "XLK"}}))
+        tilt = validate_tilt_pinned(make_tilt(powers={"accelerate_entry": {"symbol": "XLK"}}))
         state = OverlayState()
         state.last_accelerate_entry_date = (calc_date - timedelta(days=5)).isoformat()  # within 21d cooldown
 
@@ -186,7 +194,7 @@ class TestAccelerateEntryCapInSeam:
     def test_applying_updates_state_for_next_check(self, accelerate_enabled):
         calc_date = date(2026, 7, 14)
         prices = build_prices(calc_date, {"XLK": 0.01, "SPY": 0.001})
-        tilt = validate_tilt(make_tilt(powers={"accelerate_entry": {"symbol": "XLK"}}))
+        tilt = validate_tilt_pinned(make_tilt(powers={"accelerate_entry": {"symbol": "XLK"}}))
         state = OverlayState()
 
         apply_overlay(tilt, state, calc_date, prices, DM_ASSETS, current_holding_symbol="SPY")
@@ -197,7 +205,7 @@ class TestLookbackOverrideInSeam:
     def test_activation_applied_and_journaled(self):
         calc_date = date(2026, 7, 14)
         prices = build_prices(calc_date, {"XLK": 0.001, "SPY": 0.001})
-        tilt = validate_tilt(
+        tilt = validate_tilt_pinned(
             make_tilt(regime_view="risk_off", powers={"lookback_override_months": 3})
         )
         state = OverlayState()
@@ -215,7 +223,7 @@ class TestLookbackOverrideInSeam:
         # Pre-seed 2 activations already used this quarter (Q3 2026), no override currently active.
         state.lookback_activations_by_quarter["2026Q3"] = 2
 
-        tilt = validate_tilt(make_tilt(regime_view="risk_off", powers={"lookback_override_months": 6}))
+        tilt = validate_tilt_pinned(make_tilt(regime_view="risk_off", powers={"lookback_override_months": 6}))
         result = apply_overlay(tilt, state, calc_date, prices, DM_ASSETS, current_holding_symbol="SPY")
         entries = [e for e in result.journal_entries if e.power == "lookback_override_months"]
         assert entries[0].status == "ignored"
@@ -227,7 +235,7 @@ class TestLookbackOverrideInSeam:
         state = OverlayState()
         state.active_lookback_override = {"started": "2026-07-01", "months": 3, "quarter": "2026Q3"}
 
-        tilt = validate_tilt(make_tilt(regime_view="risk_on"))
+        tilt = validate_tilt_pinned(make_tilt(regime_view="risk_on"))
         result = apply_overlay(tilt, state, calc_date, prices, DM_ASSETS, current_holding_symbol="SPY")
         entries = [e for e in result.journal_entries if e.power == "lookback_override_months"]
         assert entries[0].status == "ignored"
@@ -240,7 +248,7 @@ class TestLookbackOverrideInSeam:
         state = OverlayState()
         state.active_lookback_override = {"started": "2026-07-01", "months": 3, "quarter": "2026Q3"}
 
-        tilt = validate_tilt(make_tilt(as_of="2026-08-05", expires="2026-08-12", regime_view="mixed"))
+        tilt = validate_tilt_pinned(make_tilt(as_of="2026-08-05", expires="2026-08-12", regime_view="mixed"))
         result = apply_overlay(tilt, state, calc_date, prices, DM_ASSETS, current_holding_symbol="SPY")
         assert state.active_lookback_override is None
 
@@ -261,7 +269,7 @@ class TestDefensiveContest:
     def test_full_seam_applies_and_journals(self):
         calc_date = date(2026, 7, 14)
         prices = build_prices(calc_date, {"XLK": -0.01, "GLD": 0.01, "AGG": 0.0, "SHY": 0.0, "IEF": 0.0, "TIP": 0.0})
-        tilt = validate_tilt(make_tilt(powers={"force_defensive_contest": True}))
+        tilt = validate_tilt_pinned(make_tilt(powers={"force_defensive_contest": True}))
         state = OverlayState()
 
         result = apply_overlay(tilt, state, calc_date, prices, DM_ASSETS, current_holding_symbol="XLK")
@@ -273,7 +281,7 @@ class TestDefensiveContest:
     def test_over_cap_ignored(self):
         calc_date = date(2026, 7, 14)
         prices = build_prices(calc_date, {"XLK": -0.01, "GLD": 0.01, "AGG": 0.0, "SHY": 0.0, "IEF": 0.0, "TIP": 0.0})
-        tilt = validate_tilt(make_tilt(powers={"force_defensive_contest": True}))
+        tilt = validate_tilt_pinned(make_tilt(powers={"force_defensive_contest": True}))
         state = OverlayState()
         state.last_force_defensive_date = (calc_date - timedelta(days=3)).isoformat()  # within 14d cooldown
 
