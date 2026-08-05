@@ -48,7 +48,7 @@ from aurel2.core.assets import get_all_yahoo_symbols
 from aurel2.data.providers.cache import CachedPriceProvider
 from aurel2.live.journal import TradeJournal, journal_path_for_mode
 from aurel2.overlay.context_pack import build_frozen_context_pack
-from aurel2.overlay.runner import run_overlay_decision, should_event_trigger
+from aurel2.overlay.runner import run_overlay_decision, should_event_trigger, tilt_health_alert
 from aurel2.strategies.dual_momentum import DualMomentumStrategy
 
 
@@ -163,7 +163,32 @@ def main() -> int:
     pack = build_pack_for_today(args.mode, today)
     tilt = run_overlay_decision(pack, mode=args.mode, model=args.model, auto_commit=not args.no_commit)
     print(f"tilt written: regime_view={tilt['regime_view']} sample_agreement={tilt['sample_agreement']}")
+
+    alert = tilt_health_alert(tilt)
+    if alert:
+        severity, message = alert
+        print(f"PANEL {severity.upper()}: {message}", file=sys.stderr)
+        _send_panel_alert(severity, message)
+        if severity == "critical":
+            return 2
     return 0
+
+
+def _send_panel_alert(severity: str, message: str) -> None:
+    """Push a dead/degraded panel straight to the phone; never raise."""
+    try:
+        import os
+
+        from aurel2.notifications.ntfy import NtfyNotifier
+
+        NtfyNotifier(topic=os.environ.get("NTFY_TOPIC", "aurel2"), rate_limit_seconds=0).send(
+            message=message,
+            title="Aurel2 overlay panel " + ("DOWN" if severity == "critical" else "degraded"),
+            priority="urgent" if severity == "critical" else "high",
+            tags=["rotating_light"] if severity == "critical" else ["warning"],
+        )
+    except Exception as e:  # alerting must never mask the tilt result
+        print(f"panel alert send failed: {e}", file=sys.stderr)
 
 
 if __name__ == "__main__":

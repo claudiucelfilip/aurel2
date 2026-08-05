@@ -24,6 +24,10 @@ services:
       AI_MODEL: ${AI_MODEL:-sonnet}
       AI_LOOKBACK_YEARS: ${AI_LOOKBACK_YEARS:-3}
 
+      # Keep the CLI's .claude.json inside the persistent mount; without this it
+      # lives in the throwaway container FS (cause of the Jul 20 silent outage).
+      CLAUDE_CONFIG_DIR: /root/.claude
+
     volumes:
       # Persist aurel2 data (portfolio, logs, pending orders)
       - aurel2-data:/root/.aurel2
@@ -134,6 +138,9 @@ services:
     environment:
       TRADING_MODE: ${TRADING_MODE:-paper}
       AI_MODEL: ${OVERLAY_MODEL:-claude-fable-5}
+      NTFY_TOPIC: ${NTFY_TOPIC:-aurel2}
+      # See the aurel2 service: keeps CLI config inside the persistent mount.
+      CLAUDE_CONFIG_DIR: /root/.claude
     volumes:
       # Writable: this job's whole job is to write overlay_tilt.json (git-
       # auto-committed) and overlay_state.json. Read access to the trade

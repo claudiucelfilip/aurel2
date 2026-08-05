@@ -4,6 +4,7 @@ from datetime import date
 from unittest.mock import patch
 
 from aurel2.overlay.runner import (
+    tilt_health_alert,
     aggregate_samples,
     collect_samples,
     run_overlay_decision,
@@ -158,3 +159,26 @@ class TestEventTrigger:
 
     def test_none_does_not_trigger(self):
         assert should_event_trigger(None) is False
+
+
+class TestTiltHealthAlert:
+    """A dead/degraded panel must be loudly reportable (silent Jul-Aug 2026 outage)."""
+
+    def test_zero_samples_is_critical(self):
+        tilt = aggregate_samples([], as_of=date(2026, 8, 5))
+        severity, message = tilt_health_alert(tilt)
+        assert severity == "critical"
+        assert "0" in message
+
+    def test_below_majority_is_warning(self):
+        tilt = aggregate_samples([sample(), sample()], as_of=date(2026, 8, 5))
+        severity, message = tilt_health_alert(tilt)
+        assert severity == "warning"
+
+    def test_healthy_pool_is_none(self):
+        tilt = aggregate_samples([sample()] * 5, as_of=date(2026, 8, 5))
+        assert tilt_health_alert(tilt) is None
+
+    def test_majority_threshold_pool_is_none(self):
+        tilt = aggregate_samples([sample()] * 3, as_of=date(2026, 8, 5))
+        assert tilt_health_alert(tilt) is None

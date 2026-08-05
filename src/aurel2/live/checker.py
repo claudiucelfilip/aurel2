@@ -156,6 +156,7 @@ class Checker:
         # applied here, right after the deterministic decision and before the AI
         # advisor step, so both share the same seam as the backtest engine.
         self.overlay_enabled = overlay_enabled
+        self._last_overlay_silence_alert: Optional[date] = None
 
         # 2026-05-07: Switched from RobustQuarterlyStrategy (quarterly gate) to plain
         # DualMomentumStrategy. Daily-cadence backtests showed gate + calm-hold gave
@@ -335,6 +336,7 @@ class Checker:
         # tilt file is missing/malformed/expired (see overlay/schema.py).
         overlay_journal_rows: list[dict] = []
         if self.overlay_enabled:
+            self._check_overlay_silence()
             overlay_journal_rows, decision = self._apply_overlay(
                 decision=decision,
                 prices=prices,
@@ -593,6 +595,42 @@ class Checker:
             return False
         age = datetime.now(timezone.utc) - self._signal_snapshot_at
         return -timedelta(seconds=5) <= age <= MAX_DECISION_AGE
+
+    def _check_overlay_silence(self) -> None:
+        """Alert (once per day) if the tilt is missing/expired or a zero-sample
+        fallback — a dead weekly panel otherwise looks identical to a cautious
+        one, which hid a 3-week auth outage in Jul-Aug 2026."""
+        today = date.today()
+        if self._last_overlay_silence_alert == today:
+            return
+        try:
+            from aurel2.overlay.schema import load_tilt, tilt_path_for_mode
+
+            tilt = load_tilt(tilt_path_for_mode(self.mode), now=today)
+            problem = None
+            if tilt is None:
+                problem = (
+                    "Overlay tilt file is missing or expired — the weekly panel "
+                    "may not be running (check the Monday overlay-runner cron)."
+                )
+            elif tilt.samples == 0:
+                problem = (
+                    "Overlay tilt is a no-tilt fallback (0 valid samples) — the AI "
+                    "panel is failing (check claude CLI auth in the runner container)."
+                )
+            if problem:
+                self._last_overlay_silence_alert = today
+                logger.warning("overlay_silent", detail=problem)
+                self.notifier.send(
+                    message=problem,
+                    title="Aurel2 overlay silent",
+                    priority="high",
+                    tags=["warning"],
+                    category="overlay_silent",
+                )
+        except Exception as e:
+            # The watchdog must never break the decision cycle.
+            logger.error("overlay_silence_check_error", error=str(e))
 
     def _apply_overlay(
         self,

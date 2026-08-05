@@ -182,6 +182,27 @@ def aggregate_samples(samples: list[dict], as_of: Optional[date] = None, ttl_day
     }
 
 
+def tilt_health_alert(tilt: dict) -> Optional[tuple[str, str]]:
+    """(severity, message) when a written tilt shows a dead or degraded panel,
+    None when healthy. A 0-sample fallback is indistinguishable from a cautious
+    panel unless someone checks — that silence hid a 3-week auth outage (Jul-Aug
+    2026), so callers must surface 'critical' loudly (ntfy + nonzero exit)."""
+    n = int(tilt.get("samples") or 0)
+    if n == 0:
+        return (
+            "critical",
+            f"Overlay panel wrote a no-tilt fallback: 0/{N_SAMPLES} samples survived. "
+            "Likely claude CLI auth/config failure in the runner container.",
+        )
+    if n < MAJORITY_THRESHOLD:
+        return (
+            "warning",
+            f"Overlay panel degraded: only {n}/{N_SAMPLES} valid samples "
+            f"(majority needs {MAJORITY_THRESHOLD}).",
+        )
+    return None
+
+
 def git_commit_tilt(tilt_path: str, repo_root: Optional[str] = None) -> bool:
     """Auto-commit the tilt file write for versioning. Best-effort: logs and
     returns False on any git failure rather than raising (a failed commit must
