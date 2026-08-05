@@ -8,9 +8,21 @@ This document leaves no term ambiguous. Every metric below states exactly which 
 
 ## 0. Run parameters
 
+> **Amendment 2026-08-05 (Claudiu-approved): run restarted, start re-stamped to 2026-08-10.**
+> The overlay panel was silently dead 2026-07-20 → 2026-08-05 (claude CLI config lost in the
+> one-shot runner container; every weekly tilt was a 0-sample no-tilt fallback — see commit
+> `154ac3c` for the fix and the alerting added). With `accelerate_entry` disabled and the sole
+> healthy tilt (2026-07-13) applying no powers, the A2+overlay arm was mechanically identical
+> to A2-bare for the entire original window, so its metrics measured an undelivered treatment.
+> §2/§3 compute on complete-history-since-run-start, which makes mid-window exclusion
+> impossible; re-stamping the start is the only clean correction. Scorecard records with
+> `run_start: 2026-07-13` in `scorecard_history.jsonl` predate this amendment and are void
+> for §5 purposes. Week-6 evaluation lands at the first Friday scorecard clearing 30 trading
+> days from 2026-08-10 (expected 2026-09-18).
+
 | Field | Value |
 |---|---|
-| Run start date | **2026-07-13** (Monday — first weekly tilt pre-open; stamped 2026-07-10 at launch; Claudiu approved this rule 2026-07-10, launch shape: accelerate_entry disabled + shadow-logged). Recorded in `data/{mode}/scorecard_history.jsonl`'s first record and passed to every `weekly_scorecard.py --run-start` invocation thereafter. |
+| Run start date | **2026-08-10** (Monday — restart per the 2026-08-05 amendment above; originally 2026-07-13, stamped 2026-07-10 at launch; Claudiu approved this rule 2026-07-10, launch shape: accelerate_entry disabled + shadow-logged). Recorded in `data/{mode}/scorecard_history.jsonl`'s first record and passed to every `weekly_scorecard.py --run-start` invocation thereafter. |
 | Mode | `paper` (Alpaca paper account) |
 | Minimum duration | 6 full weeks = 30 trading days from run start, inclusive |
 | Evaluation cadence | Weekly, Friday after close ET, at scorecard boundaries only — never mid-week |
