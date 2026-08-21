@@ -1,33 +1,32 @@
 # WORKTREE_HANDOFF.md
 
-owner: Claw / Aurel2 runtime
+owner: Claw / Aurel2 and Sherlock runtime
 created_utc: 2026-07-19T10:46:00Z
 repo: /Users/claudiu/vps-root/aurel2
 service: Aurel2 paper overlay state
-purpose: Cover live dirty runtime state found during heartbeat hard-gate checks.
+purpose: Record ownership and operational context for the Sherlock watchdog source.
 
 ## Current Classification
 
 active_in_runtime: yes
-money_or_trading_adjacent: yes
-classification: protected_runtime_state_covered_by_handoff
+money_or_trading_adjacent: no
+classification: committed_runtime_support_source
 
-## Current Dirty State
+## Current Repository State
 
-- `data/paper/overlay_state.json`: untracked Aurel2 paper overlay state file,
-  mounted into the Aurel2 containers via `docker/docker-compose.yml`. Current
-  contents are the empty/default overlay cap state:
-  `last_accelerate_entry_date=null`, `last_force_defensive_date=null`,
-  `active_lookback_override=null`, and
-  `lookback_activations_by_quarter={}`.
+- `scripts/sherlock_gateway_watchdog.sh`: tracked runtime watchdog added on
+  2026-08-18 for the Hermes Sherlock Slack gateway. It detects repeated
+  `Session is closed` loops, applies a guarded launchd restart with a 15-minute
+  cooldown, verifies reconnection, and sends ntfy alerts on real failures.
+- The watchdog and this handoff were committed together; this document does
+  not cover any future dirty files.
 
 ## Required Handling
 
-- Do not delete, stash, or revert this file without explicit Claudiu approval.
-- Treat changes under `data/paper/` as trading-adjacent runtime state until
-  classified by the Aurel2 owner.
-- This handoff covers the exact dirty signature found on 2026-07-19. Refresh it
-  if additional source, config, order, journal, or runtime files become dirty.
+- Treat the watchdog as active operational source until it is intentionally
+  retired or relocated by its owner.
+- New dirty source, config, order, journal, or runtime files require their own
+  classification; this handoff does not cover them.
 
 ## Next Check
 
