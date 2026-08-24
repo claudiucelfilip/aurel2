@@ -6,7 +6,10 @@ set -u
 
 export PATH="/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
-SERVICE="user/$(id -u)/ai.hermes.gateway-sherlock"
+# This is a LaunchAgent loaded in the logged-in GUI domain. After a host or
+# gateway restart, launchctl may no longer alias it through user/<uid> even
+# though gui/<uid> owns and runs it.
+SERVICE="gui/$(id -u)/ai.hermes.gateway-sherlock"
 AGENT_LOG="$HOME/.hermes/profiles/sherlock/logs/agent.log"
 GATEWAY_LOG="$HOME/.hermes/profiles/sherlock/logs/gateway.log"
 STATE_DIR="$HOME/.hermes/state"
