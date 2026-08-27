@@ -71,6 +71,7 @@ class DaemonMonitor:
         self._restarts_this_hour: list[datetime] = []  # Track restart timestamps
         self._errors_today = 0
         self._last_incident_id: Optional[str] = None
+        self._alerted_failed_check: Optional[str] = None  # message of the failure already alerted
 
     async def start(self) -> None:
         """Start the monitor."""
@@ -125,11 +126,45 @@ class DaemonMonitor:
             if self._minutes_since_start % 5 == 0:
                 self.session_tracker.record_uptime(5)
 
+    FAILED_CHECK_PREFIX = "Last scheduled check failed: "
+
+    def _dedupe_failed_check(self, report: HealthReport) -> None:
+        """Alert once per distinct failed daily check, and once on recovery.
+
+        The failed-check state persists in the heartbeat until the next
+        successful check, so without this the same failure re-alerts every
+        rate-limit window (hourly) for up to a day.
+        """
+        failed_issue = next(
+            (i for i in report.issues if i.startswith(self.FAILED_CHECK_PREFIX)), None
+        )
+        if failed_issue:
+            if failed_issue == self._alerted_failed_check:
+                report.issues.remove(failed_issue)
+                if not report.issues and report.status == HealthStatus.DEGRADED:
+                    report.status = HealthStatus.HEALTHY
+            else:
+                self._alerted_failed_check = failed_issue
+        elif (
+            self._alerted_failed_check
+            and report.heartbeat
+            and report.heartbeat.last_check_success
+        ):
+            self._alerted_failed_check = None
+            self.notifier.send(
+                message="Scheduled check succeeded after the earlier failure.",
+                title="Aurel2: Check Recovered",
+                tags=["white_check_mark"],
+                priority="default",
+                category="check_recovered",
+            )
+
     async def _check_cycle(self) -> None:
         """Perform one health check cycle."""
         # Check health
         report = self.health_checker.check()
         self._last_health_report = report
+        self._dedupe_failed_check(report)
 
         logger.info(
             "health_check",

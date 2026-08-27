@@ -80,6 +80,14 @@ class LiveDaemon:
         self._last_check: Optional[datetime] = self._load_last_check()
         self._last_check_success, self._last_check_message = self._load_last_check_result()
         self._error_count = 0
+        # Same-day retry of a failed daily check (a transient data outage
+        # otherwise silently skips a whole trading day).
+        self.check_retry_interval = timedelta(minutes=30)
+        self.max_check_retries = 6
+        self._check_retry_count = 0
+        self._next_retry_at: Optional[datetime] = None
+        if self._last_check_success is False:
+            self._next_retry_at = datetime.now(self.timezone) + self.check_retry_interval
         self._last_decision_signals: Optional[dict] = None
         self._heartbeat_task: Optional[asyncio.Task] = None
         self._last_regime: Optional[str] = self._load_last_regime()
@@ -133,6 +141,8 @@ class LiveDaemon:
                 "last_check": self._last_check.isoformat() if self._last_check else None,
                 "last_check_success": self._last_check_success,
                 "last_check_message": self._last_check_message,
+                "check_retry_count": self._check_retry_count,
+                "next_retry_at": self._next_retry_at.isoformat() if self._next_retry_at else None,
                 "paper": self.paper,
                 "dry_run": self.dry_run,
                 "error_count": self._error_count,
@@ -218,6 +228,8 @@ class LiveDaemon:
 
             # Check if it's time for daily check
             if self._should_run_check(now):
+                if self._last_check is None or self._last_check.date() != now.date():
+                    self._check_retry_count = 0  # fresh day, fresh retry budget
                 logger.info("daemon_running_daily_check")
                 print(f"\n[{now.strftime('%Y-%m-%d %H:%M')}] Running daily check...")
 
@@ -240,8 +252,11 @@ class LiveDaemon:
                     self._last_check = now
                     self._last_check_success = result.success
                     self._last_check_message = result.message
-                    if not result.success:
+                    if result.success:
+                        self._next_retry_at = None
+                    else:
                         self._error_count += 1
+                        self._schedule_check_retry(now)
 
                     # Update regime tracking
                     if result.decision and result.decision.regime:
@@ -262,15 +277,38 @@ class LiveDaemon:
                 except Exception as e:
                     logger.error("daemon_check_error", error=str(e))
                     print(f"Check error: {e}")
+                    # Mark the check as consumed so a crash retries on the same
+                    # bounded schedule as a failed check, not every poll tick.
+                    self._last_check = now
                     self._last_check_success = False
                     self._last_check_message = str(e)
                     self._error_count += 1
+                    self._schedule_check_retry(now)
 
             # Poll for pending approvals
             await self._poll_pending()
 
             # Wait until next poll interval
             await asyncio.sleep(self.poll_interval.total_seconds())
+
+    def _schedule_check_retry(self, now: datetime) -> None:
+        """Schedule a bounded same-day retry after a failed check."""
+        if self._check_retry_count < self.max_check_retries:
+            self._check_retry_count += 1
+            self._next_retry_at = now + self.check_retry_interval
+            logger.warning(
+                "daemon_check_retry_scheduled",
+                attempt=self._check_retry_count,
+                max_retries=self.max_check_retries,
+                retry_at=self._next_retry_at.isoformat(),
+            )
+            print(
+                f"  Retry {self._check_retry_count}/{self.max_check_retries} "
+                f"at {self._next_retry_at.strftime('%H:%M')}"
+            )
+        else:
+            self._next_retry_at = None
+            logger.error("daemon_check_retries_exhausted", attempts=self._check_retry_count)
 
     def _should_run_check(self, now: datetime) -> bool:
         """Determine if we should run the daily check."""
@@ -282,10 +320,14 @@ class LiveDaemon:
         if self._is_market_holiday(now.date()):
             return False
 
-        # If we've already checked today, skip
+        # Already checked today: only re-run as a bounded retry of a failure
         if self._last_check:
             if self._last_check.date() == now.date():
-                return False
+                return (
+                    self._last_check_success is False
+                    and self._next_retry_at is not None
+                    and now >= self._next_retry_at
+                )
 
         # Check if it's past the scheduled check time
         scheduled = now.replace(
