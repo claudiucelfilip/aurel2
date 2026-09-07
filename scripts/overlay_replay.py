@@ -88,6 +88,19 @@ CACHE_ONLY = False
 VARIANT: dict = {}
 TILTS_FROM: dict = {}   # as_of -> weekly_overlay_log entry from a reference replay
 TILTS_FROM_PATH = None
+BIAS_BY_WEEK: dict = {}  # as_of -> {symbol: bias}
+VETO_BY_WEEK: dict = {}  # as_of -> [vetoed symbols]
+
+
+def compute_vetoes(weeks: list, threshold: float, min_weeks: int) -> dict:
+    """Symbols whose bias has been <= threshold for min_weeks consecutive reads ending this week."""
+    streak: dict = {}
+    out = {}
+    for w in weeks:
+        bias = w["symbol_bias"] or {}
+        streak = {s: (streak.get(s, 0) + 1) for s, v in bias.items() if v is not None and v <= threshold}
+        out[w["date"]] = sorted(s for s, n in streak.items() if n >= min_weeks)
+    return out
 
 
 def parse_variant_args():
@@ -101,6 +114,12 @@ def parse_variant_args():
     ap.add_argument("--accel-candidates", type=int, default=None)
     ap.add_argument("--mixed-action", choices=["none", "lookback_3m", "lookback_6m", "defensive_contest"], default=None)
     ap.add_argument("--cache-only", action="store_true", help="fail on a cache miss instead of calling the CLI")
+    ap.add_argument("--bias-from", default=None, help="model_bakeoff.json whose weekly_timelines.<model> supplies symbol_bias per week (for the derisk power)")
+    ap.add_argument("--bias-model", default="fable5")
+    ap.add_argument("--derisk", choices=["on", "off"], default=None)
+    ap.add_argument("--derisk-threshold", type=float, default=None)
+    ap.add_argument("--derisk-weeks", type=int, default=None)
+    ap.add_argument("--derisk-mode", choices=["rotate", "cash"], default=None)
     ap.add_argument("--tilts-from", default=None, help="reference overlay_replay.json whose weekly_overlay_log supplies every week's aggregated tilt (no CLI, no cache)")
     return ap.parse_args()
 
@@ -123,6 +142,21 @@ def apply_variant(args):
         knobs["accelerate_entry_candidates"] = args.accel_candidates
     if args.mixed_action is not None:
         knobs["mixed_regime_action"] = args.mixed_action
+    if args.derisk is not None:
+        knobs["derisk_enabled"] = args.derisk == "on"
+    if args.derisk_threshold is not None:
+        knobs["derisk_bias_threshold"] = args.derisk_threshold
+    if args.derisk_weeks is not None:
+        knobs["derisk_consecutive_weeks"] = args.derisk_weeks
+    if args.derisk_mode is not None:
+        knobs["derisk_mode"] = args.derisk_mode
+    if args.bias_from:
+        global BIAS_BY_WEEK, VETO_BY_WEEK
+        weeks = json.loads(Path(args.bias_from).read_text())["weekly_timelines"][args.bias_model]
+        BIAS_BY_WEEK = {w["date"]: w["symbol_bias"] for w in weeks}
+        thr = knobs.get("derisk_bias_threshold", powers_mod.CANONICAL_CONFIG.overlay.derisk_bias_threshold)
+        wk = knobs.get("derisk_consecutive_weeks", powers_mod.CANONICAL_CONFIG.overlay.derisk_consecutive_weeks)
+        VETO_BY_WEEK = compute_vetoes(weeks, thr, wk)
     cfg = dc_replace(powers_mod.CANONICAL_CONFIG, overlay=dc_replace(powers_mod.CANONICAL_CONFIG.overlay, **knobs))
     powers_mod.CANONICAL_CONFIG = cfg
     VARIANT = {"name": args.variant, **knobs}
@@ -318,6 +352,9 @@ def make_overlay_refresh(cache: dict, weekly_log: list[dict]):
                 "samples": w["samples"],
                 "sample_agreement": w["sample_agreement"],
             }
+            if BIAS_BY_WEEK:
+                tilt_dict["symbol_bias"] = BIAS_BY_WEEK.get(w["as_of"])
+                tilt_dict["derisk_symbols"] = VETO_BY_WEEK.get(w["as_of"], [])
         else:
             pack = build_frozen_context_pack(
                 prices=prices,

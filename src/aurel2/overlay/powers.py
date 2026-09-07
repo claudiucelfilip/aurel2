@@ -177,6 +177,52 @@ def apply_accelerate_entry(
     )
 
 
+def apply_derisk_held(
+    tilt: Tilt,
+    state: OverlayState,
+    today: date,
+    prices: pd.DataFrame,
+    dm_assets: dict[AssetClass, Any],
+    current_holding_symbol: Optional[str],
+    exclude_from_selection: set[AssetClass] | None = None,
+) -> Optional[OverlayJournalEntry]:
+    """While an AI veto is active (tilt.raw["derisk_symbols"]), the decision is
+    the core's best non-vetoed 12m pick (CASH if none positive). Re-asserted
+    daily so the core cannot re-enter a vetoed symbol; the engine skips a buy
+    of the symbol already held, so this is a no-op once rotated.
+    """
+    if not CANONICAL_CONFIG.overlay.derisk_enabled:
+        return None
+    vetoed = set(tilt.raw.get("derisk_symbols") or [])
+    if not vetoed:
+        return None
+    exclude = exclude_from_selection or set()
+    held_vetoed = current_holding_symbol in vetoed
+    mode = CANONICAL_CONFIG.overlay.derisk_mode
+    if mode == "cash":
+        # Sell only what the AI vetoed; otherwise keep what we hold (or stay in cash).
+        target = "CASH" if (held_vetoed or not current_holding_symbol or current_holding_symbol == "CASH") else current_holding_symbol
+    else:
+        scores = calculate_momentum_scores(prices=prices, assets=dm_assets, calc_date=today, lookback_months=12, cash_rate=0.0)
+        by_sym = {dm_assets[k].yahoo_symbol: v.momentum_12m for k, v in scores.items()
+                  if k != AssetClass.CASH and k not in exclude and dm_assets[k].yahoo_symbol}
+        ranked = sorted(((s, m) for s, m in by_sym.items() if s not in vetoed), key=lambda kv: kv[1], reverse=True)
+        target = next((s for s, m in ranked if m > 0), "CASH")
+        # Same hysteresis as the core: don't switch between non-vetoed assets on a
+        # gap smaller than switch_threshold, or the daily re-assert churns.
+        held_m = by_sym.get(current_holding_symbol)
+        if not held_vetoed and held_m is not None and held_m > 0 and target != current_holding_symbol:
+            if by_sym.get(target, 0.0) - held_m < CANONICAL_CONFIG.dual_momentum.switch_threshold:
+                target = current_holding_symbol
+    return OverlayJournalEntry(
+        power="derisk_held",
+        status="applied",
+        reason=(f"AI veto {sorted(vetoed)}: held {current_holding_symbol} vetoed, rotate to {target}" if held_vetoed
+                else f"AI veto {sorted(vetoed)} active: hold {target}, core blocked from re-entry"),
+        detail={"vetoed": sorted(vetoed), "target": target, "held": current_holding_symbol, "rotation": held_vetoed},
+    )
+
+
 def apply_mixed_regime_action(tilt: Tilt) -> Tilt:
     """Map a "mixed" view onto a power (config knob; default "none" = unchanged).
 
@@ -362,7 +408,15 @@ def apply_overlay(
     journal_entries: list[OverlayJournalEntry] = []
     decision_overrides: dict[str, Any] = {}
 
-    accel_entry = apply_accelerate_entry(
+    derisk_entry = apply_derisk_held(
+        tilt, state, today, prices, dm_assets, current_holding_symbol, exclude_from_selection
+    )
+    if derisk_entry is not None:
+        journal_entries.append(derisk_entry)
+        decision_overrides["action"] = "buy"
+        decision_overrides["asset_symbol"] = derisk_entry.detail["target"]
+
+    accel_entry = None if derisk_entry is not None else apply_accelerate_entry(
         tilt, state, today, prices, dm_assets, current_holding_symbol, exclude_from_selection
     )
     if accel_entry is not None:

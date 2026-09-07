@@ -81,6 +81,16 @@ class OverlaySettings:
     accelerate_entry_candidates: int = 1
     # What a "mixed" regime view maps to: none | lookback_3m | lookback_6m | defensive_contest.
     mixed_regime_action: str = "none"
+    # Research power 4 (replay-only so far): when the AI's recorded symbol_bias on
+    # a symbol stays <= threshold for N consecutive weekly reads, veto it — rotate
+    # to the core's best non-vetoed 12m pick (else CASH) and block re-entry while
+    # the veto holds. The one lever live-trader's AI had and the overlay lacked.
+    derisk_enabled: bool = False
+    derisk_bias_threshold: float = -0.015
+    derisk_consecutive_weeks: int = 2
+    # rotate: hold the core's best non-vetoed pick, with the core's own switch
+    # hysteresis. cash: sell the vetoed holding and stay in cash until the veto lifts.
+    derisk_mode: str = "rotate"
 
     # Power 2: temporary lookback override (3m or 6m instead of 12m).
     lookback_override_max_consecutive_days: int = 30
