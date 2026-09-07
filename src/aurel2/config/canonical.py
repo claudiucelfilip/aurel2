@@ -75,6 +75,12 @@ class OverlaySettings:
     # for re-enabling behind a worth-it hurdle.
     accelerate_entry_enabled: bool = False
     accelerate_entry_max_per_days: int = 21
+    # Research knobs, swept offline by scripts/overlay_replay.py --variant.
+    # Defaults reproduce the launch shape exactly. candidates=1 accepts only
+    # the core's projected next pick; N accepts any of its projected top-N.
+    accelerate_entry_candidates: int = 1
+    # What a "mixed" regime view maps to: none | lookback_3m | lookback_6m | defensive_contest.
+    mixed_regime_action: str = "none"
 
     # Power 2: temporary lookback override (3m or 6m instead of 12m).
     lookback_override_max_consecutive_days: int = 30

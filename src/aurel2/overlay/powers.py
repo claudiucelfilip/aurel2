@@ -12,7 +12,7 @@ directly — it only returns a (possibly modified) AgentDecision for the normal
 execution path to act on, plus journal entries describing what happened.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date
 from typing import Any, Optional
 
@@ -61,18 +61,18 @@ class OverlayResult:
     active_lookback_months: Optional[int] = None  # for the caller to re-run DM ranking at this lookback
 
 
-def project_next_pick(
+def project_next_picks(
     prices: pd.DataFrame,
     calc_date: date,
     dm_assets: dict[AssetClass, Any],
     exclude_from_selection: set[AssetClass] | None = None,
-) -> Optional[str]:
-    """Project the core's OWN next pick forward using current short-term trend.
+) -> list[str]:
+    """The core's OWN projected ranking under current short-term trend, best first.
 
     Reuses calculate_momentum_scores (the same function DualMomentumStrategy
     itself calls) at a short lookback (PROJECTION_TREND_MONTHS) as a proxy for
     "if current short-term trends persist, who wins the 12m ranking next" —
-    this can only ever surface a symbol already in dm_assets, never a novel one.
+    this can only ever surface symbols already in dm_assets, never a novel one.
     """
     exclude_from_selection = exclude_from_selection or set()
     scores = calculate_momentum_scores(
@@ -82,14 +82,25 @@ def project_next_pick(
         lookback_months=PROJECTION_TREND_MONTHS,
         cash_rate=0.0,
     )
-    risky_scores = {
-        k: v for k, v in scores.items() if k != AssetClass.CASH and k not in exclude_from_selection
-    }
-    if not risky_scores:
-        return None
-    winner_class = max(risky_scores.keys(), key=lambda k: risky_scores[k].momentum_12m)
-    winner_asset = dm_assets.get(winner_class)
-    return winner_asset.yahoo_symbol if winner_asset else None
+    risky = {k: v for k, v in scores.items() if k != AssetClass.CASH and k not in exclude_from_selection}
+    ranked = sorted(risky, key=lambda k: risky[k].momentum_12m, reverse=True)
+    out = []
+    for ac in ranked:
+        asset = dm_assets.get(ac)
+        if asset and asset.yahoo_symbol:
+            out.append(asset.yahoo_symbol)
+    return out
+
+
+def project_next_pick(
+    prices: pd.DataFrame,
+    calc_date: date,
+    dm_assets: dict[AssetClass, Any],
+    exclude_from_selection: set[AssetClass] | None = None,
+) -> Optional[str]:
+    """The single projected winner (first of project_next_picks), or None."""
+    picks = project_next_picks(prices, calc_date, dm_assets, exclude_from_selection)
+    return picks[0] if picks else None
 
 
 def apply_accelerate_entry(
@@ -108,7 +119,9 @@ def apply_accelerate_entry(
     if not symbol:
         return None
 
-    projected = project_next_pick(prices, today, dm_assets, exclude_from_selection)
+    n_candidates = max(1, int(CANONICAL_CONFIG.overlay.accelerate_entry_candidates))
+    candidates = project_next_picks(prices, today, dm_assets, exclude_from_selection)[:n_candidates]
+    projected = candidates[0] if candidates else None
 
     if not CANONICAL_CONFIG.overlay.accelerate_entry_enabled:
         # Shadow log: record what would have happened so the parallel run
@@ -120,12 +133,17 @@ def apply_accelerate_entry(
             detail={"requested": symbol, "projected_next_pick": projected},
         )
 
-    if projected is None or symbol != projected:
+    if symbol not in candidates:
+        reason = (
+            f"requested symbol {symbol!r} is not the core's own projected next pick ({projected!r})"
+            if n_candidates == 1
+            else f"requested symbol {symbol!r} is not among the core's projected top-{n_candidates} ({candidates!r})"
+        )
         return OverlayJournalEntry(
             power="accelerate_entry",
             status="ignored",
-            reason=f"requested symbol {symbol!r} is not the core's own projected next pick ({projected!r})",
-            detail={"requested_symbol": symbol, "projected_symbol": projected},
+            reason=reason,
+            detail={"requested_symbol": symbol, "projected_symbol": projected, "candidates": candidates},
         )
 
     if symbol == current_holding_symbol:
@@ -145,12 +163,33 @@ def apply_accelerate_entry(
         )
 
     record_accelerate_entry(state, today)
+    rank = candidates.index(symbol) + 1
+    reason = (
+        f"accelerated entry into {symbol}, the core's own projected next pick"
+        if rank == 1
+        else f"accelerated entry into {symbol}, #{rank} in the core's projected top-{n_candidates}"
+    )
     return OverlayJournalEntry(
         power="accelerate_entry",
         status="applied",
-        reason=f"accelerated entry into {symbol}, the core's own projected next pick",
-        detail={"symbol": symbol},
+        reason=reason,
+        detail={"symbol": symbol, "projected_rank": rank},
     )
+
+
+def apply_mixed_regime_action(tilt: Tilt) -> Tilt:
+    """Map a "mixed" view onto a power (config knob; default "none" = unchanged).
+
+    Never overrides a power the tilt already requests explicitly.
+    """
+    action = CANONICAL_CONFIG.overlay.mixed_regime_action
+    if tilt.regime_view != "mixed" or action == "none":
+        return tilt
+    if action in ("lookback_3m", "lookback_6m") and tilt.lookback_override_months is None:
+        return replace(tilt, lookback_override_months=int(action[-2]))
+    if action == "defensive_contest" and not tilt.force_defensive_contest:
+        return replace(tilt, force_defensive_contest=True)
+    return tilt
 
 
 def apply_lookback_override(
@@ -319,6 +358,7 @@ def apply_overlay(
     if tilt is None:
         return OverlayResult(decision_overrides={})
 
+    tilt = apply_mixed_regime_action(tilt)
     journal_entries: list[OverlayJournalEntry] = []
     decision_overrides: dict[str, Any] = {}
 

@@ -68,6 +68,7 @@ logging.disable(logging.WARNING)
 import pandas as pd
 
 import aurel2.overlay.integration as overlay_integration
+import aurel2.overlay.powers as powers_mod
 from aurel2.core.assets import ASSET_REGISTRY
 from aurel2.core.models import AssetClass, SignalAction
 from aurel2.config.canonical import CANONICAL_CONFIG, live_asset_registry
@@ -83,6 +84,51 @@ CACHE_PATH = REPO_ROOT / "data" / "edge_decomposition" / "overlay_replay_cache.j
 OUT_PATH = REPO_ROOT / "data" / "edge_decomposition" / "overlay_replay.json"
 REPLAY_MODE = "replay"
 REPLAY_DATA_DIR = REPO_ROOT / "data" / "replay"
+CACHE_ONLY = False
+VARIANT: dict = {}
+TILTS_FROM: dict = {}   # as_of -> weekly_overlay_log entry from a reference replay
+TILTS_FROM_PATH = None
+
+
+def parse_variant_args():
+    """--variant NAME runs the overlay arm under research knobs (see
+    OverlaySettings) and writes to overlay_replay_<NAME>.json with its own
+    scratch mode dir, so variants can run in parallel without clobbering."""
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--variant", default=None, help="name; omit for the canonical default run")
+    ap.add_argument("--accel", choices=["on", "off"], default=None)
+    ap.add_argument("--accel-candidates", type=int, default=None)
+    ap.add_argument("--mixed-action", choices=["none", "lookback_3m", "lookback_6m", "defensive_contest"], default=None)
+    ap.add_argument("--cache-only", action="store_true", help="fail on a cache miss instead of calling the CLI")
+    ap.add_argument("--tilts-from", default=None, help="reference overlay_replay.json whose weekly_overlay_log supplies every week's aggregated tilt (no CLI, no cache)")
+    return ap.parse_args()
+
+
+def apply_variant(args):
+    """Patch the overlay config the powers seam reads; defaults untouched."""
+    global REPLAY_MODE, REPLAY_DATA_DIR, OUT_PATH, CACHE_ONLY, VARIANT, TILTS_FROM, TILTS_FROM_PATH
+    from dataclasses import replace as dc_replace
+    CACHE_ONLY = bool(args.cache_only)
+    if args.tilts_from:
+        TILTS_FROM_PATH = args.tilts_from
+        ref = json.loads(Path(args.tilts_from).read_text())
+        TILTS_FROM = {w["as_of"]: w for w in ref["weekly_overlay_log"]}
+    if not args.variant:
+        return
+    knobs = {}
+    if args.accel is not None:
+        knobs["accelerate_entry_enabled"] = args.accel == "on"
+    if args.accel_candidates is not None:
+        knobs["accelerate_entry_candidates"] = args.accel_candidates
+    if args.mixed_action is not None:
+        knobs["mixed_regime_action"] = args.mixed_action
+    cfg = dc_replace(powers_mod.CANONICAL_CONFIG, overlay=dc_replace(powers_mod.CANONICAL_CONFIG.overlay, **knobs))
+    powers_mod.CANONICAL_CONFIG = cfg
+    VARIANT = {"name": args.variant, **knobs}
+    REPLAY_MODE = f"replay-{args.variant}"
+    REPLAY_DATA_DIR = REPO_ROOT / "data" / REPLAY_MODE
+    OUT_PATH = REPO_ROOT / "data" / "edge_decomposition" / f"overlay_replay_{args.variant}.json"
 
 START = date(2026, 2, 11)
 END = date(2026, 7, 9)
@@ -147,6 +193,8 @@ def cached_collect_samples(pack: dict, as_of: date, cache: dict) -> list[dict]:
     for i in range(N_SAMPLES):
         key = f"{as_of.isoformat()}:{base_key}:s{i}"
         rec = cache.get(key)
+        if rec is None and CACHE_ONLY:
+            raise RuntimeError(f"cache miss for {as_of} sample {i} (--cache-only): refusing to call the CLI")
         if rec is None:
             parsed = _sample_one(pack, model=MODEL)
             rec = {"cache_key": key, "date": as_of.isoformat(), "sample_idx": i, "parsed": parsed}
@@ -252,17 +300,39 @@ def make_overlay_refresh(cache: dict, weekly_log: list[dict]):
         tracker: HoldingTracker = state["tracker"]
         det_signal = tracker.advance(prices, rebal_date)
 
-        pack = build_frozen_context_pack(
-            prices=prices,
-            calc_date=rebal_date,
-            dm_assets=tracker.engine.dual_momentum.assets,
-            current_holding_symbol=tracker.current_holding_symbol,
-            days_held=tracker.days_held(rebal_date),
-            deterministic_signal=det_signal,
-        )
-
-        samples = cached_collect_samples(pack, rebal_date, cache)
-        tilt_dict = aggregate_samples(samples, as_of=rebal_date)
+        if TILTS_FROM:
+            # Replay the reference run's aggregated AI decisions verbatim so an
+            # A/B isolates the power mechanics, not model/prompt drift.
+            w = TILTS_FROM.get(rebal_date.isoformat())
+            if w is None:
+                state.setdefault("errors", []).append(f"no reference tilt for {rebal_date}")
+                raise RuntimeError(f"--tilts-from has no tilt for {rebal_date}")
+            from aurel2.overlay.runner import DEFAULT_TTL_DAYS
+            tilt_dict = {
+                "as_of": w["as_of"],
+                "expires": (rebal_date + timedelta(days=DEFAULT_TTL_DAYS)).isoformat(),
+                "regime_view": w["regime_view"],
+                "confidence": w["confidence"],
+                "powers": w["powers_requested"],
+                "reasoning": f"replayed from {TILTS_FROM_PATH}",
+                "samples": w["samples"],
+                "sample_agreement": w["sample_agreement"],
+            }
+        else:
+            pack = build_frozen_context_pack(
+                prices=prices,
+                calc_date=rebal_date,
+                dm_assets=tracker.engine.dual_momentum.assets,
+                current_holding_symbol=tracker.current_holding_symbol,
+                days_held=tracker.days_held(rebal_date),
+                deterministic_signal=det_signal,
+            )
+            try:
+                samples = cached_collect_samples(pack, rebal_date, cache)
+            except Exception as e:
+                state.setdefault("errors", []).append(f"{rebal_date}: {e}")
+                raise
+            tilt_dict = aggregate_samples(samples, as_of=rebal_date)
         tilt_path = tilt_path_for_mode(REPLAY_MODE)
         write_tilt(tilt_path, tilt_dict)
 
@@ -366,6 +436,9 @@ def snapshots_to_curve(snapshots) -> list[dict]:
 
 
 def main():
+    apply_variant(parse_variant_args())
+    if VARIANT:
+        print(f"Variant: {VARIANT}")
     print(f"Wiping {REPLAY_DATA_DIR} (scratch state only)...")
     if REPLAY_DATA_DIR.exists():
         shutil.rmtree(REPLAY_DATA_DIR)
@@ -426,6 +499,7 @@ def main():
         "model": MODEL,
         "n_samples": N_SAMPLES,
         "context_pack_version": CANONICAL_CONFIG.overlay.context_pack_version,
+        "variant": VARIANT or None,
         "arms": {
             "a2_overlay": {
                 "final_value": round(overlay_result.final_value, 2),
@@ -447,6 +521,14 @@ def main():
         "weekly_overlay_log": weekly_log,
         "overlay_journal_log": overlay_journal_log,
     }
+
+    refresh_errors = refresh_state.get("errors", [])
+    if refresh_errors or not weekly_log:
+        print(f"\nOVERLAY ARM INVALID: {len(refresh_errors)} refresh error(s), {len(weekly_log)} weeks refreshed -- "
+              "the engine swallows refresh errors and silently runs a bare arm. Not writing output.", file=sys.stderr)
+        for e in refresh_errors[:5]:
+            print("  " + str(e), file=sys.stderr)
+        sys.exit(2)
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUT_PATH.write_text(json.dumps(out, indent=2, default=str))
