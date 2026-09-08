@@ -59,9 +59,13 @@ class OverlaySettings:
     """
 
     tilt_file_path: str = "data/{mode}/overlay_tilt.json"
-    # Parallel run launched 2026-07-13 (graduation rule:
-    # docs/plans/2026-07-10-graduation-rule.md, approved 2026-07-10).
-    enabled: bool = True
+    # REMOVED 2026-09-08 (Claudiu): "remove the overlay, keep bare A2" per the
+    # graduation rule's underperformance row. Two parallel-run windows delivered
+    # no treatment (dead CLI + powers that never alter a trade), and offline A/B
+    # on the 22 blind weeks (data/edge_decomposition/overlay_replay_*.json) shows
+    # every power configuration — including a de-risk/sell lever — at or below
+    # bare A2. See docs/plans/2026-07-10-graduation-rule.md §0 amendment.
+    enabled: bool = False
 
     # Frozen by the single ablation step (docs/plans/2026-07-10-context-pack-spec.md):
     # v2 = v1 + per-asset RSI(14)/z-scores + momentum-spread alarm. v3 cut.

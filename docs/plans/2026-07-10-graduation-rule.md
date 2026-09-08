@@ -8,6 +8,27 @@ This document leaves no term ambiguous. Every metric below states exactly which 
 
 ## 0. Run parameters
 
+> **Decision 2026-09-08 (Claudiu): overlay REMOVED, bare A2 kept.** Outcome row: "A2+overlay
+> underperforms A2-bare" (§5). Evidence:
+> - Live run (from 2026-08-10): `applied_count: 0` at every weekly checkpoint — the overlay arm
+>   was mechanically identical to bare all run. The panel CLI token expired 2026-08-24 (no-tilt
+>   fallbacks since), but even the healthy weeks applied no powers. Week-3 scorecard (2026-08-28):
+>   bare +4.15% / overlay +2.12% / QQQ −0.62% / live-trader −2.16%.
+> - Offline A/B on the 22 blind weeks (Feb 11 → Jul 9, replaying the reference run's own tilts,
+>   `scripts/overlay_replay.py --variant … --tilts-from`): bare +14.40%. Accelerate-entry on
+>   (strict or top-3 gate): +4.84% (one wrong XLE detour). Mixed→3m/6m lookback: 0.00pp
+>   (87 override days, no trade changed). Mixed→defensive contest: 0.00pp (held asset won 9/9).
+>   De-risk/sell power from the AI's recorded symbol_bias (8 settings, rotate-with-hysteresis
+>   or cash): best +6.38%, worst −12.43% — vetoes fire after the GLD drop or block the XLK run.
+> - Leak test (`scripts/overlay_leak_test.py`): Fable 5 dates anonymized packs 48% exact-year
+>   (chance 5%) and names 64% of famous regimes — so no pre-cutoff backtest can rescue the
+>   verdict; forward paper was the only honest test and it delivered no treatment twice.
+>
+> Actions: `CANONICAL_CONFIG.overlay.enabled = False`; overlay-runner / overlay-event-check
+> crons removed on Dumbo; weekly scorecard kept as the bare-A2 vs QQQ vs live-trader record for
+> the ~6-month bare-A2 checkpoint (early Dec 2026). Trend-vol fallback evaluation (§5) deferred
+> to that checkpoint. Overlay code stays in-tree, default-off, with the research knobs.
+
 > **Amendment 2026-08-05 (Claudiu-approved): run restarted, start re-stamped to 2026-08-10.**
 > The overlay panel was silently dead 2026-07-20 → 2026-08-05 (claude CLI config lost in the
 > one-shot runner container; every weekly tilt was a 0-sample no-tilt fallback — see commit
