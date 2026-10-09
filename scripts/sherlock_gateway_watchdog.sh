@@ -1,26 +1,28 @@
 #!/usr/bin/env bash
 # Watchdog for the Hermes Sherlock gateway on Dumbo.
-# Catches the failure launchd cannot see: the process stays alive while its
-# Slack socket is permanently wedged ("Session is closed" retry loop, 2026-08-18).
+# Catches the failure seen 2026-08-27 that left Sherlock silently deaf for 12h:
+# after a network blip the Slack Socket Mode aiohttp session gets stuck and
+# never self-heals, looping "Session is closed" every ~15s. The process stays
+# alive, so launchd KeepAlive and `gateway status` both report healthy while
+# no Slack message is ever received. Only the log reveals it.
 set -u
 
 export PATH="/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
-# This is a LaunchAgent loaded in the logged-in GUI domain. After a host or
-# gateway restart, launchctl may no longer alias it through user/<uid> even
-# though gui/<uid> owns and runs it.
-SERVICE="gui/$(id -u)/ai.hermes.gateway-sherlock"
-AGENT_LOG="$HOME/.hermes/profiles/sherlock/logs/agent.log"
-GATEWAY_LOG="$HOME/.hermes/profiles/sherlock/logs/gateway.log"
+PROFILE_DIR="$HOME/.hermes/profiles/sherlock"
+ERR_LOG="$HOME/.hermes/logs/gateway.error.log"
+GW_LOG="$PROFILE_DIR/logs/gateway.log"
+LOCK_DIR="/tmp/sherlock-watchdog.lock"
 STATE_DIR="$HOME/.hermes/state"
 LAST_FIX="$STATE_DIR/sherlock-watchdog-last-restart"
-LOCK_DIR="/tmp/sherlock-watchdog.lock"
 NTFY_TOPIC="${NTFY_TOPIC:-aurel2}"
-
-# Don't restart more than once per 15 min: a restart loop would be worse than silence.
 COOLDOWN_S=900
-# Wedged means errors in the recent window with no successful connect after them.
-WINDOW_MIN=5
+SERVICE="ai.hermes.gateway" # one gateway serves all profiles since Hermes 0.21
+# gateway.error.log is raw stderr with NO timestamps. Measure only newly
+# appended bytes that contain the known stuck-loop signature; unrelated agent
+# tool errors also reach this shared stderr and must never trigger a restart.
+PROBE_S=45
+GROWTH_THRESHOLD_B=1500
 
 log() { printf '%s sherlock-watchdog: %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*"; }
 
@@ -36,72 +38,111 @@ notify() {
 		-d "$2" "https://ntfy.sh/$NTFY_TOPIC" >/dev/null 2>&1 || true
 }
 
-# 1. Process alive at all? If launchd already has it down, let KeepAlive do its job.
-if ! launchctl print "$SERVICE" >/dev/null 2>&1; then
-	log "FAILED: service not loaded"
-	notify "Sherlock watchdog" "ai.hermes.gateway-sherlock is not loaded on Dumbo"
-	exit 1
-fi
+# Restart the gateway. The service lives in the gui/ domain, NOT user/ —
+# `user/<uid>/...` fails with "Could not find service in domain".
+restart_gateway() {
+	launchctl kickstart -k "gui/$(id -u)/$SERVICE" 2>/dev/null \
+		|| launchctl kickstart -k "user/$(id -u)/$SERVICE" 2>/dev/null \
+		|| return 1
+}
 
-[ -r "$AGENT_LOG" ] || { log "no agent log yet"; exit 0; }
-
-# 2. Look only at the last WINDOW_MIN minutes of log.
-# BSD awk (macOS) has no mktime(), so compare the log's "YYYY-MM-DD HH:MM:SS"
-# prefix lexically against a cutoff string — same ordering, no date math.
-cutoff_str=$(date -v-${WINDOW_MIN}M '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date -d "-${WINDOW_MIN} minutes" '+%Y-%m-%d %H:%M:%S')
-recent=$(awk -v cutoff="$cutoff_str" '
-	/^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9]/ {
-		keep = (substr($0, 1, 19) >= cutoff)
-	}
-	keep
-' "$AGENT_LOG" 2>/dev/null)
-
-fail_count=$(printf '%s\n' "$recent" | grep -c "Session is closed" 2>/dev/null || true)
-fail_count=${fail_count:-0}
-
-if [ "$fail_count" -lt 3 ]; then
-	log "ok (${fail_count} socket errors in last ${WINDOW_MIN}m)"
-	exit 0
-fi
-
-# 3. A reconnect after the last error means it healed itself; don't interfere.
-last_err_line=$(printf '%s\n' "$recent" | grep -n "Session is closed" | tail -1 | cut -d: -f1)
-last_ok_line=$(printf '%s\n' "$recent" | grep -n "Socket Mode connected" | tail -1 | cut -d: -f1)
-if [ -n "${last_ok_line:-}" ] && [ -n "${last_err_line:-}" ] && [ "$last_ok_line" -gt "$last_err_line" ]; then
-	log "ok (reconnected after errors)"
-	exit 0
-fi
-
-# 4. Confirm Slack itself is reachable, so we restart for a stuck client, not an outage.
-if ! curl -s -m 10 -o /dev/null "https://slack.com/api/api.test"; then
-	log "slack.com unreachable; network problem, not a stuck client — not restarting"
-	exit 0
-fi
-
-# 5. Cooldown guard.
-last_fix=$(cat "$LAST_FIX" 2>/dev/null | tr -dc '0-9')
-[ -n "$last_fix" ] || last_fix=0
-now_s=$(date +%s)
-if [ "$last_fix" -ge $((now_s - COOLDOWN_S)) ]; then
-	log "wedged but restarted recently ($(( (now_s - last_fix) / 60 ))m ago); escalating instead"
-	notify "Sherlock still wedged" "Restarted $(( (now_s - last_fix) / 60 ))m ago and Slack is still failing. Needs a look."
-	exit 1
-fi
-
-log "wedged (${fail_count} errors, no reconnect); restarting gateway"
-echo "$now_s" > "$LAST_FIX"
-launchctl kickstart -k "$SERVICE" || { log "FAILED: kickstart failed"; notify "Sherlock watchdog" "kickstart failed on Dumbo"; exit 1; }
-
-# 6. Verify the fix actually took, rather than assuming.
-for _ in 1 2 3 4 5 6 7 8 9 10; do
-	sleep 3
-	if tail -40 "$GATEWAY_LOG" 2>/dev/null | grep -q "Socket Mode connected"; then
-		log "recovered: Socket Mode connected"
-		notify "Sherlock recovered" "Slack socket was wedged; gateway restarted and reconnected."
-		exit 0
+# Sample signature-bearing growth over PROBE_S. A stuck gateway writes the
+# "Session is closed" retry line continuously. Other stderr growth is ignored.
+stuck_log_growth() {
+	local a b start
+	a=$(stat -f%z "$ERR_LOG" 2>/dev/null || echo 0)
+	sleep "$PROBE_S"
+	b=$(stat -f%z "$ERR_LOG" 2>/dev/null || echo 0)
+	# Log rotation/truncation shows as negative growth; treat as no signal.
+	if [ "$b" -le "$a" ]; then
+		echo 0
+		return
 	fi
-done
+	start=$((a + 1))
+	tail -c "+$start" "$ERR_LOG" 2>/dev/null \
+		| grep -E 'Session is closed' 2>/dev/null \
+		| wc -c \
+		| tr -dc '0-9'
+}
 
-log "FAILED: restarted but no reconnect confirmed"
-notify "Sherlock restart unconfirmed" "Gateway was restarted but Socket Mode did not confirm within 30s."
-exit 1
+# Scale the observed growth to bytes/min for a stable threshold.
+growth_per_min() {
+	local g; g=$(stuck_log_growth); [ -n "$g" ] || g=0
+	echo $(( g * 60 / PROBE_S ))
+}
+
+# A watchdog restart must not kill scheduled work. Cron run state is durable
+# and readable even when Slack's socket is unhealthy, so defer until the next
+# watchdog pass if any profile currently owns a running execution.
+cron_in_flight() {
+	local profile
+	for profile in default claw sherlock; do
+		if hermes --profile "$profile" cron runs --limit 50 2>/dev/null \
+			| awk '$2 == "running" { found=1 } END { exit(found ? 0 : 1) }'; then
+			return 0
+		fi
+	done
+	return 1
+}
+
+status=0
+
+# --- Check 1: the gateway process exists at all ---
+if ! pgrep -f "hermes gateway run --external-supervisor" >/dev/null 2>&1; then
+	log "gateway process not running"
+	last_fix=$(tr -dc '0-9' < "$LAST_FIX" 2>/dev/null); [ -n "$last_fix" ] || last_fix=0
+	now_s=$(date +%s)
+	if [ "$last_fix" -ge $((now_s - COOLDOWN_S)) ]; then
+		log "restarted recently; escalating"
+		notify "Sherlock gateway down" "Process still missing after a restart $(( (now_s - last_fix) / 60 ))m ago."
+		exit 1
+	fi
+	echo "$now_s" > "$LAST_FIX"
+	restart_gateway
+	sleep 20
+	if pgrep -f "hermes gateway run --external-supervisor" >/dev/null 2>&1; then
+		log "recovered: gateway process back"
+		notify "Sherlock recovered" "Gateway process was missing; restarted and is running."
+	else
+		log "FAILED: gateway process still missing after restart"
+		notify "Sherlock gateway down" "Restarted but the gateway process is still not running."
+		status=1
+	fi
+	exit "$status"
+fi
+
+# --- Check 2: the stuck-session loop (the silent killer) ---
+# Only meaningful when Dumbo itself is online; a real outage is not Sherlock's fault.
+if curl -s -m 10 -o /dev/null "https://slack.com/api/api.test"; then
+	recent=$(growth_per_min)
+	if [ "${recent:-0}" -ge "$GROWTH_THRESHOLD_B" ]; then
+		log "Slack socket stuck (error log growing ${recent} B/min)"
+		if cron_in_flight; then
+			log "cron execution in flight; deferring gateway restart"
+			exit 0
+		fi
+		last_fix=$(tr -dc '0-9' < "$LAST_FIX" 2>/dev/null); [ -n "$last_fix" ] || last_fix=0
+		now_s=$(date +%s)
+		if [ "$last_fix" -ge $((now_s - COOLDOWN_S)) ]; then
+			log "restarted recently; escalating"
+			notify "Sherlock Slack stuck" "Socket Mode still dead after a restart $(( (now_s - last_fix) / 60 ))m ago. Needs a look."
+			exit 1
+		fi
+		echo "$now_s" > "$LAST_FIX"
+		log "restarting gateway"
+		restart_gateway
+		sleep 25
+		if [ "$(growth_per_min)" -lt "$GROWTH_THRESHOLD_B" ]; then
+			log "recovered: Slack Socket Mode reconnected"
+			notify "Sherlock recovered" "Slack socket was stuck in a dead retry loop; restarted and reconnected."
+		else
+			log "FAILED: Slack still not connected after restart"
+			notify "Sherlock Slack down" "Gateway restarted but Slack Socket Mode is still not connected."
+			status=1
+		fi
+		exit "$status"
+	fi
+fi
+
+[ "$status" -eq 0 ] && log "ok"
+exit "$status"
