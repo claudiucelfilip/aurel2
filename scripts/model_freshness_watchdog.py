@@ -12,11 +12,13 @@ request until someone edits config by hand.
 What it does, in order:
   1. Upgrades the Codex CLI if a newer npm release exists (the backend gates
      new models on client version).
-  2. Reads candidate slugs from ~/.codex/models_cache.json, keeps the sol and
-     terra lines (plus plain gpt-N.N), sorts newest first, sol before terra.
-  3. Probes the newest candidates with `codex exec` until one answers.
-  4. Rewrites every known pin to that model: Hermes profiles, ~/.codex/config.toml,
-     ~/.openclaw/openclaw.json, Aurel3 config.json.
+  2. Asks the Codex CLI what it uses with no model pinned: that built-in default
+     follows OpenAI's current recommendation (gpt-6.1-sol with codex 0.162).
+  3. Only if that default fails, falls back to probing the newest sol/terra slugs
+     from ~/.codex/models_cache.json.
+  4. Rewrites every pin that cannot follow a default to that model: Hermes
+     profiles (Hermes has no default for openai-codex), ~/.openclaw/openclaw.json,
+     Aurel3 config.json. ~/.codex/config.toml is left unpinned on purpose.
   5. Ensures each Hermes profile and OpenClaw agent falls back to local qwen.
   6. Restarts the Hermes gateway when something changed, and pings ntfy.
 
@@ -161,6 +163,19 @@ def upgrade_codex_if_stale(codex_path: str, apply: bool) -> None:
             notes.append(f"codex CLI {current} is behind {latest}")
 
 
+def codex_default_model(codex_path: str) -> str | None:
+    """Run codex with no -m and read the model it picked from its header."""
+    try:
+        r = run_codex(codex_path, ["exec", "--skip-git-repo-check", "Reply with exactly: OK"], PROBE_TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        return None
+    m = re.search(r"^model:\s*(\S+)", r.stdout + r.stderr, re.M)  # header goes to stderr
+    if m and r.returncode == 0 and re.search(r"^OK\s*$", r.stdout, re.M):
+        return m.group(1)
+    notes.append("codex default model did not answer: " + (r.stdout + r.stderr)[-200:].strip())
+    return None
+
+
 def probe(codex_path: str, model: str) -> tuple[bool, str]:
     """Return (entitled, detail). Costs one tiny request on the subscription."""
     try:
@@ -195,6 +210,11 @@ def candidates() -> list[str]:
 
 
 def pick_target(codex_path: str, current: str | None) -> str | None:
+    default = codex_default_model(codex_path)
+    if default and GPT_SLUG.match(default):
+        log(f"codex default model: {default}")
+        return default
+    log("codex default unusable; probing the newest sol/terra slugs instead")
     cands = candidates()
     if not cands:
         return current
@@ -243,10 +263,6 @@ def current_pin() -> str | None:
         m = GPT_TOKEN.search(default)
         if m:
             return m.group(0)
-    if CODEX_CONFIG.exists():
-        m = re.search(r'^model\s*=\s*"(gpt-[^"]+)"', CODEX_CONFIG.read_text(), re.M)
-        if m:
-            return m.group(1)
     return None
 
 
@@ -292,14 +308,14 @@ def update_hermes_profiles(target: str, qwen: tuple[str, str] | None, apply: boo
     return restart
 
 
-def update_codex_config(target: str, apply: bool) -> None:
+def update_codex_config(apply: bool) -> None:
+    """Drop any `model = "gpt-..."` pin so the CLI's own default applies."""
     if not CODEX_CONFIG.exists():
         return
     text = CODEX_CONFIG.read_text()
-    new = re.sub(r'^(model\s*=\s*")(gpt-[^"]+)(")', lambda m: m.group(1) + target + m.group(3), text, count=1, flags=re.M)
-    if new != text:
-        old = re.search(r'^model\s*=\s*"([^"]+)"', text, re.M).group(1)
-        changes.append(f"codex config.toml: model {old} -> {target}")
+    new, n = re.subn(r'^model\s*=\s*"gpt-[^"]+"\n', "", text, count=1, flags=re.M)
+    if n:
+        changes.append("codex config.toml: model pin removed (CLI default now applies)")
         if apply:
             backup(CODEX_CONFIG)
             CODEX_CONFIG.write_text(new)
@@ -432,7 +448,7 @@ def main() -> int:
         notes.append("no local qwen endpoint reachable; fallbacks left as they are")
 
     restart = update_hermes_profiles(target, qwen, apply)
-    update_codex_config(target, apply)
+    update_codex_config(apply)
     update_openclaw(target, openclaw_qwen_id(), apply)
     update_aurel3(target, apply)
 
