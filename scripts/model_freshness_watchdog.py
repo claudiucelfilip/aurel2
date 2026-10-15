@@ -12,8 +12,8 @@ request until someone edits config by hand.
 What it does, in order:
   1. Upgrades the Codex CLI if a newer npm release exists (the backend gates
      new models on client version).
-  2. Reads candidate slugs from ~/.codex/models_cache.json, keeps the `-sol`
-     line (plus plain gpt-N.N), sorts by version.
+  2. Reads candidate slugs from ~/.codex/models_cache.json, keeps the sol and
+     terra lines (plus plain gpt-N.N), sorts newest first, sol before terra.
   3. Probes the newest candidates with `codex exec` until one answers.
   4. Rewrites every known pin to that model: Hermes profiles, ~/.codex/config.toml,
      ~/.openclaw/openclaw.json, Aurel3 config.json.
@@ -62,8 +62,9 @@ QWEN_ENDPOINTS = [
 
 GPT_SLUG = re.compile(r"^gpt-(\d+(?:\.\d+)*)(?:-([a-z]+))?$")
 GPT_TOKEN = re.compile(r"gpt-\d+(?:\.\d+)*(?:-[a-z]+)?")
-EXCLUDED_SUFFIXES = {"mini", "nano", "pro", "codex", "spark", "chat", "terra", "luna", "astra"}
-PREFERRED_SUFFIX = "sol"
+# Claudiu's rule (2026-10-15): newest version wins; within a version prefer sol, then terra,
+# then the plain slug. Other variants (luna, astra, mini, pro, ...) are never picked.
+SUFFIX_RANK = {"sol": 3, "terra": 2, None: 1}
 MAX_PROBES = 4
 PROBE_TIMEOUT_S = 180
 
@@ -187,14 +188,10 @@ def candidates() -> list[str]:
         m = GPT_SLUG.match(s or "")
         if not m:
             continue
-        suffix = m.group(2)
-        if suffix in EXCLUDED_SUFFIXES:
-            continue
-        if suffix not in (None, PREFERRED_SUFFIX):
-            continue
-        out.append(s)
-    # newest first; within a version prefer the -sol variant
-    return sorted(out, key=lambda s: (version_key(s), 1 if s.endswith("-" + PREFERRED_SUFFIX) else 0), reverse=True)
+        if m.group(2) in SUFFIX_RANK:
+            out.append(s)
+    # newest first; within a version sol, then terra, then plain
+    return sorted(out, key=lambda s: (version_key(s), SUFFIX_RANK[GPT_SLUG.match(s).group(2)]), reverse=True)
 
 
 def pick_target(codex_path: str, current: str | None) -> str | None:
