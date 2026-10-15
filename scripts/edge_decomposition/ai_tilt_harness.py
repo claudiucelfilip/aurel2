@@ -213,7 +213,7 @@ def call_claude_cli(prompt: str, model: str = "sonnet") -> tuple[dict | None, fl
     return parsed, latency, result_text
 
 
-def call_codex_cli(prompt: str, model: str = "gpt-5.6-sol") -> tuple[dict | None, float, str]:
+def call_codex_cli(prompt: str, model: str = "gpt-6.1-sol") -> tuple[dict | None, float, str]:
     """Shell out to `codex exec --json ...`. Returns (parsed_result_or_None, latency_s, raw_text).
 
     stdout is newline-delimited JSON events; the final answer is the

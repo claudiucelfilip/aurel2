@@ -1,4 +1,4 @@
-"""CLI callers for the overlay operator (Fable 5) and Claw shadow-scorer (gpt-5.6-sol).
+"""CLI callers for the overlay operator (Fable 5) and Claw shadow-scorer (gpt-6.1-sol).
 
 NEVER the Anthropic SDK / ANTHROPIC_API_KEY — always shell out to the `claude`
 CLI. Pattern lifted verbatim from scripts/edge_decomposition/ai_tilt_harness.py
@@ -12,7 +12,7 @@ from typing import Optional
 
 CLI_TIMEOUT_S = 150
 DEFAULT_CLAUDE_MODEL = "claude-fable-5"
-DEFAULT_CODEX_MODEL = "gpt-5.6-sol"
+DEFAULT_CODEX_MODEL = "gpt-6.1-sol"
 
 
 def extract_json(text: str) -> Optional[dict]:

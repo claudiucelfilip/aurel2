@@ -1,7 +1,7 @@
 """Claw shadow-scorer: weekly, read-only comparison telemetry.
 
 Sends the SAME context pack the overlay operator sees to the codex CLI
-(gpt-5.6-sol), asking what Claw would do, and logs the raw response to
+(gpt-6.1-sol), asking what Claw would do, and logs the raw response to
 data/{mode}/claw_shadow.jsonl. This is PURE comparison telemetry — its output
 is never read by powers.py / apply_overlay, never feeds into the tilt file,
 and never influences any decision. It exists only so the parallel-run
@@ -21,7 +21,7 @@ from aurel2.overlay.prompt import render_prompt
 
 logger = structlog.get_logger()
 
-DEFAULT_CODEX_MODEL = "gpt-5.6-sol"
+DEFAULT_CODEX_MODEL = "gpt-6.1-sol"
 
 
 def claw_shadow_path_for_mode(mode: str = "paper") -> str:
