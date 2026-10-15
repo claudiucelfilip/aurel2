@@ -93,27 +93,45 @@ def version_key(slug: str) -> tuple:
 
 # ---------------------------------------------------------------- codex cli
 
-def codex_bin() -> str | None:
-    for p in ("/opt/homebrew/bin/codex", "/usr/local/bin/codex", shutil.which("codex") or ""):
-        if p and os.access(p, os.X_OK):
-            return p
-    for p in glob.glob(str(HOME / ".nvm/versions/node/*/bin/codex")):
-        return p
-    return None
+def codex_env(codex_path: str) -> dict:
+    """PATH with the codex binary's own bin dir first, so `#!/usr/bin/env node`
+    resolves to the node that codex was installed under (launchd has no nvm)."""
+    env = dict(os.environ)
+    env["PATH"] = str(Path(codex_path).parent) + ":" + env.get("PATH", "/usr/bin:/bin")
+    return env
 
 
-def npm_for(codex_path: str) -> str | None:
-    cand = Path(codex_path).resolve().parent.parent.parent.parent / "bin" / "npm"
-    if cand.exists():
-        return str(cand)
-    sib = Path(os.path.realpath(codex_path)).parent / "npm"
-    return str(sib) if sib.exists() else shutil.which("npm")
+def run_codex(codex_path: str, args: list[str], timeout: int) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [codex_path, *args], capture_output=True, text=True, timeout=timeout,
+        stdin=subprocess.DEVNULL, cwd="/tmp", env=codex_env(codex_path),
+    )
 
 
 def codex_version(codex_path: str) -> str:
-    out = subprocess.run([codex_path, "--version"], capture_output=True, text=True, timeout=30).stdout
+    try:
+        out = run_codex(codex_path, ["--version"], 30).stdout
+    except Exception:  # noqa: BLE001
+        return "0.0.0"
     m = re.search(r"(\d+\.\d+\.\d+)", out)
     return m.group(1) if m else "0.0.0"
+
+
+def codex_bin() -> str | None:
+    """Newest working codex among homebrew, /usr/local, PATH and nvm installs."""
+    paths = ["/opt/homebrew/bin/codex", "/usr/local/bin/codex", shutil.which("codex") or ""]
+    paths += glob.glob(str(HOME / ".nvm/versions/node/*/bin/codex"))
+    best, best_ver = None, (0, 0, 0)
+    for p in dict.fromkeys(x for x in paths if x and os.access(x, os.X_OK)):
+        ver = tuple(int(x) for x in codex_version(p).split("."))
+        if ver > best_ver:
+            best, best_ver = p, ver
+    return best
+
+
+def npm_for(codex_path: str) -> str | None:
+    sib = Path(codex_path).parent / "npm"
+    return str(sib) if sib.exists() else shutil.which("npm")
 
 
 def upgrade_codex_if_stale(codex_path: str, apply: bool) -> None:
@@ -123,7 +141,8 @@ def upgrade_codex_if_stale(codex_path: str, apply: bool) -> None:
         return
     try:
         latest = subprocess.run(
-            [npm, "view", "@openai/codex", "version"], capture_output=True, text=True, timeout=60
+            [npm, "view", "@openai/codex", "version"], capture_output=True, text=True, timeout=60,
+            env=codex_env(codex_path),
         ).stdout.strip()
     except Exception as exc:  # noqa: BLE001
         notes.append(f"codex: npm view failed: {exc}")
@@ -132,7 +151,7 @@ def upgrade_codex_if_stale(codex_path: str, apply: bool) -> None:
     if latest and latest != current:
         if apply:
             log(f"upgrading codex {current} -> {latest}")
-            r = subprocess.run([npm, "install", "-g", f"@openai/codex@{latest}"], capture_output=True, text=True, timeout=600)
+            r = subprocess.run([npm, "install", "-g", f"@openai/codex@{latest}"], capture_output=True, text=True, timeout=600, env=codex_env(codex_path))
             if r.returncode == 0:
                 changes.append(f"codex CLI {current} -> {latest}")
             else:
@@ -144,10 +163,7 @@ def upgrade_codex_if_stale(codex_path: str, apply: bool) -> None:
 def probe(codex_path: str, model: str) -> tuple[bool, str]:
     """Return (entitled, detail). Costs one tiny request on the subscription."""
     try:
-        r = subprocess.run(
-            [codex_path, "exec", "--skip-git-repo-check", "-m", model, "Reply with exactly: OK"],
-            capture_output=True, text=True, timeout=PROBE_TIMEOUT_S, stdin=subprocess.DEVNULL, cwd="/tmp",
-        )
+        r = run_codex(codex_path, ["exec", "--skip-git-repo-check", "-m", model, "Reply with exactly: OK"], PROBE_TIMEOUT_S)
     except subprocess.TimeoutExpired:
         return False, "timeout"
     text = (r.stdout + r.stderr)
@@ -401,6 +417,8 @@ def main() -> int:
         log("codex CLI not found; nothing to do")
         return 1
     upgrade_codex_if_stale(codex, apply)
+    codex = codex_bin() or codex
+    log(f"codex {codex_version(codex)} at {codex}")
     current = current_pin()
     target = args.target or pick_target(codex, current)
     if not target:
