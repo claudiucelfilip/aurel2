@@ -136,3 +136,12 @@ A clean Sharpe/DD pass with a containment violation is still a **halt**, full st
 This rule takes effect when **Claudiu approves it**. Once approved, it governs automated weekly evaluation (`scripts/weekly_scorecard.py`) for the duration of the run.
 
 **Graduation to real money on Aurel2 always requires Claudiu's explicit final sign-off**, even on a clean, unambiguous "Pass" row with zero containment violations at week 6. No automated process — this scorecard included — is authorized to flip `overlay.enabled` for the live account or move capital. The scorecard's job ends at "here is the evidence"; the go/no-go call on real money is never automated.
+
+> **Decision 2026-10-23 (Claudiu): Aurel2 goes live on the real Alpaca account, replacing live-trader.**
+> live-trader's trading job (`claw-live-market-check`) is paused and its Alpaca key pair regenerated; Aurel2 runs
+> `live --real` as the separate `aurel2-real` compose project (see `docs/plans/2026-10-23-aurel2-real-switch-runbook.md`).
+> The 5 December checkpoint is overridden by this decision. The paper run and its weekly scorecard continue unchanged.
+> **Goal for the real run:** SPY-like return with a smaller worst fall. It is judged on Sharpe and maximum drawdown
+> versus SPY, not on CAGR. Context: the research round of 2026-10-22/23 found no long-only, unleveraged strategy that
+> beats SPY by 3 points a year in a fair test; Aurel2's own 20-year backtest nets +1.3 points, all from 2008, with
+> six-year stretches behind SPY by 10 points a year. A hot or cold quarter is not evidence either way.

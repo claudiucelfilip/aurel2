@@ -17,7 +17,7 @@ from aurel2.core.assets import ASSET_REGISTRY
 from aurel2.data.providers.yahoo import YahooFinanceProvider
 from aurel2.strategies.dual_momentum import DualMomentumStrategy
 from aurel2.live.connection import AlpacaConnection
-from aurel2.live.executor import Executor, ExecutionResult
+from aurel2.live.executor import Executor, ExecutionResult, min_holding_value
 from aurel2.live.journal import TradeJournal, journal_path_for_mode
 from aurel2.live.pending import PendingManager, PendingDecision, DecisionUrgency
 from aurel2.live.trade_recorder import TradeRecorder
@@ -258,7 +258,7 @@ class Checker:
         if positions:
             # Find largest position
             largest = max(positions, key=lambda p: p.market_value)
-            if largest.market_value > 100:
+            if largest.market_value > min_holding_value(account_value):
                 current_holding = largest.symbol
 
         logger.info(

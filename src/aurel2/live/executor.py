@@ -11,6 +11,11 @@ from aurel2.broker.base import BrokerOrder, OrderResult, BrokerPosition
 if TYPE_CHECKING:
     from aurel2.live.connection import AlpacaConnection
 
+
+def min_holding_value(account_value: float) -> float:
+    """Dust cutoff for recognising a holding: $100, or 10% of equity on small accounts (a $109 real account must not treat its own position as dust)."""
+    return min(100.0, 0.10 * float(account_value or 0.0))
+
 logger = structlog.get_logger()
 
 
@@ -449,8 +454,9 @@ class Executor:
         # Find largest position by market value
         largest = max(positions, key=lambda p: p.market_value)
 
-        # Only return if it's a meaningful position
-        if largest.market_value > 100:  # More than $100
+        summary = await self.connection.get_account_summary()
+        account_value = summary.total_value if summary else 0.0
+        if largest.market_value > min_holding_value(account_value):
             return largest.symbol
 
         return None
