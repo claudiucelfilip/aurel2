@@ -99,10 +99,11 @@ if ! ensure_docker; then
 fi
 
 status=0
-# aurel2-live-runner removed 2026-07-10: decommissioned (real-money runner
-# that shared live-trader's Alpaca account; Claudiu chose one-bot-per-account).
+# aurel2-real added 2026-10-23: Aurel2 on the real account, replacing live-trader
+# (its trading job paused, keys regenerated). One bot per account still holds.
 for container in \
 	aurel2-trading-aurel2-1 \
+	aurel2-real \
 	aurel2-trading-monitor-1 \
 	aurel2-trading-dashboard-1 \
 	docker-aurel2-crypto-1 \

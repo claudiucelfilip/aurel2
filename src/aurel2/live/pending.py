@@ -1,6 +1,7 @@
 """Pending decisions manager - tracks approvals and handles timeouts."""
 
 import json
+import os
 import uuid
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timedelta
@@ -107,10 +108,13 @@ class PendingManager:
     def __init__(
         self,
         pending_file: str = DEFAULT_PENDING_FILE,
-        approval_base_url: str = "http://46.225.75.110:8080/decision",
+        approval_base_url: Optional[str] = None,
     ):
         self.pending_file = Path(pending_file)
-        self.approval_base_url = approval_base_url
+        # Empty = disk-only approvals (edit the pending file). The old VPS default is gone.
+        self.approval_base_url = (
+            approval_base_url if approval_base_url is not None else os.environ.get("APPROVAL_BASE_URL", "")
+        ).rstrip("/")
         self.decisions: dict[str, PendingDecision] = {}
         # IDs of decisions whose disk-edited approval/rejection has already
         # been emitted to the daemon (prevents repeat-execute on each poll).
@@ -151,7 +155,7 @@ class PendingManager:
             confidence=confidence,
             status=PendingStatus.PENDING.value,
             original_price=original_price,
-            approval_url=f"{self.approval_base_url}/{decision_id}",
+            approval_url=f"{self.approval_base_url}/{decision_id}" if self.approval_base_url else "",
             deterministic_action=deterministic_action,
             deterministic_asset=deterministic_asset,
             strategies=strategies or [],
@@ -177,6 +181,9 @@ class PendingManager:
 
     async def post_to_approval_endpoint(self, decision: PendingDecision) -> bool:
         """Post decision to Vercel approval endpoint."""
+        if not decision.approval_url:
+            logger.info("pending_disk_only", id=decision.id, file=str(self.pending_file))
+            return False
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
@@ -221,6 +228,8 @@ class PendingManager:
 
         Returns: "approved", "rejected", or None if still pending.
         """
+        if not decision.approval_url:
+            return None
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
