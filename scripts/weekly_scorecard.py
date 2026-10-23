@@ -47,6 +47,9 @@ from aurel2.scorecard.arms import (
 from aurel2.scorecard.metrics import alpha_vs_benchmark, cumulative_return, max_drawdown, sharpe_ratio
 
 LIVE_TRADER_TRADES_PATH = Path("/Users/claudiu/.openclaw/workspace/live-trader/trades.jsonl")
+# live-trader stopped trading 2026-10-23 (Aurel2 took the real account). Its arm
+# ends there and is omitted from any run that starts on or after that date.
+LIVE_TRADER_RETIRED = date(2026, 10, 23)
 
 
 def scorecard_history_path(mode: str) -> Path:
@@ -177,16 +180,18 @@ def build_scorecard(mode: str, run_start: date, today: date | None = None) -> di
     a2_series = a2_overlay_series(mode, run_start, today)
     starting_capital = a2_series[0][1] if a2_series else 10000.0
 
-    lt_series, lt_gap = live_trader_daily_series(LIVE_TRADER_TRADES_PATH, run_start, today)
     bare_series, bare_error = a2_bare_shadow_series(run_start, today, starting_capital)
     qqq_series_, qqq_error = qqq_series(run_start, today, starting_capital)
 
     arms = {
         "a2_overlay": arm_metrics(a2_series, qqq_series_),
-        "live_trader": {**arm_metrics(lt_series, qqq_series_), "gap": lt_gap or not lt_series},
         "a2_bare": {**arm_metrics(bare_series, qqq_series_), "error": bare_error},
         "qqq": {**arm_metrics(qqq_series_, qqq_series_), "error": qqq_error},
     }
+    if run_start < LIVE_TRADER_RETIRED:
+        lt_end = min(today, LIVE_TRADER_RETIRED)
+        lt_series, lt_gap = live_trader_daily_series(LIVE_TRADER_TRADES_PATH, run_start, lt_end)
+        arms["live_trader"] = {**arm_metrics(lt_series, qqq_series_), "gap": lt_gap or not lt_series}
 
     overlay = overlay_accounting(Path(journal_path_for_mode(mode)), run_start, today)
     regime_history = regime_view_history(mode, run_start, today)
@@ -218,7 +223,9 @@ def build_scorecard(mode: str, run_start: date, today: date | None = None) -> di
 def format_ntfy_summary(card: dict) -> str:
     lines = [f"Scorecard {card['mode']} — as of {card['as_of']} ({card['trading_days_elapsed']} trading days)"]
     for name, key in [("A2+overlay", "a2_overlay"), ("live-trader", "live_trader"), ("A2-bare", "a2_bare"), ("QQQ", "qqq")]:
-        m = card["arms"][key]
+        m = card["arms"].get(key)
+        if m is None:
+            continue
         if m.get("gap") or m.get("error"):
             lines.append(f"{name}: DATA GAP")
             continue

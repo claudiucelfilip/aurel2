@@ -28,12 +28,16 @@ Logs: docker logs --tail 200 aurel2-trading-aurel2-1
 Dashboard: http://127.0.0.1:8080 on Dumbo, public route https://aurel2.clawdiu.org/
 ```
 
-**aurel2-live-runner is DECOMMISSIONED (2026-07-10).** It ran `live --real` against
-the SAME Alpaca account live-trader trades (proof: its 0.641202-share XLK order on
-2026-07-07 appears in live-trader's broker reconcile) — the source of the March GLD
-wash-trades and the misattributed "manual" trades. One bot per account: live-trader
-keeps the real account; Aurel2 runs paper (`aurel2-trading-aurel2-1`) until it
-graduates per docs/plans/2026-07-10-graduation-rule.md. Do not recreate it.
+**Real account (since 2026-10-23): `aurel2-real`** — container from
+`/opt/aurel2/docker/docker-compose.real.yml`, keys in `/opt/aurel2/docker/real.env`,
+runs `live --real` against the Alpaca live account with the same code as the paper
+daemon. Live-trader (Claw's AI-judged bot) is retired: its Hermes job
+`claw-live-market-check` is paused and its stored keys were revoked. One bot per
+account still holds — never run two traders against the real account (the old
+`aurel2-live-runner`, 2026-03..07, caused wash trades that way). Runbook and goal:
+docs/plans/2026-10-23-aurel2-real-switch-runbook.md,
+docs/plans/2026-07-10-graduation-rule.md. Kill switch:
+`docker compose -f /opt/aurel2/docker/docker-compose.real.yml down`.
 
 **IMPORTANT: Always check Dumbo first, not the deprecated VPS and not this control machine!**
 
