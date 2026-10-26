@@ -99,13 +99,9 @@ if ! ensure_docker; then
 fi
 
 status=0
-# aurel2-real added 2026-10-23: Aurel2 on the real account, replacing live-trader
-# (its trading job paused, keys regenerated). One bot per account still holds.
+# Paper stack (daemon, monitor, dashboard) shut down 2026-10-26; aurel2-real is the only Aurel2.
 for container in \
-	aurel2-trading-aurel2-1 \
 	aurel2-real \
-	aurel2-trading-monitor-1 \
-	aurel2-trading-dashboard-1 \
 	docker-aurel2-crypto-1 \
 	docker-dashboard-1
 do

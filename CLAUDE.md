@@ -23,15 +23,18 @@ SSH: ssh 100.122.64.94
 Repo path: /root/aurel2
 Real repo path: /Users/claudiu/vps-root/aurel2
 Synced deployment copy: /opt/aurel2
-Runtime env: /opt/aurel2/docker/.env
-Logs: docker logs --tail 200 aurel2-trading-aurel2-1
-Dashboard: http://127.0.0.1:8080 on Dumbo, public route https://aurel2.clawdiu.org/
+Runtime env: /opt/aurel2/docker/real.env (written by set-real-keys.sh, never read it)
+Logs: docker logs --tail 200 aurel2-real
+Dashboard: none since 2026-10-26 (the paper dashboard went down with the paper stack; https://aurel2.clawdiu.org/ is dead)
 ```
+
+**Paper stack shut down 2026-10-26.** `aurel2-trading-aurel2-1`, its monitor and
+dashboard were taken down (`docker compose ... down`, volumes kept). Only
+`aurel2-real` trades. Do not bring the paper daemon back without being asked.
 
 **Real account (since 2026-10-23): `aurel2-real`** — container from
 `/opt/aurel2/docker/docker-compose.real.yml`, keys in `/opt/aurel2/docker/real.env`,
-runs `live --real` against the Alpaca live account with the same code as the paper
-daemon. Live-trader (Claw's AI-judged bot) is retired: its Hermes job
+runs `live --real` against the Alpaca live account. Live-trader (Claw's AI-judged bot) is retired: its Hermes job
 `claw-live-market-check` is paused and its stored keys were revoked. One bot per
 account still holds — never run two traders against the real account (the old
 `aurel2-live-runner`, 2026-03..07, caused wash trades that way). Runbook and goal:
