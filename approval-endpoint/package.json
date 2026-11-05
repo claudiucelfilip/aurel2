@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "tsc --module commonjs --outDir .test-build --declaration false --declarationMap false && node --test tests/security.test.cjs"
+    "test": "tsc --outDir .test-build --declaration false --declarationMap false && node --test tests/security.test.cjs"
   },
   "engines": {
     "node": "24.x"
