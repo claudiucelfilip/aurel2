@@ -13,6 +13,8 @@ services:
       APCA_API_SECRET_KEY: ${APCA_API_SECRET_KEY:-}
 
       # Trading settings (read by CLI via envvar)
+      AUREL2_APPROVAL_API_TOKEN: ${AUREL2_APPROVAL_API_TOKEN:-}
+      AUREL2_APPROVAL_BASE_URL: ${AUREL2_APPROVAL_BASE_URL:-http://localhost:8080/decision}
       TRADING_MODE: ${TRADING_MODE:-paper}
       CHECK_TIME: ${CHECK_TIME:-16:00}
       POLL_INTERVAL: ${POLL_INTERVAL:-5}
@@ -72,8 +74,14 @@ services:
     depends_on:
       - aurel2
     environment:
+      AUREL2_DASHBOARD_USER: ${AUREL2_DASHBOARD_USER:-}
+      AUREL2_DASHBOARD_PASSWORD: ${AUREL2_DASHBOARD_PASSWORD:-}
+      AUREL2_DASHBOARD_READ_USER: ${AUREL2_DASHBOARD_READ_USER:-}
+      AUREL2_DASHBOARD_READ_PASSWORD: ${AUREL2_DASHBOARD_READ_PASSWORD:-}
+      AUREL2_DASHBOARD_ORIGIN: ${AUREL2_DASHBOARD_ORIGIN:-}
       APCA_API_KEY_ID: ${APCA_API_KEY_ID:-}
       APCA_API_SECRET_KEY: ${APCA_API_SECRET_KEY:-}
+      AUREL2_APPROVAL_API_TOKEN: ${AUREL2_APPROVAL_API_TOKEN:-}
       TRADING_MODE: ${TRADING_MODE:-paper}
     volumes:
       - aurel2-data:/root/.aurel2
@@ -85,8 +93,8 @@ services:
       - ../src:/app/src:ro
       - ../config:/app/config:ro
     ports:
-      - "${DASHBOARD_PORT:-8080}:8080"
-    command: ["dashboard", "--host", "0.0.0.0", "--port", "8080", "--reload"]
+      - "127.0.0.1:${DASHBOARD_PORT:-8080}:8080"
+    command: ["dashboard", "--host", "0.0.0.0", "--port", "8080"]
     profiles:
       - dashboard
 

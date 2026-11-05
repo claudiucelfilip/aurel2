@@ -498,7 +498,9 @@ class TestDashboardRoutes:
     """Integration tests for dashboard HTTP routes."""
 
     @pytest.fixture
-    def client(self, tmp_data_dir, journal_entries, pending_decisions_data):
+    def client(self, tmp_data_dir, journal_entries, pending_decisions_data, monkeypatch):
+        monkeypatch.setenv("AUREL2_DASHBOARD_USER", "test-approver")
+        monkeypatch.setenv("AUREL2_DASHBOARD_PASSWORD", "fixture-only-password-" * 3)
         """Create a test client with mock broker data."""
         from fastapi.testclient import TestClient
         from aurel2.dashboard.app import app
@@ -520,7 +522,9 @@ class TestDashboardRoutes:
         }
 
         with patch("aurel2.dashboard.app.get_broker_data", return_value=mock_broker_data):
-            yield TestClient(app)
+            client = TestClient(app)
+            client.auth = ("test-approver", "fixture-only-password-" * 3)
+            yield client
 
     def test_dashboard_returns_200(self, client):
         """Dashboard should return HTTP 200."""

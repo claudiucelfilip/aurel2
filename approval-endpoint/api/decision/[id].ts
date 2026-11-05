@@ -1,5 +1,6 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { ApprovalRequest, ApprovalResponse } from '../../lib/http';
 import { Redis } from '@upstash/redis';
+import { identity, responseHeaders, csrfToken, validCsrf } from '../../lib/security';
 
 // Initialize Redis - try fromEnv() first, then fall back to explicit config
 const redis = new Redis({
@@ -22,6 +23,7 @@ interface Decision {
   reasoning: string;
   confidence: number;
   created_at: string;
+  expires_at: string;
   status: 'pending' | 'approved' | 'rejected';
   responded_at?: string;
   // Rich context
@@ -61,8 +63,8 @@ function generateApprovalHTML(decision: Decision): string {
     const color = actionColors[s.action] || '#6b7280';
     return `
       <div class="strategy-row">
-        <span class="strategy-name">${s.name}</span>
-        <span class="strategy-action" style="color: ${color}">${s.action}</span>
+        <span class="strategy-name">${escapeHtml(String(s.name))}</span>
+        <span class="strategy-action" style="color: ${color}">${escapeHtml(String(s.action))}</span>
       </div>
     `;
   }).join('') || '';
@@ -103,7 +105,7 @@ function generateApprovalHTML(decision: Decision): string {
       <div class="market-grid">
         <div class="market-item">
           <span class="market-label">Regime</span>
-          <span class="market-value">${decision.market_regime}</span>
+          <span class="market-value">${escapeHtml(String(decision.market_regime))}</span>
         </div>
         ${decision.spy_price ? `
         <div class="market-item">
@@ -120,7 +122,7 @@ function generateApprovalHTML(decision: Decision): string {
         ${decision.current_holding ? `
         <div class="market-item">
           <span class="market-label">Current</span>
-          <span class="market-value">${decision.current_holding}</span>
+          <span class="market-value">${escapeHtml(String(decision.current_holding))}</span>
         </div>
         ` : ''}
       </div>
@@ -132,7 +134,7 @@ function generateApprovalHTML(decision: Decision): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aurel2: ${decision.action.toUpperCase()} ${decision.symbol}</title>
+  <title>Aurel2: ${decision.action.toUpperCase()} ${escapeHtml(String(decision.symbol))}</title>
   <style>
     * {
       margin: 0;
@@ -478,7 +480,7 @@ function generateApprovalHTML(decision: Decision): string {
 
       <div class="action-section">
         <div class="action-badge">${decision.action}</div>
-        <div class="symbol">${decision.symbol}</div>
+        <div class="symbol">${escapeHtml(String(decision.symbol))}</div>
       </div>
 
       ${marketHtml}
@@ -509,9 +511,9 @@ function generateApprovalHTML(decision: Decision): string {
       <div class="section">
         <div class="label">Portfolio Change</div>
         <div class="reasoning-text" style="text-align: center;">
-          <span style="color: #94a3b8;">${decision.current_holding}</span>
+          <span style="color: #94a3b8;">${escapeHtml(String(decision.current_holding))}</span>
           <span style="margin: 0 12px;">→</span>
-          <span style="color: ${actionColor}; font-weight: 600;">${decision.symbol}</span>
+          <span style="color: ${actionColor}; font-weight: 600;">${escapeHtml(String(decision.symbol))}</span>
         </div>
       </div>
       ` : ''}
@@ -556,6 +558,7 @@ function generateApprovalHTML(decision: Decision): string {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
+            'X-CSRF-Token': '${csrfToken(decision.id, decision.expires_at)}',
           },
           body: JSON.stringify({ status }),
         });
@@ -596,158 +599,106 @@ function getDecisionKey(id: string): string {
   return `decision:${id}`;
 }
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse
-) {
-  // Get decision ID from URL
-  const { id } = req.query;
+// Redis serializes replies so approval and rejection cannot both win.
+export const respondScript = `
+local raw = redis.call('GET', KEYS[1])
+if not raw then return {'missing', ''} end
+local decision = cjson.decode(raw)
+if decision.status ~= 'pending' then return {'answered', ''} end
+if not decision.expires_at or decision.expires_at ~= ARGV[3] then return {'expired', ''} end
+local clock = redis.call('TIME')
+if tonumber(clock[1]) * 1000 + tonumber(clock[2]) / 1000 >= tonumber(ARGV[5]) then return {'expired', ''} end
+decision.status = ARGV[1]
+decision.responded_at = ARGV[2]
+local updated = cjson.encode(decision)
+redis.call('SET', KEYS[1], updated, 'KEEPTTL')
+return {'ok', updated}
+`;
 
-  if (!id || typeof id !== 'string') {
-    return res.status(400).json({ error: 'Decision ID is required' });
-  }
-
-  // Debug: Check env vars
-  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
-    return res.status(500).json({ 
-      error: 'Redis not configured',
-      hasUrl: !!process.env.KV_REST_API_URL,
-      hasToken: !!process.env.KV_REST_API_TOKEN,
-    });
-  }
-
-  const decisionKey = getDecisionKey(id);
-
-  try {
-    switch (req.method) {
-      // GET - Returns approval HTML page or JSON
-      case 'GET': {
-        const decision = await redis.get<Decision>(decisionKey);
-
-        if (!decision) {
-          return res.status(404).json({ error: 'Decision not found' });
+export function createHandler(store = redis) {
+  return async function handler(req: ApprovalRequest, res: ApprovalResponse) {
+    responseHeaders(res);
+    const role = identity(req);
+    if (!role) {
+      res.setHeader('WWW-Authenticate', 'Basic realm="Aurel2 approvals", charset="UTF-8"');
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    const method = req.method;
+    if (!['GET', 'POST', 'PATCH'].includes(method || '')) {
+      res.setHeader('Allow', 'GET, POST, PATCH');
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
+    if ((method === 'POST' && role !== 'publisher') || (method === 'PATCH' && role !== 'approver')) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    const { id } = req.query;
+    if (typeof id !== 'string' || !/^[A-Za-z0-9_-]{8,64}$/.test(id)) {
+      return res.status(400).json({ error: 'Invalid decision ID' });
+    }
+    const decisionKey = getDecisionKey(id);
+    try {
+      if (method === 'POST') {
+        if (id.length < 32) return res.status(400).json({ error: 'Use a random decision ID of at least 32 characters' });
+        const body = req.body || {};
+        const { action, symbol, reasoning, confidence } = body;
+        if (!['buy', 'sell', 'hold'].includes(action)
+            || typeof symbol !== 'string' || !symbol || symbol.length > 32
+            || typeof reasoning !== 'string' || !reasoning || reasoning.length > 10000
+            || typeof confidence !== 'number' || !Number.isFinite(confidence) || confidence < 0 || confidence > 1) {
+          return res.status(400).json({ error: 'Invalid decision fields' });
         }
-
-        // Check Accept header for JSON preference
-        const acceptHeader = req.headers.accept || '';
-        if (acceptHeader.includes('application/json')) {
-          return res.status(200).json(decision);
+        const now = Date.now();
+        const created = body.created_at ? Date.parse(body.created_at) : now;
+        if (!Number.isFinite(created) || created > now + 60000 || created + 3600000 <= now) {
+          return res.status(400).json({ error: 'Invalid or expired creation time' });
         }
-
-        // Return HTML page
-        res.setHeader('Content-Type', 'text/html');
-        return res.status(200).send(generateApprovalHTML(decision));
-      }
-
-      // POST - Creates new decision
-      case 'POST': {
-        const {
-          action, symbol, reasoning, confidence,
-          // Rich context fields
-          deterministic_action, deterministic_asset,
-          strategies_agree, strategies,
-          market_regime, spy_price, drawdown, current_holding,
-        } = req.body;
-
-        // Validate required fields
-        if (!action || !symbol || !reasoning || confidence === undefined) {
-          return res.status(400).json({
-            error: 'Missing required fields: action, symbol, reasoning, confidence',
-          });
-        }
-
-        // Validate action
-        if (!['buy', 'sell', 'hold'].includes(action)) {
-          return res.status(400).json({
-            error: 'Invalid action. Must be buy, sell, or hold',
-          });
-        }
-
-        // Validate confidence
-        if (typeof confidence !== 'number' || confidence < 0 || confidence > 1) {
-          return res.status(400).json({
-            error: 'Confidence must be a number between 0 and 1',
-          });
-        }
-
-        // Check if decision already exists
-        const existing = await redis.get<Decision>(decisionKey);
-        if (existing) {
-          return res.status(409).json({
-            error: 'Decision with this ID already exists',
-          });
-        }
-
-        // Create new decision with rich context
         const decision: Decision = {
-          id,
-          action,
-          symbol,
-          reasoning,
-          confidence,
-          created_at: new Date().toISOString(),
-          status: 'pending',
-          // Rich context (optional fields)
-          deterministic_action,
-          deterministic_asset,
-          strategies_agree,
-          strategies,
-          market_regime,
-          spy_price,
-          drawdown,
-          current_holding,
+          id, action, symbol, reasoning, confidence,
+          created_at: new Date(created).toISOString(),
+          expires_at: new Date(created + 3600000).toISOString(), status: 'pending',
         };
-
-        // Store in KV with 7-day expiration
-        await redis.set(decisionKey, decision, { ex: 7 * 24 * 60 * 60 });
-
+        for (const key of ['deterministic_action', 'deterministic_asset', 'market_regime', 'current_holding'] as const) {
+          if (typeof body[key] === 'string') decision[key] = body[key].slice(0, 200);
+        }
+        if (typeof body.strategies_agree === 'boolean') decision.strategies_agree = body.strategies_agree;
+        if (Array.isArray(body.strategies)) {
+          decision.strategies = body.strategies.slice(0, 20).map((item: Record<string, unknown>) => ({
+            name: String(item?.name || '').slice(0, 200), action: String(item?.action || '').slice(0, 32),
+            confidence: typeof item?.confidence === 'number' && Number.isFinite(item.confidence) ? item.confidence : 0,
+          }));
+        }
+        for (const key of ['spy_price', 'drawdown'] as const) {
+          if (typeof body[key] === 'number' && Number.isFinite(body[key])) decision[key] = body[key];
+        }
+        const createdRecord = await store.set(decisionKey, decision, { nx: true, ex: 7 * 24 * 60 * 60 });
+        if (!createdRecord) return res.status(409).json({ error: 'Decision already exists' });
         return res.status(201).json(decision);
       }
-
-      // PATCH - Updates decision status
-      case 'PATCH': {
-        const { status } = req.body;
-
-        // Validate status
-        if (!status || !['approved', 'rejected'].includes(status)) {
-          return res.status(400).json({
-            error: 'Invalid status. Must be approved or rejected',
-          });
-        }
-
-        // Get existing decision
-        const decision = await redis.get<Decision>(decisionKey);
-        if (!decision) {
-          return res.status(404).json({ error: 'Decision not found' });
-        }
-
-        // Check if already responded
-        if (decision.status !== 'pending') {
-          return res.status(409).json({
-            error: 'Decision has already been responded to',
-          });
-        }
-
-        // Update decision
-        const updatedDecision: Decision = {
-          ...decision,
-          status,
-          responded_at: new Date().toISOString(),
-        };
-
-        // Store updated decision
-        await redis.set(decisionKey, updatedDecision, { ex: 7 * 24 * 60 * 60 });
-
-        return res.status(200).json(updatedDecision);
+      const decision = await store.get<Decision>(decisionKey);
+      if (!decision) return res.status(404).json({ error: 'Decision not found' });
+      const expires = Date.parse(decision.expires_at || '');
+      if (!Number.isFinite(expires) || (decision.status === 'pending' && Date.now() >= expires)) {
+        return res.status(410).json({ error: 'Approval window expired' });
       }
-
-      default:
-        res.setHeader('Allow', ['GET', 'POST', 'PATCH']);
-        return res.status(405).json({ error: `Method ${req.method} not allowed` });
+      if (method === 'GET') {
+        if (role === 'publisher' || (req.headers.accept || '').includes('application/json')) return res.status(200).json(decision);
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        return res.status(200).send(generateApprovalHTML(decision));
+      }
+      if (!validCsrf(req, id, decision.expires_at)) return res.status(403).json({ error: 'Invalid request token or origin' });
+      const status = req.body?.status;
+      if (!['approved', 'rejected'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
+      const result = await store.eval<(string | number)[], [string, string]>(respondScript, [decisionKey], [
+        status, new Date().toISOString(), decision.expires_at, Date.now(), expires,
+      ]);
+      if (result[0] === 'missing') return res.status(404).json({ error: 'Decision not found' });
+      if (result[0] === 'expired') return res.status(410).json({ error: 'Approval window expired' });
+      if (result[0] !== 'ok') return res.status(409).json({ error: 'Decision already answered' });
+      return res.status(200).json(JSON.parse(result[1]));
+    } catch {
+      return res.status(500).json({ error: 'Approval service unavailable' });
     }
-  } catch (error) {
-    console.error('Error handling decision:', error);
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return res.status(500).json({ error: 'Internal server error', details: message });
-  }
+  };
 }
+
+export default createHandler();

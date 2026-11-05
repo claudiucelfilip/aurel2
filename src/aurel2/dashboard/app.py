@@ -8,11 +8,17 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
+from html import escape
+
+from aurel2.dashboard.security import protect_dashboard, csrf_token
+from aurel2.live.approval_security import approval_expired
+from aurel2.live.pending_store import pending_transaction
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
 app = FastAPI(title="Aurel2 Dashboard")
+app.middleware("http")(protect_dashboard)
 
 # Templates
 templates_dir = Path(__file__).parent / "templates"
@@ -603,18 +609,16 @@ async def api_status():
 def _set_decision_status(decision_id: str, new_status: str) -> dict:
     """Mutate pending_decisions.json to set status. Returns updated decision."""
     pending_file = MODE_DATA_DIR / "pending_decisions.json"
-    if not pending_file.exists():
-        return {"error": "no pending decisions file"}
-    data = json.loads(pending_file.read_text())
-    decisions = data.get("decisions", {})
-    if decision_id not in decisions:
-        return {"error": f"decision {decision_id} not found"}
-    dec = decisions[decision_id]
-    if dec.get("status") not in ("pending", None):
-        return {"error": f"decision already in status {dec.get('status')}", "decision": dec}
-    dec["status"] = new_status
-    pending_file.write_text(json.dumps(data, indent=2))
-    return {"ok": True, "decision": dec}
+    with pending_transaction(pending_file) as data:
+        dec = data.get("decisions", {}).get(decision_id)
+        if not dec:
+            raise HTTPException(404, "Decision not found")
+        if dec.get("status") != "pending":
+            raise HTTPException(409, "Decision already answered")
+        if approval_expired(dec.get("created_at")):
+            raise HTTPException(410, "Approval window expired")
+        dec["status"] = new_status
+        return {"ok": True, "decision": dec}
 
 
 @app.post("/api/decision/{decision_id}/approve")
@@ -642,7 +646,7 @@ async def api_get_decision(decision_id: str):
     return dec
 
 
-@app.post("/decision/{decision_id}")
+@app.post("/decision/{decision_id}", status_code=201)
 async def register_decision_noop(decision_id: str):
     """No-op POST handler. Daemon's create_decision POSTs the new decision
     here for backward-compat with the old Vercel flow; we don't need to do
@@ -651,8 +655,8 @@ async def register_decision_noop(decision_id: str):
     return {"ok": True, "id": decision_id, "registered": "noop (file-based)"}
 
 
-@app.get("/decision/{decision_id}", response_class=HTMLResponse)
-async def render_decision(decision_id: str):
+@app.get("/decision/{decision_id}")
+async def render_decision(decision_id: str, request: Request):
     """Clickable approval page for a pending decision."""
     pending_file = MODE_DATA_DIR / "pending_decisions.json"
     if not pending_file.exists():
@@ -660,26 +664,33 @@ async def render_decision(decision_id: str):
     data = json.loads(pending_file.read_text())
     dec = data.get("decisions", {}).get(decision_id)
     if not dec:
-        return HTMLResponse(f"<h2>Decision {decision_id} not found.</h2>", status_code=404)
-    status = dec.get("status", "pending")
-    action = (dec.get("action") or "").upper()
-    symbol = dec.get("symbol") or ""
-    reason = dec.get("reasoning", "") or ""
+        return HTMLResponse("<h2>Decision not found.</h2>", status_code=404)
+    if "application/json" in request.headers.get("accept", ""):
+        return dec
+    decision_id = escape(decision_id, quote=True)
+    token = csrf_token(decision_id)
+    status = escape(dec.get("status", "pending"))
+    action = escape((dec.get("action") or "").upper())
+    symbol = escape(dec.get("symbol") or "")
+    reason = escape(dec.get("reasoning", "") or "")
     confidence = dec.get("confidence", 0)
     price = dec.get("original_price")
     price_str = f"${price:.2f}" if price else "—"
     strategies = dec.get("strategies", []) or []
     strategies_html = "".join(
-        f"<li><b>{s.get('name','?')}</b>: {str(s.get('action','?')).upper()} ({s.get('confidence',0):.2f})</li>"
+        f"<li><b>{escape(str(s.get('name','?')))}</b>: {escape(str(s.get('action','?')).upper())} ({s.get('confidence',0):.2f})</li>"
         for s in strategies
     )
-    is_pending = status == "pending"
+    is_pending = (status == "pending" and not approval_expired(dec.get("created_at"))
+                  and request.state.approval_role == "approver")
     buttons = (
         f"""
         <form method="POST" action="/api/decision/{decision_id}/approve" style="display:inline">
+          <input type="hidden" name="csrf_token" value="{token}">
           <button type="submit" style="background:#22c55e;color:white;padding:12px 24px;border:0;border-radius:8px;font-size:16px;cursor:pointer;margin-right:12px">Approve</button>
         </form>
         <form method="POST" action="/api/decision/{decision_id}/reject" style="display:inline">
+          <input type="hidden" name="csrf_token" value="{token}">
           <button type="submit" style="background:#ef4444;color:white;padding:12px 24px;border:0;border-radius:8px;font-size:16px;cursor:pointer">Reject</button>
         </form>
         """

@@ -2,7 +2,7 @@
 
 import json
 import os
-import uuid
+import secrets
 from dataclasses import dataclass, field, asdict
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -11,6 +11,9 @@ from enum import Enum
 
 import httpx
 import structlog
+
+from aurel2.live.approval_security import approval_headers
+from aurel2.live.pending_store import pending_transaction
 
 logger = structlog.get_logger()
 
@@ -141,7 +144,7 @@ class PendingManager:
         journal_decision_id: Optional[str] = None,
     ) -> PendingDecision:
         """Create a new pending decision."""
-        decision_id = str(uuid.uuid4())[:8]
+        decision_id = secrets.token_hex(24)
 
         decision = PendingDecision(
             id=decision_id,
@@ -183,7 +186,9 @@ class PendingManager:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
                     decision.approval_url,
+                    headers=approval_headers(decision.approval_url),
                     json={
+                        "created_at": datetime.fromisoformat(decision.created_at).astimezone().isoformat(),
                         "action": decision.action,
                         "symbol": decision.symbol or "HOLD",
                         "reasoning": decision.reasoning[:500],
@@ -227,7 +232,7 @@ class PendingManager:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
                     decision.approval_url,
-                    headers={"Accept": "application/json"},
+                    headers=approval_headers(decision.approval_url),
                     timeout=10.0,
                 )
 
@@ -286,20 +291,40 @@ class PendingManager:
 
             # Check for timeout first
             if decision.is_timed_out():
-                decision.status = PendingStatus.TIMEOUT.value
-                self._save()
-                results.append((decision, PendingStatus.TIMEOUT.value))
-                logger.info("pending_timed_out", id=decision.id)
+                resolved, changed = self._transition_pending(decision.id, PendingStatus.TIMEOUT.value)
+                if (resolved and resolved.status in ("approved", "rejected")
+                        and not resolved.executed_at and resolved.id not in self._emitted_disk_status):
+                    self._emitted_disk_status.add(resolved.id)
+                    results.append((resolved, resolved.status))
+                elif resolved and changed:
+                    results.append((resolved, PendingStatus.TIMEOUT.value))
+                    logger.info("pending_timed_out", id=decision.id)
                 continue
 
             # Poll endpoint for approval/rejection
             new_status = await self.poll_approval_status(decision)
             if new_status:
-                decision.status = new_status
-                self._save()
-                results.append((decision, new_status))
+                # A dashboard reply may have won while the remote poll was in flight.
+                resolved, _ = self._transition_pending(decision.id, new_status)
+                if (resolved and resolved.status in ("approved", "rejected")
+                        and not resolved.executed_at and resolved.id not in self._emitted_disk_status):
+                    self.decisions[resolved.id] = resolved
+                    self._emitted_disk_status.add(resolved.id)
+                    results.append((resolved, resolved.status))
 
         return results
+
+    def _transition_pending(self, decision_id: str, status: str) -> tuple[Optional[PendingDecision], bool]:
+        """Preserve whichever reply or timeout first committed to shared storage."""
+        with pending_transaction(self.pending_file) as stored:
+            current = stored.get("decisions", {}).get(decision_id)
+            changed = bool(current and current.get("status") == PendingStatus.PENDING.value)
+            if changed:
+                current["status"] = status
+            resolved = PendingDecision.from_dict(current) if current else None
+        if resolved:
+            self.decisions[decision_id] = resolved
+        return resolved, changed
 
     def mark_executed(self, decision_id: str) -> None:
         """Mark a decision as executed."""
@@ -363,8 +388,12 @@ class PendingManager:
             }
         }
 
-        with open(self.pending_file, "w") as f:
-            json.dump(data, f, indent=2)
+        with pending_transaction(self.pending_file) as stored:
+            for key, incoming in data["decisions"].items():
+                current = stored.get("decisions", {}).get(key, {})
+                if incoming["status"] == "pending" and current.get("status") in {"approved", "rejected", "executed", "timeout"}:
+                    data["decisions"][key] = current
+            stored["decisions"] = data["decisions"]
 
     def _load(self) -> None:
         """Load decisions from file."""

@@ -6,5 +6,5 @@
       "dest": "/api/decision/[id]?id=$1"
     }
   ],
-  "public": true
+  "public": false
 }

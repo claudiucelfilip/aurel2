@@ -574,8 +574,9 @@ def agent(
     4. If AI disagrees, upgrades to NON_ROUTINE and suggests override
     5. Sends notification and creates approval request if needed
     """
-    import uuid
+    import secrets
     import httpx
+    from aurel2.live.approval_security import approval_headers
     from rich.panel import Panel
 
     from aurel2.agent.orchestrator import AgentOrchestrator, DecisionType
@@ -753,7 +754,7 @@ def agent(
             )
     else:
         # Needs approval - create approval request
-        decision_id = str(uuid.uuid4())[:8]
+        decision_id = secrets.token_hex(24)
         approval_link = f"{approval_url}/{decision_id}"
 
         console.print(f"\n[yellow]Approval required. Creating approval request...[/yellow]")
@@ -777,6 +778,7 @@ def agent(
             with httpx.Client() as client:
                 response = client.post(
                     approval_link,
+                    headers=approval_headers(approval_link),
                     json={
                         "action": final_action,
                         "symbol": final_asset or "HOLD",

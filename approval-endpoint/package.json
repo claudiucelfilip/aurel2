@@ -4,17 +4,17 @@
   "description": "Vercel approval endpoint for Aurel2 trading decisions",
   "private": true,
   "scripts": {
-    "deploy": "vercel --prod"
+    "check": "tsc --noEmit",
+    "test": "tsc --module commonjs --outDir .test-build --declaration false --declarationMap false && node --test tests/security.test.cjs"
   },
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
   "dependencies": {
-    "@upstash/redis": "^1.28.0"
+    "@upstash/redis": "^1.41.0"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "typescript": "^5.0.0",
-    "vercel": "^33.0.0"
+    "@types/node": "^24.19.2",
+    "typescript": "^5.0.0"
   }
 }

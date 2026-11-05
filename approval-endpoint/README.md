@@ -1,168 +1,28 @@
-# Aurel2 Approval Endpoint
+# Aurel2 approval endpoint
 
-A Vercel serverless endpoint for managing trading decision approvals. Provides a mobile-friendly HTML interface for approving or rejecting decisions from the Aurel2 trading agent.
+An authenticated hosted interface for reading and replying to trading approval requests. Publisher credentials can create and poll requests; human approvers use separate credentials and a request token from the page. Missing credentials deny access.
 
-## Features
+See [approval access](../docs/security/approval-access.md) for required private environment variables, deployment sequencing, and trading-policy limits.
 
-- **RESTful API** for creating and managing decisions
-- **Mobile-friendly HTML page** with dark theme matching Aurel2 dashboard
-- **Real-time status updates** with approve/reject buttons
-- **Vercel KV storage** for persistent decision state
+## Routes
 
-## API Endpoints
+| Route | Authorized identity | Behavior |
+|---|---|---|
+| `GET /api/decision/[id]` | Publisher or approver | JSON for publishers; HTML or JSON for approvers |
+| `POST /api/decision/[id]` | Publisher | Create a new request with a random identifier of at least 32 characters; existing IDs return conflict |
+| `PATCH /api/decision/[id]` | Approver | Approve or reject once, within one hour, with the page's request token |
+| `GET /api/test` | Publisher | Return a minimal service check |
 
-### `GET /api/decision/[id]`
-
-Returns the decision approval page (HTML) or decision data (JSON).
-
-**Headers:**
-- `Accept: text/html` - Returns HTML approval page (default)
-- `Accept: application/json` - Returns JSON decision data
-
-**Response (JSON):**
-```json
-{
-  "id": "decision-123",
-  "action": "buy",
-  "symbol": "BTCUSDT",
-  "reasoning": "Strong upward trend detected...",
-  "confidence": 0.85,
-  "created_at": "2024-01-15T10:30:00.000Z",
-  "status": "pending",
-  "responded_at": null
-}
-```
-
-### `POST /api/decision/[id]`
-
-Creates a new decision.
-
-**Request Body:**
-```json
-{
-  "action": "buy",
-  "symbol": "BTCUSDT",
-  "reasoning": "Strong upward trend detected with high volume...",
-  "confidence": 0.85
-}
-```
-
-**Fields:**
-- `action` (required): `"buy"`, `"sell"`, or `"hold"`
-- `symbol` (required): Trading pair symbol (e.g., `"BTCUSDT"`)
-- `reasoning` (required): Explanation for the decision
-- `confidence` (required): Number between 0 and 1
-
-### `PATCH /api/decision/[id]`
-
-Updates a decision's status (approve/reject).
-
-**Request Body:**
-```json
-{
-  "status": "approved"
-}
-```
-
-**Fields:**
-- `status` (required): `"approved"` or `"rejected"`
+Publishing requires `action` (`buy`, `sell`, or `hold`), `symbol`, `reasoning`, and numeric `confidence` between zero and one. Send the original ISO `created_at` timestamp so the approval window matches the producer. A reply body contains `status` (`approved` or `rejected`); the page sends its request token in `X-CSRF-Token`. Tokens and passwords never belong in URLs.
 
 ## Deployment
 
-### Prerequisites
+The platform project builds this directory with Node.js 24. Configure the private authentication variables and exact HTTPS origin before deploying. The Redis connection uses `KV_REST_API_URL` and `KV_REST_API_TOKEN` from the linked storage service.
 
-1. [Vercel CLI](https://vercel.com/cli) installed
-2. A Vercel account
-3. Vercel KV database created
+Deployment tooling belongs to the platform or a separately managed deployment environment. The app does not bundle the Vercel CLI or its unrelated build dependencies. Coordinate the producer token and hosted endpoint changes before enabling new requests; old records without expiration fail closed.
 
-### Setup Vercel KV
+## Validation
 
-1. Go to your Vercel dashboard
-2. Navigate to **Storage** > **Create Database** > **KV**
-3. Name it (e.g., `aurel2-decisions`)
-4. Link it to your project
+Install dependencies with `npm ci --ignore-scripts`. Run `npm run check` and `npm test`. The served HTTP tests use fictional decisions and a disposable local Redis over a Unix socket; `redis-server` and `redis-cli` must be on PATH. They require no production credentials and never contact a broker.
 
-### Deploy
-
-```bash
-# Navigate to approval-endpoint directory
-cd approval-endpoint
-
-# Install dependencies
-npm install
-
-# Login to Vercel (if not already)
-vercel login
-
-# Deploy to Vercel
-vercel
-
-# For production deployment
-vercel --prod
-```
-
-### Environment Variables
-
-The following environment variables are automatically set when you link Vercel KV:
-
-- `KV_REST_API_URL` - Vercel KV REST API URL
-- `KV_REST_API_TOKEN` - Vercel KV REST API token
-
-## Local Development
-
-```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-```
-
-**Note:** For local development, you'll need to set up environment variables for Vercel KV. You can use `vercel env pull` to download them from your Vercel project.
-
-## Usage Example
-
-### Create a Decision (from Aurel2 agent)
-
-```typescript
-const response = await fetch('https://your-app.vercel.app/api/decision/decision-123', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify({
-    action: 'buy',
-    symbol: 'BTCUSDT',
-    reasoning: 'Strong bullish divergence on RSI with increasing volume',
-    confidence: 0.82,
-  }),
-});
-
-const decision = await response.json();
-console.log('Approval URL:', `https://your-app.vercel.app/api/decision/${decision.id}`);
-```
-
-### Check Decision Status (polling)
-
-```typescript
-const response = await fetch('https://your-app.vercel.app/api/decision/decision-123', {
-  headers: {
-    'Accept': 'application/json',
-  },
-});
-
-const decision = await response.json();
-if (decision.status === 'approved') {
-  // Execute the trade
-} else if (decision.status === 'rejected') {
-  // Skip the trade
-}
-```
-
-## Decision Lifecycle
-
-1. **Agent creates decision** via POST with `status: "pending"`
-2. **User receives notification** with link to approval page
-3. **User approves/rejects** via HTML buttons or PATCH request
-4. **Agent polls for status** and acts accordingly
-5. **Decision expires** after 7 days
+After deployment, verify denied unauthenticated access and a dedicated non-trading fixture through the served HTTPS interface before enabling its producer. A passing local test does not establish the deployment's configuration.
